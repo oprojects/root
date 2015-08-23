@@ -41,6 +41,7 @@ REGISTER_METHOD(PyRandomForest)
 
 ClassImp(MethodPyRandomForest)
 
+static bool TrainAgain=kFALSE;
 
 //_______________________________________________________________________
 MethodPyRandomForest::MethodPyRandomForest(const TString &jobName,
@@ -78,7 +79,7 @@ Bool_t MethodPyRandomForest::HasAnalysisType(Types::EAnalysisType type, UInt_t n
 //_______________________________________________________________________
 void  MethodPyRandomForest::Init()
 {
-
+_import_array();//require to use numpy arrays
 // Convert the file name to a Python string.
 PyObject *pName= PyString_FromString("sklearn.ensemble");
 // Import the file as a Python module.
@@ -110,67 +111,43 @@ if (PyCallable_Check(fClassifierClass ))
 
 //Training data
 UInt_t fNvars=Data()->GetNVariables();
-UInt_t fNrowsTraining=Data()->GetNTrainingEvents();//every row is an event, a class type and a weight
+int fNrowsTraining=Data()->GetNTrainingEvents();//every row is an event, a class type and a weight
+int *dims=new int[2];
+dims[0]=fNrowsTraining;
+dims[1]=fNvars;
+fTrainData=(PyArrayObject*)PyArray_FromDims(2, dims, NPY_FLOAT);
+float* TrainData=(float*)(PyArray_DATA(fTrainData));
 
-fTrainDataClasses=PyTuple_New(fNrowsTraining);
-fTrainData=PyTuple_New(fNrowsTraining);
-fTrainDataWeights=PyTuple_New(fNrowsTraining);
+
+fTrainDataClasses=(PyArrayObject*)PyArray_FromDims(1,&fNrowsTraining, NPY_FLOAT);
+float* TrainDataClasses=(float*)(PyArray_DATA(fTrainDataClasses));
+
+fTrainDataWeights=(PyArrayObject*)PyArray_FromDims(1,&fNrowsTraining, NPY_FLOAT);
+float* TrainDataWeights=(float*)(PyArray_DATA(fTrainDataWeights));
 
 for(int i=0;i<fNrowsTraining;i++)
 {
-    PyObject *TrainDataRow=PyTuple_New(fNvars);
     const TMVA::Event *e=Data()->GetTrainingEvent(i);
     for(int j=0;j<fNvars;j++)
     {
-        PyObject *pValue=PyFloat_FromDouble(e->GetValue(j));
-        if (!pValue)
-        {
-           Py_DECREF(fTrainDataClasses);
-           Py_DECREF(fTrainData);
-           Log()<<kFATAL<<"Error passing Training Data to Tuples(Variables)"<<Endl;
-        }
-        
-        PyTuple_SetItem(TrainDataRow, j,pValue);
+        TrainData[j+i*fNvars]=e->GetValue(j);
     }
-    PyObject *pClassValue;
-    if(e->GetClass()==TMVA::Types::kSignal) pClassValue=PyInt_FromLong(TMVA::Types::kSignal);
-    else pClassValue=PyInt_FromLong(TMVA::Types::kBackground);
-    if (!pClassValue)
-    {
-       Py_DECREF(fTrainDataClasses);
-       Py_DECREF(fTrainData);
-       Log()<<kFATAL<<"Error passing Training Data to Tuples(Class Type)"<<Endl;
-    }
-    PyObject *pWeightValue=PyFloat_FromDouble(e->GetWeight());
-    if (!pWeightValue)
-    {
-       Py_DECREF(fTrainDataClasses);
-       Py_DECREF(fTrainData);
-       Log()<<kFATAL<<"Error passing Training Data to Tuples(Weight)"<<Endl;
-    }
-        
-    PyTuple_SetItem(fTrainData, i,TrainDataRow);
-    PyTuple_SetItem(fTrainDataClasses, i,pClassValue);
-    PyTuple_SetItem(fTrainDataWeights, i,pWeightValue);
+    if(e->GetClass()==TMVA::Types::kSignal) TrainDataClasses[i]=TMVA::Types::kSignal;
+    else TrainDataClasses[i]=TMVA::Types::kBackground;
+    
+    TrainDataWeights[i]=e->GetWeight();
 }
-
-// PyObject_Print(TraindDataArray, stdout, 0);
-
-//  PyObject_Print(item, stdout, 0);
 }
 
 void MethodPyRandomForest::Train()
 {
-    //https://docs.python.org/2/c-api/object.html
-//     PyObject_CallMethodObjArgs(PyObject *o, PyObject *name, ..., NULL)
-
 //     PyObject_Print(fClassifier, stdout, 0);
 //     PyObject_Print(fTrainData, stdout, 0);
 //     PyObject_Print(fTrainDataClasses, stdout, 0);
 //     PyObject_Print(fTrainDataClasses, stdout, 0);
     
-    PyObject *pValue=PyObject_CallMethod(fClassifier,"fit","(OOO)", fTrainData,fTrainDataClasses,fTrainDataWeights);
-    PyObject_Print(pValue, stdout, 0);
+    fClassifier=PyObject_CallMethod(fClassifier,"fit","(OOO)", fTrainData,fTrainDataClasses,fTrainDataWeights);
+    PyObject_Print(fClassifier, stdout, 0);
 //     pValue =PyObject_CallObject(fClassifier, PyString_FromString("classes_"));
 //     PyObject_Print(pValue, stdout, 0);
      
@@ -196,6 +173,23 @@ void MethodPyRandomForest::TestClassification()
 //_______________________________________________________________________
 Double_t MethodPyRandomForest::GetMvaValue(Double_t *errLower, Double_t *errUpper)
 {
+   // cannot determine error
+   NoErrorCalc(errLower, errUpper);
+   //NOTE: the testing evaluation is using thread and for unknow reason
+   //I need to re-traing because fClassifier if not working on the thread
+   //NOTE: appear to be that GetMvaValue is called after load train's macros output
+   //with training information from MethodBase::MakeClass TMVAClassification_PyRandomForest.class.C
+   //this is not implemented yet
+   if(Data()->GetCurrentType() == Types::kTesting)
+   {
+       if(!TrainAgain)
+       {
+         _import_array();//require to use numpy arrays(threads need reload)
+         Train();
+        TrainAgain=kTRUE;
+       }
+   }
+   
    Double_t mvaValue;
    const TMVA::Event *e=Data()->GetEvent();
    UInt_t nvars=e->GetNVariables();
@@ -212,11 +206,13 @@ Double_t MethodPyRandomForest::GetMvaValue(Double_t *errLower, Double_t *errUppe
        PyTuple_SetItem(pEvent, i,pValue);
    }
    
-   //optimisation require here, predict_proba must be class's attribute
-   PyObject *result=PyObject_CallMethodObjArgs(fClassifier,PyString_FromString("predict_proba"),pEvent,NULL);
-
-   PyObject_Print(result, stdout, 0);
-   std::cout<<std::endl;
+   PyArrayObject *result=(PyArrayObject*)PyObject_CallMethod(fClassifier,"predict_proba","(O)",pEvent);
+   float* proba=(float*)(PyArray_DATA(result));
+   mvaValue=proba[1];//getting signal prob
+   Py_DECREF(result);
+   Py_DECREF(pEvent);
+//    PyObject_Print(result, stdout, 0);
+//    std::cout<<std::endl;
    return mvaValue;
 }
 

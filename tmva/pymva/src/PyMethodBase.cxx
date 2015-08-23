@@ -29,9 +29,11 @@ PyMethodBase::PyMethodBase(const TString &jobName,
   if(!PyInitializeStatus)
   {
     Py_Initialize();
+    PyEval_InitThreads();
     PyInitializeStatus=kTRUE;
   }
   _import_array();
+  import_array();
 }
 
 //_______________________________________________________________________
@@ -43,9 +45,11 @@ PyMethodBase::PyMethodBase(Types::EMVA methodType,
   if(!PyInitializeStatus)
   {
     Py_Initialize();
+    PyEval_InitThreads();
     PyInitializeStatus=kTRUE;
   }
   _import_array();
+  import_array();
 }
 
 //_______________________________________________________________________

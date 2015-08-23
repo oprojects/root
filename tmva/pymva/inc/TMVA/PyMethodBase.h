@@ -89,12 +89,12 @@ namespace TMVA {
    protected:
      PyObject *fModuleSklearn;
      PyObject *fClassifier;
-//      PyArrayObject *fTrainData;
-//      PyArrayObject *fTrainDataWeights;//array of weights
-//      PyArrayObject *fTrainDataClasses;//array with sig/bgk class
-     PyObject *fTrainData;
-     PyObject *fTrainDataWeights;//array of weights
-     PyObject *fTrainDataClasses;//array with sig/bgk class
+     PyArrayObject *fTrainData;
+     PyArrayObject *fTrainDataWeights;//array of weights
+     PyArrayObject *fTrainDataClasses;//array with sig/bgk class
+//      PyObject *fTrainData;
+//      PyObject *fTrainDataWeights;//array of weights
+//      PyObject *fTrainDataClasses;//array with sig/bgk class
    private:
       ClassDef(PyMethodBase,0)  // Virtual base class for all TMVA method
 
