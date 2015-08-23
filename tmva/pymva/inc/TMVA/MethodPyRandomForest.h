@@ -76,6 +76,8 @@ namespace TMVA {
       friend class Factory;                   // DSMTEST
       friend class Reader;                    // DSMTEST      
    protected:
+       //RandromForest options
+       
       // get help message text
       void GetHelpMessage() const;
 

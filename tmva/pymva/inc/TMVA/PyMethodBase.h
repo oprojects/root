@@ -67,7 +67,7 @@ namespace TMVA {
                   TDirectory* theBaseDir = 0);
 
       // default destructur
-      virtual ~PyMethodBase(){};
+      virtual ~PyMethodBase();
       virtual void     Train() = 0;
       // options treatment
       virtual void     Init()           = 0;
@@ -89,8 +89,12 @@ namespace TMVA {
    protected:
      PyObject *fModuleSklearn;
      PyObject *fClassifier;
-     PyArrayObject *fTrainData;
-     PyArrayObject *fTestData;
+//      PyArrayObject *fTrainData;
+//      PyArrayObject *fTrainDataWeights;//array of weights
+//      PyArrayObject *fTrainDataClasses;//array with sig/bgk class
+     PyObject *fTrainData;
+     PyObject *fTrainDataWeights;//array of weights
+     PyObject *fTrainDataClasses;//array with sig/bgk class
    private:
       ClassDef(PyMethodBase,0)  // Virtual base class for all TMVA method
 

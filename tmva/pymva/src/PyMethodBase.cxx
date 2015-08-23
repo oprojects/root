@@ -31,6 +31,7 @@ PyMethodBase::PyMethodBase(const TString &jobName,
     Py_Initialize();
     PyInitializeStatus=kTRUE;
   }
+  _import_array();
 }
 
 //_______________________________________________________________________
@@ -44,4 +45,13 @@ PyMethodBase::PyMethodBase(Types::EMVA methodType,
     Py_Initialize();
     PyInitializeStatus=kTRUE;
   }
+  _import_array();
+}
+
+//_______________________________________________________________________
+PyMethodBase::~PyMethodBase()
+{
+// if(fModuleSklearn) Py_DECREF(fModuleSklearn);
+// if(fClassifier) Py_DECREF(fClassifier);    
+// if(fTrainData) Py_DECREF(fTrainData);
 }
