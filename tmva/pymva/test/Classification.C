@@ -76,19 +76,20 @@ void Classification()
    ///////////////////
    //Booking         //
    ///////////////////   
-   TMVA::PyMethodBase *method=(TMVA::PyMethodBase *)factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest","!V:" );
+//    TMVA::MethodBase *method=factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest","!V:NEstimators=1000:NJobs=8" );
+     factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest","!V:NEstimators=1000:NJobs=8" );
 
-   
-//     method->Train();
+//    method->Init();
+//    method->Train();
       
       // Train MVAs using the set of training events
-   factory->TrainAllMethods();
+     factory->TrainAllMethods();
 
    // ---- Evaluate all MVAs using the set of test events
-   factory->TestAllMethods();
+//    factory->TestAllMethods();
 
    // ----- Evaluate and compare performance of all configured MVAs
-   factory->EvaluateAllMethods();
+//    factory->EvaluateAllMethods();
    // --------------------------------------------------------------
 
    // Save the output

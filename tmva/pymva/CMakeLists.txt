@@ -6,16 +6,6 @@
 
 set(libname PyMVA)
 
-ROOT_USE_PACKAGE(core)
-ROOT_USE_PACKAGE(core/rint)
-ROOT_USE_PACKAGE(core/thread)
-ROOT_USE_PACKAGE(math/matrix)
-ROOT_USE_PACKAGE(io/io)
-ROOT_USE_PACKAGE(graf2d/gpad)
-ROOT_USE_PACKAGE(hist/hist)
-ROOT_USE_PACKAGE(tmva)
-ROOT_USE_PACKAGE(tree/tree)
-
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 
