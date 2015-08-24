@@ -76,14 +76,14 @@ void Classification()
    ///////////////////
    //Booking         //
    ///////////////////   
-//    TMVA::MethodBase *method=factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest","!V:NEstimators=1000:NJobs=8" );
-     factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest","!V:NEstimators=1000:NJobs=8" );
+   TMVA::MethodBase *method=factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest","!V:NEstimators=100:NJobs=1" );
+//      factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest","!V:NEstimators=1000:NJobs=8" );
 
 //    method->Init();
 //    method->Train();
       
-      // Train MVAs using the set of training events
-     factory->TrainAllMethods();
+   // Train MVAs using the set of training events
+   factory->TrainAllMethods();
 
    // ---- Evaluate all MVAs using the set of test events
 //    factory->TestAllMethods();

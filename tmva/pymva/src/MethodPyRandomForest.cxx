@@ -16,7 +16,7 @@
  * (http://tmva.sourceforge.net/LICENSE)                                          *
  *                                                                                *
  **********************************************************************************/
-
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <iomanip>
 
 #include "TMath.h"
@@ -35,13 +35,14 @@
 
 #include "TMVA/Results.h"
 
+
+
 using namespace TMVA;
 
 REGISTER_METHOD(PyRandomForest)
 
 ClassImp(MethodPyRandomForest)
 
-static PyObject *kwargs=NULL;
 static bool TrainAgain=kFALSE;
 
 //_______________________________________________________________________
@@ -53,11 +54,12 @@ MethodPyRandomForest::MethodPyRandomForest(const TString &jobName,
    PyMethodBase(jobName, Types::kPyRandomForest, methodTitle, dsi, theOption, theTargetDir),
    n_estimators(10),
    criterion("gini"),
-   max_depth("None"),
+   max_features("auto"),
+   max_depth(0),
    min_samples_leaf(1),
    min_weight_fraction_leaf(0),
    bootstrap(kTRUE),
-    n_jobs(1)   
+   n_jobs(1)   
 {
    // standard constructor for the PyRandomForest
 
@@ -69,7 +71,8 @@ MethodPyRandomForest::MethodPyRandomForest(DataSetInfo &theData, const TString &
    : PyMethodBase(Types::kPyRandomForest, theData, theWeightFile, theTargetDir),
    n_estimators(10),
    criterion("gini"),
-   max_depth("None"),
+   max_features("auto"),
+   max_depth(0),
    min_samples_leaf(1),
    min_weight_fraction_leaf(0),
    bootstrap(kTRUE),
@@ -128,23 +131,14 @@ void MethodPyRandomForest::ProcessOptions()
         n_estimators = 10;
     }
     //TODO: Error control for variables here  
-         kwargs = Py_BuildValue("s=i,s=s,s=s,s=i,s=f,s=i,s=i",\
-        "n_estimators",n_estimators,\
-        "criterion",criterion, \
-        "max_depth",max_depth, \
-        "min_samples_leaf",min_samples_leaf, \
-        "min_weight_fraction_leaf",min_weight_fraction_leaf,\
-        "bootstrap",bootstrap, \
-        "n_jobs",n_jobs);//NOTE: not all options was passed
-   Log() << kERROR <<"ProcessOptions =" <<n_jobs<<Endl;
-
 }
 
 
 //_______________________________________________________________________
 void  MethodPyRandomForest::Init()
 {
-        Log() << kERROR <<"INIT =" <<n_jobs<<Endl;
+//         Log() << kERROR <<"INIT =" <<n_jobs<<Endl;
+    ProcessOptions();
     _import_array();//require to use numpy arrays
     
     //Import sklearn
@@ -158,9 +152,9 @@ void  MethodPyRandomForest::Init()
     {
         Log() <<kFATAL<< "Can't import sklearn.ensemble" << Endl;
         Log() << Endl;
-    }
+    }    
     
-
+    
     //Training data
     UInt_t fNvars=Data()->GetNVariables();
     int fNrowsTraining=Data()->GetNTrainingEvents();//every row is an event, a class type and a weight
@@ -190,21 +184,36 @@ void  MethodPyRandomForest::Init()
         TrainDataWeights[i]=e->GetWeight();
     }
 }
-
+// n_estimators=10, criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0,
+// max_features='auto', max_leaf_nodes=None, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0, warm_start=False, 
+// class_weight=None
 void MethodPyRandomForest::Train()
 {
-    ProcessSetup();
+//     (isiiifsiiiiiiis)
+    //NOTE: max_features must have 3 defferents variables int, float and string 
+    //search a solution with PyObject
+    PyObject* pomax_depth;
+    if(max_depth<=0) pomax_depth=Py_None;
+    else pomax_depth=PyInt_FromLong(max_depth);
+   PyObject *args = Py_BuildValue("(isOiifsOiii)",n_estimators,criterion.Data(),pomax_depth,2, \
+                                  min_samples_leaf,min_weight_fraction_leaf,max_features.Data(),Py_None,\
+                                  bootstrap,kFALSE,n_jobs);//,NULL,0,kFALSE,kFALSE,NULL);
+   Py_DECREF(pomax_depth);
+   PyObject_Print(args,stdout,0);
+   std::cout<<std::endl;
+    
     PyObject *pDict = PyModule_GetDict(fModuleSklearn);
     PyObject *fClassifierClass = PyDict_GetItemString(pDict, "RandomForestClassifier");
+//    Log() << kFATAL <<"Train =" <<n_jobs<<Endl;
     
     // Create an instance of the class
     if (PyCallable_Check(fClassifierClass ))
     {
         //instance        
-        fClassifier = PyObject_CallObject(fClassifierClass ,kwargs);
+        fClassifier = PyObject_CallObject(fClassifierClass ,args);
         PyObject_Print(fClassifier, stdout, 0);
         
-        // //         Py_DECREF(kwargs); 
+        Py_DECREF(args); 
     }else{
         PyErr_Print();
         Py_DECREF(pDict);
@@ -213,6 +222,7 @@ void MethodPyRandomForest::Train()
         Log() << Endl;
         
     }   
+    
     fClassifier=PyObject_CallMethod(fClassifier,(char*)"fit",(char*)"(OOO)", fTrainData,fTrainDataClasses,fTrainDataWeights);
     //     PyObject_Print(fClassifier, stdout, 0);
     //     pValue =PyObject_CallObject(fClassifier, PyString_FromString("classes_"));
@@ -230,6 +240,7 @@ void MethodPyRandomForest::TestClassification()
 //_______________________________________________________________________
 Double_t MethodPyRandomForest::GetMvaValue(Double_t *errLower, Double_t *errUpper)
 {
+//     _import_array();//require to use numpy arrays
     // cannot determine error
     NoErrorCalc(errLower, errUpper);
     //NOTE: the testing evaluation is using thread and for unknow reason
