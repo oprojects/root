@@ -43,8 +43,6 @@ REGISTER_METHOD(PyRandomForest)
 
 ClassImp(MethodPyRandomForest)
 
-static bool TrainAgain=kFALSE;
-
 //_______________________________________________________________________
 MethodPyRandomForest::MethodPyRandomForest(const TString &jobName,
                      const TString &methodTitle,
@@ -145,10 +143,10 @@ void  MethodPyRandomForest::Init()
     // Convert the file name to a Python string.
     PyObject *pName= PyString_FromString("sklearn.ensemble");
     // Import the file as a Python module.
-    fModuleSklearn = PyImport_Import(pName);
+    fModule= PyImport_Import(pName);
     Py_DECREF(pName);
     
-    if(!fModuleSklearn)
+    if(!fModule)
     {
         Log() <<kFATAL<< "Can't import sklearn.ensemble" << Endl;
         Log() << Endl;
@@ -202,7 +200,7 @@ void MethodPyRandomForest::Train()
    PyObject_Print(args,stdout,0);
    std::cout<<std::endl;
     
-    PyObject *pDict = PyModule_GetDict(fModuleSklearn);
+    PyObject *pDict = PyModule_GetDict(fModule);
     PyObject *fClassifierClass = PyDict_GetItemString(pDict, "RandomForestClassifier");
 //    Log() << kFATAL <<"Train =" <<n_jobs<<Endl;
     
@@ -243,21 +241,9 @@ Double_t MethodPyRandomForest::GetMvaValue(Double_t *errLower, Double_t *errUppe
 //     _import_array();//require to use numpy arrays
     // cannot determine error
     NoErrorCalc(errLower, errUpper);
-    //NOTE: the testing evaluation is using thread and for unknow reason
-    //I need to re-traing because fClassifier if not working on the thread
-    //NOTE: appear to be that GetMvaValue is called after load train's macros output
-    //with training information from MethodBase::MakeClass TMVAClassification_PyRandomForest.class.C
-    //this is not implemented yet
-    if(Data()->GetCurrentType() == Types::kTesting)
-    {
-        if(!TrainAgain)
-        {
-            _import_array();//require to use numpy arrays(threads need reload)
-            Train();
-            TrainAgain=kTRUE;
-        }
-    }
-    
+
+    if(fClassifier) return 0;//not implemented yet model persistence
+        
     Double_t mvaValue;
     const TMVA::Event *e=Data()->GetEvent();
     UInt_t nvars=e->GetNVariables();
@@ -282,6 +268,15 @@ Double_t MethodPyRandomForest::GetMvaValue(Double_t *errLower, Double_t *errUppe
     //    PyObject_Print(result, stdout, 0);
     //    std::cout<<std::endl;
     return mvaValue;
+}
+
+//_______________________________________________________________________
+void MethodPyRandomForest::ReadStateFromFile()
+{
+  if(!PyIsInitialized())
+  {
+    PyInitialize();
+  }
 }
 
 //_______________________________________________________________________

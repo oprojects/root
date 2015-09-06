@@ -68,6 +68,15 @@ namespace TMVA {
 
       // default destructur
       virtual ~PyMethodBase();
+      //basic python related function
+      static void PyInitialize();
+      static int  PyIsInitialized();
+      static void PyFinalize();
+      static void PySetProgramName(TString name){Py_SetProgramName(const_cast<char*>(name.Data()));}
+      static TString Py_GetProgramName(){return Py_GetProgramName();}
+      static PyObject* Eval(TString code);//required to parse booking options from string to pyobjects
+      
+      
       virtual void     Train() = 0;
       // options treatment
       virtual void     Init()           = 0;
@@ -87,15 +96,20 @@ namespace TMVA {
       virtual void ReadWeightsFromStream( TFile& ) {}                // backward compatibility
        
    protected:
-     PyObject *fModuleSklearn;
-     PyObject *fClassifier;
+     PyObject *fModule;//Module to load
+     PyObject *fClassifier;//Classifier object
+     
      PyArrayObject *fTrainData;
      PyArrayObject *fTrainDataWeights;//array of weights
      PyArrayObject *fTrainDataClasses;//array with sig/bgk class
-//      PyObject *fTrainData;
-//      PyObject *fTrainDataWeights;//array of weights
-//      PyObject *fTrainDataClasses;//array with sig/bgk class
    private:
+      static PyObject *fModulePickle;//Module for model persistence
+      static PyObject *fPickleDumps;//Function to dumps PyObject information into string
+      static PyObject *fPickleLoads;//Function to load PyObject information from string
+      
+      static PyObject *fModuleBuiltin;
+      static PyObject *fEval;
+      
       ClassDef(PyMethodBase,0)  // Virtual base class for all TMVA method
 
    };
