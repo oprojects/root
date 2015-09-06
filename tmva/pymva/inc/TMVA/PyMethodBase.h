@@ -102,14 +102,14 @@ namespace TMVA {
      PyArrayObject *fTrainData;
      PyArrayObject *fTrainDataWeights;//array of weights
      PyArrayObject *fTrainDataClasses;//array with sig/bgk class
-   private:
+   private:   
+      static PyObject *fModuleBuiltin;
+      static PyObject *fEval;
+   protected:
       static PyObject *fModulePickle;//Module for model persistence
       static PyObject *fPickleDumps;//Function to dumps PyObject information into string
       static PyObject *fPickleLoads;//Function to load PyObject information from string
-      
-      static PyObject *fModuleBuiltin;
-      static PyObject *fEval;
-      
+         
       ClassDef(PyMethodBase,0)  // Virtual base class for all TMVA method
 
    };

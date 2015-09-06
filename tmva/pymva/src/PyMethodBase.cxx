@@ -29,7 +29,8 @@ PyMethodBase::PyMethodBase(const TString &jobName,
                          const TString &methodTitle,
                          DataSetInfo &dsi,
                          const TString &theOption ,
-                         TDirectory *theBaseDir): MethodBase(jobName, methodType, methodTitle, dsi, theOption, theBaseDir)
+                         TDirectory *theBaseDir): MethodBase(jobName, methodType, methodTitle, dsi, theOption, theBaseDir),
+                         fClassifier(NULL)
 {
   if(!PyIsInitialized())
   {
@@ -41,7 +42,8 @@ PyMethodBase::PyMethodBase(const TString &jobName,
 PyMethodBase::PyMethodBase(Types::EMVA methodType,
                          DataSetInfo &dsi,
                          const TString &weightFile,
-                         TDirectory *theBaseDir): MethodBase(methodType, dsi, weightFile, theBaseDir)
+                         TDirectory *theBaseDir): MethodBase(methodType, dsi, weightFile, theBaseDir),
+                         fClassifier(NULL)
 {
   if(!PyIsInitialized())
   {
@@ -54,7 +56,7 @@ PyMethodBase::~PyMethodBase()
 {
   if(PyIsInitialized())
   {
-    PyFinalize();
+//     PyFinalize();
   }
 }
 

@@ -18,6 +18,7 @@
  **********************************************************************************/
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <iomanip>
+#include <fstream>
 
 #include "TMath.h"
 #include "Riostream.h"
@@ -30,6 +31,7 @@
 #include "TMVA/Tools.h"
 #include "TMVA/Ranking.h"
 #include "TMVA/Types.h"
+#include "TMVA/Config.h"
 #include "TMVA/PDF.h"
 #include "TMVA/ClassifierFactory.h"
 
@@ -60,7 +62,7 @@ MethodPyRandomForest::MethodPyRandomForest(const TString &jobName,
    n_jobs(1)   
 {
    // standard constructor for the PyRandomForest
-
+ SetWeightFileDir( gConfig().GetIONames().fWeightFileDir );
 
 }
 
@@ -76,6 +78,7 @@ MethodPyRandomForest::MethodPyRandomForest(DataSetInfo &theData, const TString &
    bootstrap(kTRUE),
    n_jobs(1)   
 {
+     SetWeightFileDir( gConfig().GetIONames().fWeightFileDir );
 }
 
 
@@ -226,6 +229,19 @@ void MethodPyRandomForest::Train()
     //     pValue =PyObject_CallObject(fClassifier, PyString_FromString("classes_"));
     //     PyObject_Print(pValue, stdout, 0);
     
+    TString path=GetWeightFileDir()+"/PyRFModel.PyData";
+    Log() << Endl;
+    Log() << gTools().Color("bold") << "--- Saving State File In:" << gTools().Color("reset")<<path<< Endl;
+    Log() << Endl;
+    
+    PyObject *model_arg = Py_BuildValue("(O)",fClassifier);
+    PyObject *model_data = PyObject_CallObject(fPickleDumps ,model_arg);
+    std::ofstream PyData;
+    PyData.open(path.Data());
+    PyData<<PyString_AsString(model_data);
+    PyData.close();
+    Py_DECREF(model_arg); 
+    Py_DECREF(model_data); 
 }
 
 //_______________________________________________________________________
@@ -242,7 +258,7 @@ Double_t MethodPyRandomForest::GetMvaValue(Double_t *errLower, Double_t *errUppe
     // cannot determine error
     NoErrorCalc(errLower, errUpper);
 
-    if(fClassifier) return 0;//not implemented yet model persistence
+    if(!fClassifier) ReadStateFromFile();//not implemented yet model persistence
         
     Double_t mvaValue;
     const TMVA::Event *e=Data()->GetEvent();
@@ -277,6 +293,28 @@ void MethodPyRandomForest::ReadStateFromFile()
   {
     PyInitialize();
   }
+  
+  TString path=GetWeightFileDir()+"/PyRFModel.PyData";
+  Log() << Endl;
+  Log() << gTools().Color("bold") << "--- Loading State File From:" << gTools().Color("reset")<<path<< Endl;
+  Log() << Endl;
+  std::ifstream PyData;
+  std::stringstream PyDataStream;
+  std::string PyDataString;
+    
+  PyData.open(path.Data());
+  PyDataStream<<PyData.rdbuf();
+  PyDataString=PyDataStream.str();
+  PyData.close();
+  
+//   std::cout<<"-----------------------------------\n";
+//   std::cout<<PyDataString.c_str();
+//   std::cout<<"-----------------------------------\n";
+  PyObject *model_arg = Py_BuildValue("(s)",PyDataString.c_str());
+  fClassifier = PyObject_CallObject(fPickleLoads ,model_arg);
+
+  
+  Py_DECREF(model_arg);   
 }
 
 //_______________________________________________________________________
