@@ -7,7 +7,7 @@
  * Class  : RMethodBase                                                           *
  *                                                                                *
  * Description:                                                                   *
- *      Virtual base class for all MVA method based on ROOTR                      *
+ *      Virtual base class for all MVA method based on Python                     *
  *                                                                                *
  **********************************************************************************/
 
@@ -102,7 +102,8 @@ namespace TMVA {
      PyArrayObject *fTrainData;
      PyArrayObject *fTrainDataWeights;//array of weights
      PyArrayObject *fTrainDataClasses;//array with sig/bgk class
-   private:   
+   private:
+       
       static PyObject *fModuleBuiltin;
       static PyObject *fEval;
    protected:

@@ -76,13 +76,35 @@ void Classification()
    
    ///////////////////
    //Booking         //
-   ///////////////////   
+   ///////////////////
+   // Boosted Decision Trees
+    // Gradient Boost
+//     factory->BookMethod( TMVA::Types::kBDT, "BDTG",
+//                          "!H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2" );
+//     
+//     // Adaptive Boost
+//     factory->BookMethod( TMVA::Types::kBDT, "BDT",
+//                          "!H:!V:NTrees=850:MinNodeSize=2.5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType=GiniIndex:nCuts=20" );
+//     
+//     // Bagging
+//     factory->BookMethod( TMVA::Types::kBDT, "BDTB",
+//                          "!H:!V:NTrees=400:BoostType=Bagging:SeparationType=GiniIndex:nCuts=20" );
+//     
+//     // Decorrelation + Adaptive Boost
+//     factory->BookMethod( TMVA::Types::kBDT, "BDTD",
+//                          "!H:!V:NTrees=400:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:SeparationType=GiniIndex:nCuts=20:VarTransform=Decorrelate" );
+//     
+//     // Allow Using Fisher discriminant in node splitting for (strong) linearly correlated variables
+//     factory->BookMethod( TMVA::Types::kBDT, "BDTMitFisher",
+//                          "!H:!V:NTrees=50:MinNodeSize=2.5%:UseFisherCuts:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" );
+ 
+    //PyMVA methods
    factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest",
-                       "!V:NEstimators=100:Criterion=gini:MaxFeatures=auto:MaxDepth=8:MinSamplesLeaf=1:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
-//    factory->BookMethod(TMVA::Types::kPyAdaBoost, "PyAdaBoost",
-//                        "!V:" );
-//    factory->BookMethod(TMVA::Types::kPyGTB, "PyGTB",
-//                        "!V:" );
+                       "!V:NEstimators=200:Criterion=gini:MaxFeatures=auto:MaxDepth=6:MinSamplesLeaf=3:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
+   factory->BookMethod(TMVA::Types::kPyAdaBoost, "PyAdaBoost",
+                       "!V:" );
+   factory->BookMethod(TMVA::Types::kPyGTB, "PyGTB",
+                       "!V:" );
 
       
    // Train MVAs using the set of training events

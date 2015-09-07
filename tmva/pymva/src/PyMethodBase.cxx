@@ -69,9 +69,9 @@ PyObject* PyMethodBase::Eval(TString code)
 
     PyObject *pycode = Py_BuildValue("(sOO)",code.Data(),global,local);
     PyObject *result = PyObject_CallObject(fEval,pycode);
-    Py_DECREF(main); 
-    Py_DECREF(global); 
-    Py_DECREF(local); 
+//     Py_DECREF(main); 
+//     Py_DECREF(global); 
+//     Py_DECREF(local); 
     Py_DECREF(pycode); 
     return result;
 }

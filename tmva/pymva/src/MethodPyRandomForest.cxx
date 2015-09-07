@@ -54,13 +54,19 @@ MethodPyRandomForest::MethodPyRandomForest(const TString &jobName,
    PyMethodBase(jobName, Types::kPyRandomForest, methodTitle, dsi, theOption, theTargetDir),
    n_estimators(10),
    criterion("gini"),
-   max_features("'auto'"),
    max_depth("None"),
    min_samples_split(2),
    min_samples_leaf(1),
    min_weight_fraction_leaf(0),
+   max_features("'auto'"),
+   max_leaf_nodes("None"),
    bootstrap(kTRUE),
-   n_jobs(1)   
+   oob_score(kFALSE),
+   n_jobs(1),
+   random_state("None"),
+   verbose(0),
+   warm_start(kFALSE),
+   class_weight("None")
 {
    // standard constructor for the PyRandomForest
  SetWeightFileDir( gConfig().GetIONames().fWeightFileDir );
@@ -72,13 +78,19 @@ MethodPyRandomForest::MethodPyRandomForest(DataSetInfo &theData, const TString &
    : PyMethodBase(Types::kPyRandomForest, theData, theWeightFile, theTargetDir),
    n_estimators(10),
    criterion("gini"),
-   max_features("'auto'"),
    max_depth("None"),
    min_samples_split(2),
    min_samples_leaf(1),
    min_weight_fraction_leaf(0),
+   max_features("'auto'"),
+   max_leaf_nodes("None"),
    bootstrap(kTRUE),
-   n_jobs(1)   
+   oob_score(kFALSE),
+   n_jobs(1),
+   random_state("None"),
+   verbose(0),
+   warm_start(kFALSE),
+   class_weight("None")
 {
      SetWeightFileDir( gConfig().GetIONames().fWeightFileDir );
 }
@@ -171,7 +183,97 @@ void MethodPyRandomForest::ProcessOptions()
         << Endl;
         n_estimators = 10;
     }
-    //TODO: Error control for variables here  
+    if(criterion!="gini"&&criterion!="entropy")
+    {
+        Log() << kFATAL << Form(" Criterion = %s... that does not work !! ",criterion.Data())
+        << " The options are gini of entropy."
+        << Endl;        
+    }
+    PyObject *pomax_depth=Eval(max_depth);
+    if(!pomax_depth)
+    {
+        Log() << kFATAL << Form(" MaxDepth = %s... that does not work !! ",criterion.Data())
+        << " The options are None or integer."
+        << Endl;        
+    }
+    Py_DECREF(pomax_depth);
+    
+    if(min_samples_split<0)
+    {
+        Log() << kERROR << " MinSamplesSplit < 0... that does not work !! "
+        << " I set it to 2 .. just so that the program does not crash"
+        << Endl;
+        min_samples_split=2;
+    }
+    if(min_samples_leaf<0)
+    {
+        Log() << kERROR << " MinSamplesLeaf < 0... that does not work !! "
+        << " I set it to 1 .. just so that the program does not crash"
+        << Endl;
+        min_samples_leaf=1;        
+    }
+    
+   if(min_weight_fraction_leaf<0)
+   {
+        Log() << kERROR << " MinWeightFractionLeaf < 0... that does not work !! "
+        << " I set it to 0 .. just so that the program does not crash"
+        << Endl;
+        min_weight_fraction_leaf=0;       
+   }
+   if(max_features=="auto"||max_features=="sqrt"||max_features=="log2")max_features=Form("'%s'",max_features.Data());
+   PyObject *pomax_features=Eval(max_features);
+   if(!pomax_features)
+   {
+        Log() << kFATAL << Form(" MaxFeatures = %s... that does not work !! ",max_features.Data())
+        << "int, float, string or None, optional (default='auto')"
+        << "The number of features to consider when looking for the best split:"
+        << "If int, then consider `max_features` features at each split."
+        << "If float, then `max_features` is a percentage and"
+        << "`int(max_features * n_features)` features are considered at each split."
+        << "If 'auto', then `max_features=sqrt(n_features)`."
+        << "If 'sqrt', then `max_features=sqrt(n_features)`."
+        << "If 'log2', then `max_features=log2(n_features)`."
+        << "If None, then `max_features=n_features`."
+        << Endl;               
+  }
+  Py_DECREF(pomax_features);
+
+   PyObject *pomax_leaf_nodes=Eval(max_leaf_nodes);
+   if(!pomax_leaf_nodes)
+   {
+        Log() << kFATAL << Form(" MaxLeafNodes = %s... that does not work !! ",max_leaf_nodes.Data())
+        << " The options are None or integer."
+        << Endl;        
+   }
+  Py_DECREF(pomax_leaf_nodes);
+   
+//    bootstrap(kTRUE),
+//    oob_score(kFALSE),
+//    n_jobs(1),
+
+   PyObject *porandom_state=Eval(random_state);
+   if(!porandom_state)
+   {
+        Log() << kFATAL << Form(" RandomState = %s... that does not work !! ",random_state.Data())
+        << "If int, random_state is the seed used by the random number generator;"
+        << "If RandomState instance, random_state is the random number generator;"
+        << "If None, the random number generator is the RandomState instance used by `np.random`."
+        << Endl;        
+   }
+  Py_DECREF(porandom_state);
+
+//    verbose(0),
+//    warm_start(kFALSE),
+//    class_weight("None")
+   PyObject *poclass_weight=Eval(class_weight);
+   if(!poclass_weight)
+   {
+        Log() << kFATAL << Form(" ClassWeight = %s... that does not work !! ",class_weight.Data())
+        << "dict, list of dicts, 'auto', 'subsample' or None, optional"
+        << Endl;
+   }
+  Py_DECREF(poclass_weight);
+   
 }
 
 //_______________________________________________________________________
@@ -267,7 +369,7 @@ void MethodPyRandomForest::Train()
         
     }   
     
-    fClassifier=PyObject_CallMethod(fClassifier,(char*)"fit",(char*)"(OOO)", fTrainData,fTrainDataClasses,fTrainDataWeights);
+    fClassifier=PyObject_CallMethod(fClassifier,const_cast<char*>("fit"),const_cast<char*>("(OOO)"), fTrainData,fTrainDataClasses,fTrainDataWeights);
     //     PyObject_Print(fClassifier, stdout, 0);
     //     pValue =PyObject_CallObject(fClassifier, PyString_FromString("classes_"));
     //     PyObject_Print(pValue, stdout, 0);
@@ -317,7 +419,7 @@ Double_t MethodPyRandomForest::GetMvaValue(Double_t *errLower, Double_t *errUppe
         }
         PyTuple_SetItem(pEvent, i,pValue);
     }
-    PyArrayObject *result=(PyArrayObject*)PyObject_CallMethod(fClassifier,"predict_proba","(O)",pEvent);
+    PyArrayObject *result=(PyArrayObject*)PyObject_CallMethod(fClassifier,const_cast<char*>("predict_proba"),const_cast<char*>("(O)"),pEvent);
     double* proba=(double*)(PyArray_DATA(result));
     mvaValue=proba[1];//getting signal prob
     Py_DECREF(result);
