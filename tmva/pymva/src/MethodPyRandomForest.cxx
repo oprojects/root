@@ -254,11 +254,10 @@ void MethodPyRandomForest::TestClassification()
 //_______________________________________________________________________
 Double_t MethodPyRandomForest::GetMvaValue(Double_t *errLower, Double_t *errUpper)
 {
-//     _import_array();//require to use numpy arrays
     // cannot determine error
     NoErrorCalc(errLower, errUpper);
 
-    if(!fClassifier) ReadStateFromFile();//not implemented yet model persistence
+    if(!fClassifier) ReadStateFromFile();
         
     Double_t mvaValue;
     const TMVA::Event *e=Data()->GetEvent();
@@ -275,14 +274,11 @@ Double_t MethodPyRandomForest::GetMvaValue(Double_t *errLower, Double_t *errUppe
         }
         PyTuple_SetItem(pEvent, i,pValue);
     }
-    
-    PyArrayObject *result=(PyArrayObject*)PyObject_CallMethod(fClassifier,(char*)"predict_proba",(char*)"(O)",pEvent);
-    float* proba=(float*)(PyArray_DATA(result));
+    PyArrayObject *result=(PyArrayObject*)PyObject_CallMethod(fClassifier,"predict_proba","(O)",pEvent);
+    double* proba=(double*)(PyArray_DATA(result));
     mvaValue=proba[1];//getting signal prob
     Py_DECREF(result);
     Py_DECREF(pEvent);
-    //    PyObject_Print(result, stdout, 0);
-    //    std::cout<<std::endl;
     return mvaValue;
 }
 

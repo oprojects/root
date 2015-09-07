@@ -76,8 +76,8 @@ void Classification()
    ///////////////////
    //Booking         //
    ///////////////////   
-   TMVA::MethodBase *method=factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest","!V:NEstimators=100:NJobs=1" );
-//      factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest","!V:NEstimators=1000:NJobs=8" );
+   factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest",
+                       "!V:NEstimators=100:NJobs=1:MaxDepth=8" );
 
 //    method->Init();
 //    method->Train();
