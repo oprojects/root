@@ -54,8 +54,8 @@ MethodPyRandomForest::MethodPyRandomForest(const TString &jobName,
    PyMethodBase(jobName, Types::kPyRandomForest, methodTitle, dsi, theOption, theTargetDir),
    n_estimators(10),
    criterion("gini"),
-   max_features("auto"),
-   max_depth(0),
+   max_features("'auto'"),
+   max_depth("None"),
    min_samples_leaf(1),
    min_weight_fraction_leaf(0),
    bootstrap(kTRUE),
@@ -71,8 +71,8 @@ MethodPyRandomForest::MethodPyRandomForest(DataSetInfo &theData, const TString &
    : PyMethodBase(Types::kPyRandomForest, theData, theWeightFile, theTargetDir),
    n_estimators(10),
    criterion("gini"),
-   max_features("auto"),
-   max_depth(0),
+   max_features("'auto'"),
+   max_depth("None"),
    min_samples_leaf(1),
    min_weight_fraction_leaf(0),
    bootstrap(kTRUE),
@@ -105,9 +105,13 @@ void MethodPyRandomForest::DeclareOptions()
     The function to measure the quality of a split. Supported criteria are \
     'gini' for the Gini impurity and 'entropy' for the information gain. \
     Note: this parameter is tree-specific.");
-    DeclareOptionRef(max_depth, "MaxDepth", "nteger, optional (default=2) \
-    The minimum number of samples required to split an internal node. \
-    Note: this parameter is tree-specific.");
+    
+    DeclareOptionRef(max_features, "MaxFeatures", "The number of features to consider when looking for the best split");
+    DeclareOptionRef(max_depth, "MaxDepth", "integer or None, optional (default=None) \
+                                             The maximum depth of the tree. If None, then nodes are expanded until \
+                                             all leaves are pure or until all leaves contain less than \
+                                             min_samples_split samples. \
+                                             Ignored if ``max_leaf_nodes`` is not None.");
     DeclareOptionRef(min_samples_leaf, "MinSamplesLeaf", "integer, optional (default=1) \
     The minimum number of samples in newly created leaves.  A split is \
     discarded if after the split, one of the leaves would contain less then \
@@ -192,12 +196,16 @@ void MethodPyRandomForest::Train()
 {
 //     (isiiifsiiiiiiis)
     //NOTE: max_features must have 3 defferents variables int, float and string 
-    //search a solution with PyObject
-    PyObject* pomax_depth;
-    if(max_depth<=0) pomax_depth=Py_None;
-    else pomax_depth=PyInt_FromLong(max_depth);
-   PyObject *args = Py_BuildValue("(isOiifsOiii)",n_estimators,criterion.Data(),pomax_depth,2, \
-                                  min_samples_leaf,min_weight_fraction_leaf,max_features.Data(),Py_None,\
+    PyObject* pomax_features=Eval(max_features);
+    PyObject* pomax_depth=Eval(max_depth);
+
+    PyObject_Print(pomax_features,stdout,0);
+    std::cout<<std::endl;
+    
+    PyObject_Print(pomax_depth,stdout,0);
+    std::cout<<std::endl;
+    PyObject *args = Py_BuildValue("(isOiifOOiii)",n_estimators,criterion.Data(),pomax_depth,2, \
+                                  min_samples_leaf,min_weight_fraction_leaf,pomax_features,Py_None,\
                                   bootstrap,kFALSE,n_jobs);//,NULL,0,kFALSE,kFALSE,NULL);
    Py_DECREF(pomax_depth);
    PyObject_Print(args,stdout,0);

@@ -78,11 +78,11 @@ void Classification()
    //Booking         //
    ///////////////////   
    factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest",
-                       "!V:NEstimators=100:NJobs=1:MaxDepth=8" );
-   factory->BookMethod(TMVA::Types::kPyAdaBoost, "PyAdaBoost",
-                       "!V:" );
-   factory->BookMethod(TMVA::Types::kPyGTB, "PyGTB",
-                       "!V:" );
+                       "!V:NEstimators=100:Criterion=gini:MaxFeatures='auto':MaxDepth=8:MinSamplesLeaf=1:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
+//    factory->BookMethod(TMVA::Types::kPyAdaBoost, "PyAdaBoost",
+//                        "!V:" );
+//    factory->BookMethod(TMVA::Types::kPyGTB, "PyGTB",
+//                        "!V:" );
 
       
    // Train MVAs using the set of training events

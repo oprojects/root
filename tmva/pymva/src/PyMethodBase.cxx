@@ -62,9 +62,16 @@ PyMethodBase::~PyMethodBase()
 
 //_______________________________________________________________________
 PyObject* PyMethodBase::Eval(TString code)
-{    
-    PyObject *pycode = Py_BuildValue("(s)",code.Data());
+{   
+    PyObject* main = PyImport_AddModule("__main__");
+    PyObject* global = PyModule_GetDict(main);
+    PyObject* local = PyDict_New();
+
+    PyObject *pycode = Py_BuildValue("(sOO)",code.Data(),global,local);
     PyObject *result = PyObject_CallObject(fEval,pycode);
+    Py_DECREF(main); 
+    Py_DECREF(global); 
+    Py_DECREF(local); 
     Py_DECREF(pycode); 
     return result;
 }
