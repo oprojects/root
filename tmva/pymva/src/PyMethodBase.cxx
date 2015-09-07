@@ -17,11 +17,11 @@ using namespace TMVA;
 
 ClassImp(PyMethodBase)
 
-PyObject *PyMethodBase::fModuleBuiltin;
-PyObject *PyMethodBase::fEval;
-PyObject *PyMethodBase::fModulePickle;
-PyObject *PyMethodBase::fPickleDumps;
-PyObject *PyMethodBase::fPickleLoads;
+PyObject *PyMethodBase::fModuleBuiltin=NULL;
+PyObject *PyMethodBase::fEval=NULL;
+PyObject *PyMethodBase::fModulePickle=NULL;
+PyObject *PyMethodBase::fPickleDumps=NULL;
+PyObject *PyMethodBase::fPickleLoads=NULL;
       
 //_______________________________________________________________________
 PyMethodBase::PyMethodBase(const TString &jobName,
@@ -120,6 +120,7 @@ void PyMethodBase::PyFinalize()
     if(fModuleBuiltin) delete fModuleBuiltin;
     if(fPickleDumps) delete fPickleDumps;
     if(fPickleLoads) delete fPickleLoads;
+
 }
       
 //_______________________________________________________________________

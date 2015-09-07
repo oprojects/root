@@ -11,7 +11,8 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 
 
 set(PY_HEADERS ${CMAKE_SOURCE_DIR}/tmva/pymva/inc/TMVA/PyMethodBase.h 
-               ${CMAKE_SOURCE_DIR}/tmva/pymva/inc/TMVA/MethodPyRandomForest.h)
+               ${CMAKE_SOURCE_DIR}/tmva/pymva/inc/TMVA/MethodPyRandomForest.h
+               ${CMAKE_SOURCE_DIR}/tmva/pymva/inc/TMVA/MethodPyAdaBoost.h)
               
 
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)

@@ -11,6 +11,7 @@
 // the classifiers
 #pragma link C++ class TMVA::PyMethodBase+;
 #pragma link C++ class TMVA::MethodPyRandomForest+;
+#pragma link C++ class TMVA::MethodPyAdaBoost+;
 
 #endif
 

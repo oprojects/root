@@ -19,6 +19,7 @@
 void Classification()
 {
    TMVA::Tools::Instance();
+   TMVA::PyMethodBase::PyInitialize();
 
    TString outfileName( "TMVA.root" );
    TFile* outputFile = TFile::Open( outfileName, "RECREATE" );
@@ -76,8 +77,10 @@ void Classification()
    ///////////////////
    //Booking         //
    ///////////////////   
-   factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest",
-                       "!V:NEstimators=100:NJobs=1:MaxDepth=8" );
+//    factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest",
+//                        "!V:NEstimators=100:NJobs=1:MaxDepth=8" );
+   factory->BookMethod(TMVA::Types::kPyAdaBoost, "PyAdaBoost",
+                       "!V:NEstimators=100" );
 
 //    method->Init();
 //    method->Train();
