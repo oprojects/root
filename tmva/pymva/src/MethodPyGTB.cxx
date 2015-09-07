@@ -4,11 +4,11 @@
 /**********************************************************************************
  * Project: TMVA - a Root-integrated toolkit for multivariate data analysis       *
  * Package: TMVA                                                                  *
- * Class  : MethodPyAdaBoost                                                  *
- * Web    : http://oproject.org                                           *
+ * Class  : MethodPyGTB                                                           *
+ * Web    : http://oproject.org                                                   *
  *                                                                                *
  * Description:                                                                   *
- *      AdaBoost      Classifiear from Scikit learn                               *
+ *      GradientBoostingClassifier Classifiear from Scikit learn                  *
  *                                                                                *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -27,7 +27,7 @@
 #include "TVectorD.h"
 
 #include "TMVA/VariableTransformBase.h"
-#include "TMVA/MethodPyAdaBoost.h"
+#include "TMVA/MethodPyGTB.h"
 #include "TMVA/Tools.h"
 #include "TMVA/Ranking.h"
 #include "TMVA/Types.h"
@@ -41,27 +41,27 @@
 
 using namespace TMVA;
 
-REGISTER_METHOD(PyAdaBoost)
+REGISTER_METHOD(PyGTB)
 
-ClassImp(MethodPyAdaBoost)
+ClassImp(MethodPyGTB)
 
 //_______________________________________________________________________
-MethodPyAdaBoost::MethodPyAdaBoost(const TString &jobName,
+MethodPyGTB::MethodPyGTB(const TString &jobName,
                      const TString &methodTitle,
                      DataSetInfo &dsi,
                      const TString &theOption,
                      TDirectory *theTargetDir) :
-   PyMethodBase(jobName, Types::kPyAdaBoost, methodTitle, dsi, theOption, theTargetDir),
+   PyMethodBase(jobName, Types::kPyGTB, methodTitle, dsi, theOption, theTargetDir),
    n_estimators(50)
 {
-   // standard constructor for the PyAdaBoost
+   // standard constructor for the PyGTB
  SetWeightFileDir( gConfig().GetIONames().fWeightFileDir );
 
 }
 
 //_______________________________________________________________________
-MethodPyAdaBoost::MethodPyAdaBoost(DataSetInfo &theData, const TString &theWeightFile, TDirectory *theTargetDir)
-   : PyMethodBase(Types::kPyAdaBoost, theData, theWeightFile, theTargetDir),
+MethodPyGTB::MethodPyGTB(DataSetInfo &theData, const TString &theWeightFile, TDirectory *theTargetDir)
+   : PyMethodBase(Types::kPyGTB, theData, theWeightFile, theTargetDir),
    n_estimators(50)
 {
      SetWeightFileDir( gConfig().GetIONames().fWeightFileDir );
@@ -69,12 +69,12 @@ MethodPyAdaBoost::MethodPyAdaBoost(DataSetInfo &theData, const TString &theWeigh
 
 
 //_______________________________________________________________________
-MethodPyAdaBoost::~MethodPyAdaBoost(void)
+MethodPyGTB::~MethodPyGTB(void)
 {
 }
 
 //_______________________________________________________________________
-Bool_t MethodPyAdaBoost::HasAnalysisType(Types::EAnalysisType type, UInt_t numberClasses, UInt_t numberTargets)
+Bool_t MethodPyGTB::HasAnalysisType(Types::EAnalysisType type, UInt_t numberClasses, UInt_t numberTargets)
 {
     if (type == Types::kClassification && numberClasses == 2) return kTRUE;
     return kFALSE;
@@ -82,7 +82,7 @@ Bool_t MethodPyAdaBoost::HasAnalysisType(Types::EAnalysisType type, UInt_t numbe
 
 
 //_______________________________________________________________________
-void MethodPyAdaBoost::DeclareOptions()
+void MethodPyGTB::DeclareOptions()
 {
     MethodBase::DeclareCompatibilityOptions();
 
@@ -90,7 +90,7 @@ void MethodPyAdaBoost::DeclareOptions()
 }
 
 //_______________________________________________________________________
-void MethodPyAdaBoost::ProcessOptions()
+void MethodPyGTB::ProcessOptions()
 {
     if (n_estimators <= 0) {
         Log() << kERROR << " NEstimators <=0... that does not work !! "
@@ -103,7 +103,7 @@ void MethodPyAdaBoost::ProcessOptions()
 
 
 //_______________________________________________________________________
-void  MethodPyAdaBoost::Init()
+void  MethodPyGTB::Init()
 {
     ProcessOptions();
     _import_array();//require to use numpy arrays
@@ -152,7 +152,7 @@ void  MethodPyAdaBoost::Init()
     }
 }
 
-void MethodPyAdaBoost::Train()
+void MethodPyGTB::Train()
 {
 
     //NOTE: max_features must have 3 defferents variables int, float and string 
@@ -162,7 +162,7 @@ void MethodPyAdaBoost::Train()
 //    std::cout<<std::endl;
     
     PyObject *pDict = PyModule_GetDict(fModule);
-    PyObject *fClassifierClass = PyDict_GetItemString(pDict, "AdaBoostClassifier");
+    PyObject *fClassifierClass = PyDict_GetItemString(pDict, "GradientBoostingClassifier");
     
     // Create an instance of the class
     if (PyCallable_Check(fClassifierClass ))
@@ -176,7 +176,7 @@ void MethodPyAdaBoost::Train()
         PyErr_Print();
         Py_DECREF(pDict);
         Py_DECREF(fClassifierClass);
-        Log() <<kFATAL<< "Can't call function AdaBoostClassifier" << Endl;
+        Log() <<kFATAL<< "Can't call function GradientBoostingClassifier" << Endl;
         Log() << Endl;
         
     }   
@@ -187,7 +187,7 @@ void MethodPyAdaBoost::Train()
     //     pValue =PyObject_CallObject(fClassifier, PyString_FromString("classes_"));
     //     PyObject_Print(pValue, stdout, 0);
     
-    TString path=GetWeightFileDir()+"/PyAdaBoostModel.PyData";
+    TString path=GetWeightFileDir()+"/PyGTBModel.PyData";
     Log() << Endl;
     Log() << gTools().Color("bold") << "--- Saving State File In:" << gTools().Color("reset")<<path<< Endl;
     Log() << Endl;
@@ -203,14 +203,14 @@ void MethodPyAdaBoost::Train()
 }
 
 //_______________________________________________________________________
-void MethodPyAdaBoost::TestClassification()
+void MethodPyGTB::TestClassification()
 {
     MethodBase::TestClassification();
 }
 
 
 //_______________________________________________________________________
-Double_t MethodPyAdaBoost::GetMvaValue(Double_t *errLower, Double_t *errUpper)
+Double_t MethodPyGTB::GetMvaValue(Double_t *errLower, Double_t *errUpper)
 {
     // cannot determine error
     NoErrorCalc(errLower, errUpper);
@@ -241,14 +241,14 @@ Double_t MethodPyAdaBoost::GetMvaValue(Double_t *errLower, Double_t *errUpper)
 }
 
 //_______________________________________________________________________
-void MethodPyAdaBoost::ReadStateFromFile()
+void MethodPyGTB::ReadStateFromFile()
 {
   if(!PyIsInitialized())
   {
     PyInitialize();
   }
   
-  TString path=GetWeightFileDir()+"/PyAdaBoostModel.PyData";
+  TString path=GetWeightFileDir()+"/PyGTBModel.PyData";
   Log() << Endl;
   Log() << gTools().Color("bold") << "--- Loading State File From:" << gTools().Color("reset")<<path<< Endl;
   Log() << Endl;
@@ -272,7 +272,7 @@ void MethodPyAdaBoost::ReadStateFromFile()
 }
 
 //_______________________________________________________________________
-void MethodPyAdaBoost::GetHelpMessage() const
+void MethodPyGTB::GetHelpMessage() const
 {
     // get help message text
     //

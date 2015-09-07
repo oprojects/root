@@ -4,19 +4,19 @@
 /**********************************************************************************
  * Project: TMVA - a Root-integrated toolkit for multivariate data analysis       *
  * Package: TMVA                                                                  *
- * Class  : MethodPyAdaBoost                                                      *
+ * Class  : MethodPyGTB                                                           *
  *                                                                                *
  * Description:                                                                   *
- *      scikit-learn Package AdaBoostClassifier      method based on python       *
+ *      scikit-learn Package GradientBoostingClassifier  method based on python   *
  *                                                                                *
  **********************************************************************************/
 
-#ifndef ROOT_TMVA_MethodPyAdaBoost
-#define ROOT_TMVA_MethodPyAdaBoost
+#ifndef ROOT_TMVA_MethodPyGTB
+#define ROOT_TMVA_MethodPyGTB
 
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
-// MethodPyAdaBoost                                                     //
+// MethodPyGTB                                                     //
 //                                                                      //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
@@ -31,23 +31,23 @@ namespace TMVA {
    class Reader;   // DSMTEST
    class DataSetManager;  // DSMTEST
    class Types;
-   class MethodPyAdaBoost : public PyMethodBase {
+   class MethodPyGTB : public PyMethodBase {
 
    public :
 
       // constructors
-      MethodPyAdaBoost( const TString& jobName,
+      MethodPyGTB( const TString& jobName,
                    const TString& methodTitle,
                    DataSetInfo& theData,
                    const TString& theOption = "",
                    TDirectory* theTargetDir = NULL );
 
-      MethodPyAdaBoost( DataSetInfo& dsi,
+      MethodPyGTB( DataSetInfo& dsi,
                    const TString& theWeightFile,
                    TDirectory* theTargetDir = NULL );
 
 
-      ~MethodPyAdaBoost( void );
+      ~MethodPyGTB( void );
       void     Train();
       // options treatment
       void     Init();
@@ -84,7 +84,7 @@ namespace TMVA {
       void GetHelpMessage() const;
 
       
-      ClassDef(MethodPyAdaBoost,0)
+      ClassDef(MethodPyGTB,0)
    };
 } // namespace TMVA
 #endif
