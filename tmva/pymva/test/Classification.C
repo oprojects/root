@@ -78,7 +78,7 @@ void Classification()
    //Booking         //
    ///////////////////   
    factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest",
-                       "!V:NEstimators=100:Criterion=gini:MaxFeatures='auto':MaxDepth=8:MinSamplesLeaf=1:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
+                       "!V:NEstimators=100:Criterion=gini:MaxFeatures=auto:MaxDepth=8:MinSamplesLeaf=1:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
 //    factory->BookMethod(TMVA::Types::kPyAdaBoost, "PyAdaBoost",
 //                        "!V:" );
 //    factory->BookMethod(TMVA::Types::kPyGTB, "PyGTB",

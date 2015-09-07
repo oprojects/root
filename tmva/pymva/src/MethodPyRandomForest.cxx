@@ -56,6 +56,7 @@ MethodPyRandomForest::MethodPyRandomForest(const TString &jobName,
    criterion("gini"),
    max_features("'auto'"),
    max_depth("None"),
+   min_samples_split(2),
    min_samples_leaf(1),
    min_weight_fraction_leaf(0),
    bootstrap(kTRUE),
@@ -73,6 +74,7 @@ MethodPyRandomForest::MethodPyRandomForest(DataSetInfo &theData, const TString &
    criterion("gini"),
    max_features("'auto'"),
    max_depth("None"),
+   min_samples_split(2),
    min_samples_leaf(1),
    min_weight_fraction_leaf(0),
    bootstrap(kTRUE),
@@ -106,12 +108,14 @@ void MethodPyRandomForest::DeclareOptions()
     'gini' for the Gini impurity and 'entropy' for the information gain. \
     Note: this parameter is tree-specific.");
     
-    DeclareOptionRef(max_features, "MaxFeatures", "The number of features to consider when looking for the best split");
     DeclareOptionRef(max_depth, "MaxDepth", "integer or None, optional (default=None) \
                                              The maximum depth of the tree. If None, then nodes are expanded until \
                                              all leaves are pure or until all leaves contain less than \
                                              min_samples_split samples. \
                                              Ignored if ``max_leaf_nodes`` is not None.");
+    DeclareOptionRef(min_samples_split, "MinSamplesSplit","integer, optional (default=2)\
+    The minimum number of samples required to split an internal node."); 
+    
     DeclareOptionRef(min_samples_leaf, "MinSamplesLeaf", "integer, optional (default=1) \
     The minimum number of samples in newly created leaves.  A split is \
     discarded if after the split, one of the leaves would contain less then \
@@ -119,11 +123,43 @@ void MethodPyRandomForest::DeclareOptions()
     DeclareOptionRef(min_weight_fraction_leaf, "MinWeightFractionLeaf", "//float, optional (default=0.) \
     The minimum weighted fraction of the input samples required to be at a \
     leaf node.");
+    DeclareOptionRef(max_features, "MaxFeatures", "The number of features to consider when looking for the best split");
+    DeclareOptionRef(max_leaf_nodes,"MaxLeafNodes","int or None, optional (default=None)\
+    Grow trees with ``max_leaf_nodes`` in best-first fashion.\
+    Best nodes are defined as relative reduction in impurity.\
+    If None then unlimited number of leaf nodes.\
+    If not None then ``max_depth`` will be ignored.");
     DeclareOptionRef(bootstrap, "Bootstrap", "boolean, optional (default=True) \
     Whether bootstrap samples are used when building trees.");
+    DeclareOptionRef(oob_score,"OoBScore"," bool Whether to use out-of-bag samples to estimate\
+    the generalization error.");
     DeclareOptionRef(n_jobs, "NJobs", " integer, optional (default=1) \
     The number of jobs to run in parallel for both `fit` and `predict`. \
     If -1, then the number of jobs is set to the number of cores.");
+    
+    DeclareOptionRef(random_state,"RandomState","int, RandomState instance or None, optional (default=None)\
+    If int, random_state is the seed used by the random number generator;\
+    If RandomState instance, random_state is the random number generator;\
+    If None, the random number generator is the RandomState instance used\
+    by `np.random`.");
+    DeclareOptionRef(verbose,"Verbose","int, optional (default=0)\
+    Controls the verbosity of the tree building process.");
+    DeclareOptionRef(warm_start,"WarmStart","bool, optional (default=False)\
+    When set to ``True``, reuse the solution of the previous call to fit\
+    and add more estimators to the ensemble, otherwise, just fit a whole\
+    new forest.");
+    DeclareOptionRef(class_weight,"ClassWeight","dict, list of dicts, \"auto\", \"subsample\" or None, optional\
+    Weights associated with classes in the form ``{class_label: weight}``.\
+    If not given, all classes are supposed to have weight one. For\
+    multi-output problems, a list of dicts can be provided in the same\
+    order as the columns of y.\
+    The \"auto\" mode uses the values of y to automatically adjust\
+    weights inversely proportional to class frequencies in the input data.\
+    The \"subsample\" mode is the same as \"auto\" except that weights are\
+    computed based on the bootstrap sample for every tree grown.\
+    For multi-output, the weights of each column of y will be multiplied.\
+    Note that these weights will be multiplied with sample_weight (passed\
+    through the fit method) if sample_weight is specified.");
 }
 
 //_______________________________________________________________________
@@ -138,11 +174,9 @@ void MethodPyRandomForest::ProcessOptions()
     //TODO: Error control for variables here  
 }
 
-
 //_______________________________________________________________________
 void  MethodPyRandomForest::Init()
 {
-//         Log() << kERROR <<"INIT =" <<n_jobs<<Endl;
     ProcessOptions();
     _import_array();//require to use numpy arrays
     
@@ -194,26 +228,27 @@ void  MethodPyRandomForest::Init()
 // class_weight=None
 void MethodPyRandomForest::Train()
 {
-//     (isiiifsiiiiiiis)
-    //NOTE: max_features must have 3 defferents variables int, float and string 
+    //     (isiiifsiiiiiiis)
+    //NOTE: max_features must have 3 defferents variables int, float and string
+    if(max_features=="auto"||max_features=="sqrt"||max_features=="log2")max_features=Form("'%s'",max_features.Data());
     PyObject* pomax_features=Eval(max_features);
     PyObject* pomax_depth=Eval(max_depth);
-
+    
     PyObject_Print(pomax_features,stdout,0);
     std::cout<<std::endl;
     
     PyObject_Print(pomax_depth,stdout,0);
     std::cout<<std::endl;
     PyObject *args = Py_BuildValue("(isOiifOOiii)",n_estimators,criterion.Data(),pomax_depth,2, \
-                                  min_samples_leaf,min_weight_fraction_leaf,pomax_features,Py_None,\
-                                  bootstrap,kFALSE,n_jobs);//,NULL,0,kFALSE,kFALSE,NULL);
-   Py_DECREF(pomax_depth);
-   PyObject_Print(args,stdout,0);
-   std::cout<<std::endl;
+    min_samples_leaf,min_weight_fraction_leaf,pomax_features,Py_None,\
+    bootstrap,kFALSE,n_jobs);//,NULL,0,kFALSE,kFALSE,NULL);
+    Py_DECREF(pomax_depth);
+    PyObject_Print(args,stdout,0);
+    std::cout<<std::endl;
     
     PyObject *pDict = PyModule_GetDict(fModule);
     PyObject *fClassifierClass = PyDict_GetItemString(pDict, "RandomForestClassifier");
-//    Log() << kFATAL <<"Train =" <<n_jobs<<Endl;
+    //    Log() << kFATAL <<"Train =" <<n_jobs<<Endl;
     
     // Create an instance of the class
     if (PyCallable_Check(fClassifierClass ))
