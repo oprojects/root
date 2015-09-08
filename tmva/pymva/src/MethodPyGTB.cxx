@@ -52,7 +52,20 @@ MethodPyGTB::MethodPyGTB(const TString &jobName,
                      const TString &theOption,
                      TDirectory *theTargetDir) :
    PyMethodBase(jobName, Types::kPyGTB, methodTitle, dsi, theOption, theTargetDir),
-   n_estimators(50)
+   loss("deviance"),
+   learning_rate(0.1),
+   n_estimators(100),
+   subsample(1.0),
+   min_samples_split(2),
+   min_samples_leaf(1),
+   min_weight_fraction_leaf(0.0),
+   max_depth(3),
+   init("None"),
+   random_state("None"),
+   max_features("None"),
+   verbose(0),
+   max_leaf_nodes("None"),
+   warm_start(kFALSE)
 {
    // standard constructor for the PyGTB
  SetWeightFileDir( gConfig().GetIONames().fWeightFileDir );
@@ -62,7 +75,20 @@ MethodPyGTB::MethodPyGTB(const TString &jobName,
 //_______________________________________________________________________
 MethodPyGTB::MethodPyGTB(DataSetInfo &theData, const TString &theWeightFile, TDirectory *theTargetDir)
    : PyMethodBase(Types::kPyGTB, theData, theWeightFile, theTargetDir),
-   n_estimators(50)
+   loss("deviance"),
+   learning_rate(0.1),
+   n_estimators(100),
+   subsample(1.0),
+   min_samples_split(2),
+   min_samples_leaf(1),
+   min_weight_fraction_leaf(0.0),
+   max_depth(3),
+   init("None"),
+   random_state("None"),
+   max_features("None"),
+   verbose(0),
+   max_leaf_nodes("None"),
+   warm_start(kFALSE)
 {
      SetWeightFileDir( gConfig().GetIONames().fWeightFileDir );
 }
@@ -86,7 +112,72 @@ void MethodPyGTB::DeclareOptions()
 {
     MethodBase::DeclareCompatibilityOptions();
 
-    DeclareOptionRef(n_estimators, "NEstimators", "Integer, optional (default=10). The number of trees in the forest.");
+    DeclareOptionRef(loss,"Loss","{'deviance', 'exponential'}, optional (default='deviance')\
+    loss function to be optimized. 'deviance' refers to\
+    deviance (= logistic regression) for classification\
+    with probabilistic outputs. For loss 'exponential' gradient\
+    boosting recovers the AdaBoost algorithm.");
+    
+    DeclareOptionRef(learning_rate,"LearningRate","float, optional (default=0.1)\
+    learning rate shrinks the contribution of each tree by `learning_rate`.\
+    There is a trade-off between learning_rate and n_estimators.");
+    
+    DeclareOptionRef(n_estimators, "NEstimators", "int (default=100)\
+    The number of boosting stages to perform. Gradient boosting\
+    is fairly robust to over-fitting so a large number usually\
+    results in better performance.");
+    
+   DeclareOptionRef(subsample,"Subsample","float, optional (default=1.0)\
+    The fraction of samples to be used for fitting the individual base\
+    learners. If smaller than 1.0 this results in Stochastic Gradient\
+    Boosting. `subsample` interacts with the parameter `n_estimators`.\
+    Choosing `subsample < 1.0` leads to a reduction of variance\
+    and an increase in bias.");
+   
+    DeclareOptionRef(min_samples_split, "MinSamplesSplit","integer, optional (default=2)\
+    The minimum number of samples required to split an internal node."); 
+    
+    DeclareOptionRef(min_samples_leaf, "MinSamplesLeaf", "integer, optional (default=1) \
+    The minimum number of samples in newly created leaves.  A split is \
+    discarded if after the split, one of the leaves would contain less then \
+    ``min_samples_leaf`` samples.");
+    
+    DeclareOptionRef(min_weight_fraction_leaf, "MinWeightFractionLeaf", "//float, optional (default=0.) \
+    The minimum weighted fraction of the input samples required to be at a \
+    leaf node.");
+    
+    DeclareOptionRef(max_depth, "MaxDepth", "integer or None, optional (default=None) \
+                                             The maximum depth of the tree. If None, then nodes are expanded until \
+                                             all leaves are pure or until all leaves contain less than \
+                                             min_samples_split samples. \
+                                             Ignored if ``max_leaf_nodes`` is not None.");
+    
+   DeclareOptionRef(init,"Init","BaseEstimator, None, optional (default=None)\
+    An estimator object that is used to compute the initial\
+    predictions. ``init`` has to provide ``fit`` and ``predict``.\
+    If None it uses ``loss.init_estimator`");
+   
+    DeclareOptionRef(random_state,"RandomState","int, RandomState instance or None, optional (default=None)\
+    If int, random_state is the seed used by the random number generator;\
+    If RandomState instance, random_state is the random number generator;\
+    If None, the random number generator is the RandomState instance used\
+    by `np.random`.");
+    DeclareOptionRef(max_features, "MaxFeatures", "The number of features to consider when looking for the best split");
+    DeclareOptionRef(verbose,"Verbose","int, optional (default=0)\
+    Controls the verbosity of the tree building process.");
+    DeclareOptionRef(max_leaf_nodes,"MaxLeafNodes","int or None, optional (default=None)\
+    Grow trees with ``max_leaf_nodes`` in best-first fashion.\
+    Best nodes are defined as relative reduction in impurity.\
+    If None then unlimited number of leaf nodes.\
+    If not None then ``max_depth`` will be ignored.");
+    DeclareOptionRef(warm_start,"WarmStart","bool, optional (default=False)\
+    When set to ``True``, reuse the solution of the previous call to fit\
+    and add more estimators to the ensemble, otherwise, just fit a whole\
+    new forest.");
+    
+    
+    
+    
 }
 
 //_______________________________________________________________________
@@ -157,7 +248,7 @@ void MethodPyGTB::Train()
 
     //NOTE: max_features must have 3 defferents variables int, float and string 
     //search a solution with PyObject
-   PyObject *args = Py_BuildValue("(i)",n_estimators);
+   PyObject *args = Py_BuildValue("(sfi)","deviance",0.1,n_estimators);
 //    PyObject_Print(args,stdout,0);
 //    std::cout<<std::endl;
     
@@ -168,7 +259,7 @@ void MethodPyGTB::Train()
     if (PyCallable_Check(fClassifierClass ))
     {
         //instance        
-        fClassifier = PyObject_CallObject(fClassifierClass ,NULL);
+        fClassifier = PyObject_CallObject(fClassifierClass ,args);
         PyObject_Print(fClassifier, stdout, 0);
         
         Py_DECREF(args); 

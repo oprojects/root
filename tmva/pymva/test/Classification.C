@@ -98,13 +98,13 @@ void Classification()
 //     factory->BookMethod( TMVA::Types::kBDT, "BDTMitFisher",
 //                          "!H:!V:NTrees=50:MinNodeSize=2.5%:UseFisherCuts:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" );
  
-    //PyMVA methods
+//     PyMVA methods
    factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest",
-                       "!V:NEstimators=200:Criterion=gini:MaxFeatures=auto:MaxDepth=6:MinSamplesLeaf=3:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
+                       "!V:NEstimators=100:Criterion=gini:MaxFeatures=auto:MaxDepth=6:MinSamplesLeaf=1:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
    factory->BookMethod(TMVA::Types::kPyAdaBoost, "PyAdaBoost",
-                       "!V:" );
+                       "!V:NEstimators=1000" );
    factory->BookMethod(TMVA::Types::kPyGTB, "PyGTB",
-                       "!V:" );
+                       "!V:NEstimators=150" );
 
       
    // Train MVAs using the set of training events
