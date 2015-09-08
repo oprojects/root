@@ -75,7 +75,8 @@ MATHCOREH4   := $(filter-out $(MODDIRI)/Fit/LinkDef%,$(wildcard $(MODDIRI)/Fit/*
 MATHCOREH    := $(MATHCOREH1) $(MATHCOREH2) $(MATHCOREH3) $(MATHCOREH4)
 
 MATHCORES    := $(filter-out $(MODDIRS)/G__%,$(wildcard $(MODDIRS)/*.cxx))
-MATHCOREO    := $(call stripsrc,$(MATHCORES:.cxx=.o))
+MATHCORECS   := $(wildcard $(MODDIRS)/*.c)
+MATHCOREO    := $(call stripsrc,$(MATHCORES:.cxx=.o) $(MATHCORECS:.c=.o))
 
 MATHCOREDEP  := $(MATHCOREO:.o=.d) $(MATHCOREDO:.o=.d)
 
