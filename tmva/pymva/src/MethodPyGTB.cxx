@@ -183,13 +183,125 @@ void MethodPyGTB::DeclareOptions()
 //_______________________________________________________________________
 void MethodPyGTB::ProcessOptions()
 {
+    if(loss!="deviance"&&loss!="exponential")
+    {
+        Log() << kFATAL << Form(" Loss = %s... that does not work !! ",loss.Data())
+        << " The options are deviance of exponential."
+        << Endl;        
+    }
+    
+    if(learning_rate<0)
+    {
+        Log() << kERROR << " LearningRate <0... that does not work !! "
+        << " I set it to 0.1 .. just so that the program does not crash"
+        << Endl;
+       learning_rate= 0.1;
+    }
     if (n_estimators <= 0) {
         Log() << kERROR << " NEstimators <=0... that does not work !! "
-        << " I set it to 10 .. just so that the program does not crash"
+        << " I set it to 100 .. just so that the program does not crash"
         << Endl;
-        n_estimators = 10;
+        n_estimators = 100;
     }
-    //TODO: Error control for variables here  
+    if(min_samples_split<0)
+    {
+        Log() << kERROR << " MinSamplesSplit <0... that does not work !! "
+        << " I set it to 2 .. just so that the program does not crash"
+        << Endl;
+        min_samples_split = 2;        
+    }
+    if(subsample<0)
+    {
+        Log() << kERROR << " Subsample <0... that does not work !! "
+        << " I set it to 1.0 .. just so that the program does not crash"
+        << Endl;
+        subsample = 1.0;        
+    }
+    
+    if(min_samples_leaf<0)
+    {
+        Log() << kERROR << " MinSamplesLeaf <0... that does not work !! "
+        << " I set it to 1.0 .. just so that the program does not crash"
+        << Endl;
+        min_samples_leaf = 1;        
+    }
+        
+    if(min_samples_leaf<0)
+    {
+        Log() << kERROR << " MinSamplesLeaf <0... that does not work !! "
+        << " I set it to 1.0 .. just so that the program does not crash"
+        << Endl;
+        min_samples_leaf = 1;        
+    }
+    
+    if(min_weight_fraction_leaf<0)
+    {
+        Log() << kERROR << " MinWeightFractionLeaf <0... that does not work !! "
+        << " I set it to 0.0 .. just so that the program does not crash"
+        << Endl;
+        min_weight_fraction_leaf = 0.0;        
+    }
+    
+    if(max_depth<0)
+    {
+        Log() << kERROR << " MaxDepth <0... that does not work !! "
+        << " I set it to 3 .. just so that the program does not crash"
+        << Endl;
+        max_depth = 3;        
+    }
+    
+    PyObject *poinit=Eval(init);
+    if(!poinit)
+    {
+        Log() << kFATAL << Form(" Init = %s... that does not work !! ",init.Data())
+        << " The options are None or  BaseEstimator. An estimator object that is used to compute the initial"
+        << " predictions. ``init`` has to provide ``fit`` and ``predict``."
+        << " If None it uses ``loss.init_estimator``."
+        << Endl;        
+    }
+    Py_DECREF(poinit);
+
+   PyObject *porandom_state=Eval(random_state);
+   if(!porandom_state)
+   {
+        Log() << kFATAL << Form(" RandomState = %s... that does not work !! ",random_state.Data())
+        << "If int, random_state is the seed used by the random number generator;"
+        << "If RandomState instance, random_state is the random number generator;"
+        << "If None, the random number generator is the RandomState instance used by `np.random`."
+        << Endl;        
+   }
+  Py_DECREF(porandom_state);
+  
+  if(max_features=="auto"||max_features=="sqrt"||max_features=="log2")max_features=Form("'%s'",max_features.Data());
+  PyObject *pomax_features=Eval(max_features);
+  if(!pomax_features)
+  {
+        Log() << kFATAL << Form(" MaxFeatures = %s... that does not work !! ",max_features.Data())
+        << "int, float, string or None, optional (default='auto')"
+        << "The number of features to consider when looking for the best split:"
+        << "If int, then consider `max_features` features at each split."
+        << "If float, then `max_features` is a percentage and"
+        << "`int(max_features * n_features)` features are considered at each split."
+        << "If 'auto', then `max_features=sqrt(n_features)`."
+        << "If 'sqrt', then `max_features=sqrt(n_features)`."
+        << "If 'log2', then `max_features=log2(n_features)`."
+        << "If None, then `max_features=n_features`."
+        << Endl;               
+  }
+  Py_DECREF(pomax_features);
+  
+//    verbose(0),
+   PyObject *pomax_leaf_nodes=Eval(max_leaf_nodes);
+   if(!pomax_leaf_nodes)
+   {
+        Log() << kFATAL << Form(" MaxLeafNodes = %s... that does not work !! ",max_leaf_nodes.Data())
+        << " The options are None or integer."
+        << Endl;        
+   }
+  Py_DECREF(pomax_leaf_nodes);
+
+//    warm_start(kFALSE)
+
 }
 
 
