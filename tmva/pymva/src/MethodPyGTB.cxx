@@ -1,5 +1,5 @@
 // @(#)root/tmva/pymva $Id$
-// Author: Omar Zapata 2015
+// Authors: Omar Zapata, Lorenzo Moneta, Sergei Gleyzer 2015
 
 /**********************************************************************************
  * Project: TMVA - a Root-integrated toolkit for multivariate data analysis       *
@@ -16,7 +16,7 @@
  * (http://tmva.sourceforge.net/LICENSE)                                          *
  *                                                                                *
  **********************************************************************************/
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 #include <iomanip>
 #include <fstream>
 
@@ -190,9 +190,9 @@ void MethodPyGTB::ProcessOptions()
         << Endl;        
     }
     
-    if(learning_rate<0)
+    if(learning_rate<=0)
     {
-        Log() << kERROR << " LearningRate <0... that does not work !! "
+        Log() << kERROR << " LearningRate <=0... that does not work !! "
         << " I set it to 0.1 .. just so that the program does not crash"
         << Endl;
        learning_rate= 0.1;

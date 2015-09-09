@@ -1,10 +1,11 @@
-// @(#)root/rmva $Id$
-// Author: Omar Zapata 2015
+// @(#)root/tmva/pymva $Id$
+// Authors: Omar Zapata, Lorenzo Moneta, Sergei Gleyzer 2015
 
 /**********************************************************************************
  * Project: TMVA - a Root-integrated toolkit for multivariate data analysis       *
  * Package: TMVA                                                                  *
  * Class  : MethodPyAdaBoost                                                      *
+ * Web    : http://oproject.org                                                   *
  *                                                                                *
  * Description:                                                                   *
  *      scikit-learn Package AdaBoostClassifier      method based on python       *

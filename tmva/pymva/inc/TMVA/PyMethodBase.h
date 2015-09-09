@@ -1,10 +1,11 @@
-// @(#)root/tmva/rmva $Id$
-// Author: Omar Zapata 2015
+// @(#)root/tmva/pymva $Id$
+// Authors: Omar Zapata, Lorenzo Moneta, Sergei Gleyzer 2015
 
 /**********************************************************************************
  * Project: TMVA - a Root-integrated toolkit for multivariate data analysis       *
  * Package: TMVA                                                                  *
  * Class  : RMethodBase                                                           *
+ * Web    : http://oproject.org                                                   *
  *                                                                                *
  * Description:                                                                   *
  *      Virtual base class for all MVA method based on Python                     *
@@ -26,6 +27,8 @@
 #include "TMVA/MethodBase.h"
 #endif
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-function"
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>

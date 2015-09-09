@@ -1,11 +1,11 @@
 // @(#)root/tmva/pymva $Id$
-// Author: Omar Zapata 2015
+// Authors: Omar Zapata, Lorenzo Moneta, Sergei Gleyzer 2015
 
 /**********************************************************************************
  * Project: TMVA - a Root-integrated toolkit for multivariate data analysis       *
  * Package: TMVA                                                                  *
  * Class  : MethodPyRandomForest                                                  *
- * Web    : http://tmva.sourceforge.net                                           *
+ * Web    : http://oproject.org                                                   *
  *                                                                                *
  * Description:                                                                   *
  *      Random Forest Classifiear from Scikit learn                               *
@@ -325,25 +325,41 @@ void  MethodPyRandomForest::Init()
         TrainDataWeights[i]=e->GetWeight();
     }
 }
-// n_estimators=10, criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0,
-// max_features='auto', max_leaf_nodes=None, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0, warm_start=False, 
-// class_weight=None
+
+//_______________________________________________________________________
 void MethodPyRandomForest::Train()
 {
-    //     (isiiifsiiiiiiis)
+//        n_estimators(10),
+//    criterion("gini"),
+//    max_depth("None"),
+//    min_samples_split(2),
+//    min_samples_leaf(1),
+//    min_weight_fraction_leaf(0.0),
+//    max_features("'auto'"),
+//    max_leaf_nodes("None"),
+//    bootstrap(kTRUE),
+//    oob_score(kFALSE),
+//    n_jobs(1),
+//    random_state("None"),
+//    verbose(0),
+//    warm_start(kFALSE),
+//    class_weight("None")
+
     //NOTE: max_features must have 3 defferents variables int, float and string
     if(max_features=="auto"||max_features=="sqrt"||max_features=="log2")max_features=Form("'%s'",max_features.Data());
     PyObject* pomax_features=Eval(max_features);
     PyObject* pomax_depth=Eval(max_depth);
-    
-    PyObject_Print(pomax_features,stdout,0);
-    std::cout<<std::endl;
-    
-    PyObject_Print(pomax_depth,stdout,0);
-    std::cout<<std::endl;
-    PyObject *args = Py_BuildValue("(isOiifOOiii)",n_estimators,criterion.Data(),pomax_depth,2, \
-    min_samples_leaf,min_weight_fraction_leaf,pomax_features,Py_None,\
-    bootstrap,kFALSE,n_jobs);//,NULL,0,kFALSE,kFALSE,NULL);
+    PyObject* pomax_leaf_nodes=Eval(max_leaf_nodes);
+    PyObject* porandom_state=Eval(random_state);
+    PyObject* poclass_weight=Eval(class_weight);
+//     PyObject_Print(pomax_features,stdout,0);
+//     std::cout<<std::endl;
+//     
+//     PyObject_Print(pomax_depth,stdout,0);
+//     std::cout<<std::endl;
+    PyObject *args = Py_BuildValue("(isOiifOOiiiOiiO)",n_estimators,criterion.Data(),pomax_depth,min_samples_split, \
+    min_samples_leaf,min_weight_fraction_leaf,pomax_features,pomax_leaf_nodes,\
+    bootstrap,oob_score,n_jobs,porandom_state,verbose,warm_start,poclass_weight);
     Py_DECREF(pomax_depth);
     PyObject_Print(args,stdout,0);
     std::cout<<std::endl;

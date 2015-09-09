@@ -1,5 +1,5 @@
 // @(#)root/tmva/pymva $Id$
-// Author: Omar Zapata 2015
+// Authors: Omar Zapata, Lorenzo Moneta, Sergei Gleyzer 2015
 
 /**********************************************************************************
  * Project: TMVA - a Root-integrated toolkit for multivariate data analysis       *
