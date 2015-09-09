@@ -82,13 +82,13 @@ namespace TMVA {
                     //deviance (= logistic regression) for classification
                     //with probabilistic outputs. For loss 'exponential' gradient
                     //boosting recovers the AdaBoost algorithm.
-       Float_t learning_rate;//float, optional (default=0.1)
+       Double_t learning_rate;//float, optional (default=0.1)
                              //learning rate shrinks the contribution of each tree by `learning_rate`.
                              //There is a trade-off between learning_rate and n_estimators.
 
        Int_t n_estimators;//integer, optional (default=10)
                              //The number of trees in the forest.
-       Float_t subsample;//float, optional (default=1.0)
+       Double_t subsample;//float, optional (default=1.0)
                          //The fraction of samples to be used for fitting the individual base
                          //learners. If smaller than 1.0 this results in Stochastic Gradient
                          //Boosting. `subsample` interacts with the parameter `n_estimators`.
@@ -98,7 +98,7 @@ namespace TMVA {
                               //The minimum number of samples required to split an internal node.
       Int_t min_samples_leaf;//integer, optional (default=1)
                              //The minimum number of samples required to be at a leaf node.
-      Float_t min_weight_fraction_leaf;//float, optional (default=0.)
+      Double_t min_weight_fraction_leaf;//float, optional (default=0.)
                                        //The minimum weighted fraction of the input samples required to be at a leaf node.
       Int_t max_depth;//integer, optional (default=3)
                       //maximum depth of the individual regression estimators. The maximum

@@ -96,7 +96,7 @@ namespace TMVA {
                               //discarded if after the split, one of the leaves would contain less then
                               //``min_samples_leaf`` samples.
                               //Note: this parameter is tree-specific.
-       Float_t min_weight_fraction_leaf;//float, optional (default=0.)
+       Double_t min_weight_fraction_leaf;//float, optional (default=0.)
                                         //The minimum weighted fraction of the input samples required to be at a
                                         //leaf node.
                                         //Note: this parameter is tree-specific.

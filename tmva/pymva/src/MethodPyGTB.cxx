@@ -357,13 +357,35 @@ void  MethodPyGTB::Init()
 
 void MethodPyGTB::Train()
 {
+//    loss("deviance"),
+//    learning_rate(0.1),
+//    n_estimators(100),
+//    subsample(1.0),
+//    min_samples_split(2),
+//    min_samples_leaf(1),
+//    min_weight_fraction_leaf(0.0),
+//    max_depth(3),
+//    init("None"),
+//    random_state("None"),
+//    max_features("None"),
+//    verbose(0),
+//    max_leaf_nodes("None"),
+//    warm_start(kFALSE)
 
     //NOTE: max_features must have 3 defferents variables int, float and string 
     //search a solution with PyObject
-   PyObject *args = Py_BuildValue("(sfi)","deviance",0.1,n_estimators);
-//    PyObject_Print(args,stdout,0);
-//    std::cout<<std::endl;
-    
+   PyObject* poinit=Eval(init);
+   PyObject* porandom_state=Eval(random_state);
+   PyObject* pomax_features=Eval(max_features);
+   PyObject* pomax_leaf_nodes=Eval(max_leaf_nodes);
+   
+   PyObject *args = Py_BuildValue("(sfifiifiOOOiOi)",loss.Data(),\
+                                  learning_rate,n_estimators,subsample,min_samples_split,min_samples_leaf,min_weight_fraction_leaf,\
+                                  max_depth,poinit,porandom_state,pomax_features,verbose,pomax_leaf_nodes,warm_start);
+   
+   PyObject_Print(args,stdout,0);
+   std::cout<<std::endl;
+   
     PyObject *pDict = PyModule_GetDict(fModule);
     PyObject *fClassifierClass = PyDict_GetItemString(pDict, "GradientBoostingClassifier");
     
@@ -373,10 +395,20 @@ void MethodPyGTB::Train()
         //instance        
         fClassifier = PyObject_CallObject(fClassifierClass ,args);
         PyObject_Print(fClassifier, stdout, 0);
+        std::cout<<std::endl;
         
+        Py_DECREF(poinit); 
+        Py_DECREF(porandom_state); 
+        Py_DECREF(pomax_features); 
+        Py_DECREF(pomax_leaf_nodes); 
         Py_DECREF(args); 
     }else{
         PyErr_Print();
+        Py_DECREF(poinit); 
+        Py_DECREF(porandom_state); 
+        Py_DECREF(pomax_features); 
+        Py_DECREF(pomax_leaf_nodes); 
+        Py_DECREF(args); 
         Py_DECREF(pDict);
         Py_DECREF(fClassifierClass);
         Log() <<kFATAL<< "Can't call function GradientBoostingClassifier" << Endl;
