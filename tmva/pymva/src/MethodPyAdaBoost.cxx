@@ -52,7 +52,11 @@ MethodPyAdaBoost::MethodPyAdaBoost(const TString &jobName,
                      const TString &theOption,
                      TDirectory *theTargetDir) :
    PyMethodBase(jobName, Types::kPyAdaBoost, methodTitle, dsi, theOption, theTargetDir),
-   n_estimators(50)
+   base_estimator("None"),
+   n_estimators(50),
+   learning_rate(1.0),
+   algorithm("SAMME.R"),
+   random_state("None")
 {
    // standard constructor for the PyAdaBoost
  SetWeightFileDir( gConfig().GetIONames().fWeightFileDir );
@@ -62,7 +66,11 @@ MethodPyAdaBoost::MethodPyAdaBoost(const TString &jobName,
 //_______________________________________________________________________
 MethodPyAdaBoost::MethodPyAdaBoost(DataSetInfo &theData, const TString &theWeightFile, TDirectory *theTargetDir)
    : PyMethodBase(Types::kPyAdaBoost, theData, theWeightFile, theTargetDir),
-   n_estimators(50)
+   base_estimator("None"),
+   n_estimators(50),
+   learning_rate(1.0),
+   algorithm("SAMME.R"),
+   random_state("None")
 {
      SetWeightFileDir( gConfig().GetIONames().fWeightFileDir );
 }
@@ -86,19 +94,76 @@ void MethodPyAdaBoost::DeclareOptions()
 {
     MethodBase::DeclareCompatibilityOptions();
 
-    DeclareOptionRef(n_estimators, "NEstimators", "Integer, optional (default=10). The number of trees in the forest.");
+    DeclareOptionRef(base_estimator, "BaseEstimator", "object, optional (default=DecisionTreeClassifier)\
+    The base estimator from which the boosted ensemble is built.\
+    Support for sample weighting is required, as well as proper `classes_`\
+    and `n_classes_` attributes.");
+    
+    DeclareOptionRef(n_estimators, "NEstimators", "integer, optional (default=50)\
+    The maximum number of estimators at which boosting is terminated.\
+    In case of perfect fit, the learning procedure is stopped early.");
+    
+    DeclareOptionRef(learning_rate, "LearningRate", "float, optional (default=1.)\
+    Learning rate shrinks the contribution of each classifier by\
+    ``learning_rate``. There is a trade-off between ``learning_rate`` and\
+    ``n_estimators``.");
+    
+    DeclareOptionRef(algorithm, "Algorithm", "{'SAMME', 'SAMME.R'}, optional (default='SAMME.R')\
+    If 'SAMME.R' then use the SAMME.R real boosting algorithm.\
+    ``base_estimator`` must support calculation of class probabilities.\
+    If 'SAMME' then use the SAMME discrete boosting algorithm.\
+    The SAMME.R algorithm typically converges faster than SAMME,\
+    achieving a lower test error with fewer boosting iterations.");
+    
+    DeclareOptionRef(random_state, "RandomState", "int, RandomState instance or None, optional (default=None)\
+    If int, random_state is the seed used by the random number generator;\
+    If RandomState instance, random_state is the random number generator;\
+    If None, the random number generator is the RandomState instance used\
+    by `np.random`.");
 }
 
 //_______________________________________________________________________
 void MethodPyAdaBoost::ProcessOptions()
 {
+    PyObject *pobase_estimator=Eval(base_estimator);
+    if(!pobase_estimator)
+    {
+        Log() << kFATAL << Form(" BaseEstimator = %s... that does not work !! ",base_estimator.Data())
+        << " The options are Object or None."
+        << Endl;        
+    }
+    Py_DECREF(pobase_estimator);
+ 
     if (n_estimators <= 0) {
         Log() << kERROR << " NEstimators <=0... that does not work !! "
         << " I set it to 10 .. just so that the program does not crash"
         << Endl;
         n_estimators = 10;
     }
-    //TODO: Error control for variables here  
+    if(learning_rate<=0)
+    {
+        Log() << kERROR << " LearningRate <=0... that does not work !! "
+        << " I set it to 1.0 .. just so that the program does not crash"
+        << Endl;
+       learning_rate= 1.0;
+    }
+    
+    if(algorithm!="SAMME"&&algorithm!="SAMME.R")
+    {
+        Log() << kFATAL << Form(" Algorithm = %s... that does not work !! ",algorithm.Data())
+        << " The options are SAMME of SAMME.R."
+        << Endl;                
+    }
+   PyObject *porandom_state=Eval(random_state);
+   if(!porandom_state)
+   {
+        Log() << kFATAL << Form(" RandomState = %s... that does not work !! ",random_state.Data())
+        << "If int, random_state is the seed used by the random number generator;"
+        << "If RandomState instance, random_state is the random number generator;"
+        << "If None, the random number generator is the RandomState instance used by `np.random`."
+        << Endl;        
+   }
+  Py_DECREF(porandom_state);
 }
 
 
@@ -154,13 +219,17 @@ void  MethodPyAdaBoost::Init()
 
 void MethodPyAdaBoost::Train()
 {
-
-    //NOTE: max_features must have 3 defferents variables int, float and string 
-    //search a solution with PyObject
-   PyObject *args = Py_BuildValue("(i)",n_estimators);
-//    PyObject_Print(args,stdout,0);
-//    std::cout<<std::endl;
-    
+//    base_estimator("None"),
+//    n_estimators(50),
+//    learning_rate(1.0),
+//    algorithm("SAMME.R"),
+//    random_state("None")
+   PyObject *pobase_estimator=Eval(base_estimator);
+   PyObject *porandom_state=Eval(random_state);
+   
+   PyObject *args = Py_BuildValue("(OifsO)",pobase_estimator,n_estimators,learning_rate,algorithm.Data(),porandom_state);
+   PyObject_Print(args,stdout,0);
+   std::cout<<std::endl;
     PyObject *pDict = PyModule_GetDict(fModule);
     PyObject *fClassifierClass = PyDict_GetItemString(pDict, "AdaBoostClassifier");
     
@@ -168,7 +237,7 @@ void MethodPyAdaBoost::Train()
     if (PyCallable_Check(fClassifierClass ))
     {
         //instance        
-        fClassifier = PyObject_CallObject(fClassifierClass ,NULL);
+        fClassifier = PyObject_CallObject(fClassifierClass ,args);
         PyObject_Print(fClassifier, stdout, 0);
         
         Py_DECREF(args); 

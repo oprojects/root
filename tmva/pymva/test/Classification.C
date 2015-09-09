@@ -83,8 +83,8 @@ void Classification()
 //                          "!H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2" );
 //     
 //     // Adaptive Boost
-    factory->BookMethod( TMVA::Types::kBDT, "BDT",
-                         "!H:!V:NTrees=850:MinNodeSize=2.5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType=GiniIndex:nCuts=20" );
+//     factory->BookMethod( TMVA::Types::kBDT, "BDT",
+//                          "!H:!V:NTrees=850:MinNodeSize=2.5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType=GiniIndex:nCuts=20" );
 //     
 //     // Bagging
 //     factory->BookMethod( TMVA::Types::kBDT, "BDTB",
@@ -99,12 +99,12 @@ void Classification()
 //                          "!H:!V:NTrees=50:MinNodeSize=2.5%:UseFisherCuts:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" );
  
 //     PyMVA methods
-//    factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest",
-//                        "!V:NEstimators=850:Criterion=gini:MaxFeatures=auto:MaxDepth=3:MinSamplesLeaf=1:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
+   factory->BookMethod(TMVA::Types::kPyRandomForest, "PyRandomForest",
+                       "!V:NEstimators=150:Criterion=gini:MaxFeatures=auto:MaxDepth=3:MinSamplesLeaf=1:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
    factory->BookMethod(TMVA::Types::kPyAdaBoost, "PyAdaBoost",
-                       "!V:NEstimators=1000" );
-//    factory->BookMethod(TMVA::Types::kPyGTB, "PyGTB",
-//                        "!V:NEstimators=150:Loss=deviance:LearningRate=0.1:Subsample=1:MaxDepth=6:MaxFeatures='auto'" );
+                       "!V:BaseEstimator=None:NEstimators=100:LearningRate=1:Algorithm=SAMME.R:RandomState=None" );
+   factory->BookMethod(TMVA::Types::kPyGTB, "PyGTB",
+                       "!V:NEstimators=150:Loss=deviance:LearningRate=0.1:Subsample=1:MaxDepth=6:MaxFeatures='auto'" );
 
       
    // Train MVAs using the set of training events

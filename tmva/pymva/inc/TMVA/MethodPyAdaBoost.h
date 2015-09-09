@@ -77,10 +77,26 @@ namespace TMVA {
       friend class Factory;                   // DSMTEST
       friend class Reader;                    // DSMTEST      
    protected:
-       //RandromForest options
+       //AdaBoost options
+       TString base_estimator;//object, optional (default=DecisionTreeClassifier)
+                              //The base estimator from which the boosted ensemble is built.
+                              //Support for sample weighting is required, as well as proper `classes_`
+                              //and `n_classes_` attributes.
        Int_t n_estimators;//integer, optional (default=10)
                              //The number of trees in the forest.
-       
+       Double_t learning_rate;//loat, optional (default=1.)
+                              //Learning rate shrinks the contribution of each classifier by
+                              //``learning_rate``. There is a trade-off between ``learning_rate`` and ``n_estimators``.
+       TString algorithm;//{'SAMME', 'SAMME.R'}, optional (default='SAMME.R')
+                         //If 'SAMME.R' then use the SAMME.R real boosting algorithm.
+                         //``base_estimator`` must support calculation of class probabilities.
+                         //If 'SAMME' then use the SAMME discrete boosting algorithm.
+                         //The SAMME.R algorithm typically converges faster than SAMME,
+                         //achieving a lower test error with fewer boosting iterations.
+       TString random_state;//int, RandomState instance or None, optional (default=None)
+                            //If int, random_state is the seed used by the random number generator;
+                            //If RandomState instance, random_state is the random number generator;
+                            //If None, the random number generator is the RandomState instance used by `np.random`.
       // get help message text
       void GetHelpMessage() const;
 

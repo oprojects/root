@@ -4,7 +4,7 @@
 /**********************************************************************************
  * Project: TMVA - a Root-integrated toolkit for multivariate data analysis       *
  * Package: TMVA                                                                  *
- * Class  : RMethodBase                                                           *
+ * Class  : PyMethodBase                                                          *
  * Web    : http://oproject.org                                                   *
  *                                                                                *
  * Description:                                                                   *
@@ -15,13 +15,13 @@
 #ifndef ROOT_TMVA_PyMethodBase
 #define ROOT_TMVA_PyMethodBase
 
-//////////////////////////////////////////////////////////////////////////
-//                                                                      //
-// PyMethodBase                                                         //
-//                                                                      //
-// Virtual base class for all TMVA method based on scikit-learn         //
-//                                                                      //
-//////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+// PyMethodBase                                                               //
+//                                                                            //
+// Virtual base class for all TMVA method based on Python/scikit-learn        //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
 
 #ifndef ROOT_TMVA_MethodBase
 #include "TMVA/MethodBase.h"
