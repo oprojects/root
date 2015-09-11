@@ -133,6 +133,7 @@ void MethodRXGB::Train()
    if (Data()->GetNTrainingEvents() == 0) Log() << kFATAL << "<Train> Data() has zero events" << Endl;
    ROOT::R::TRObject dmatrix = xgbdmatrix(ROOT::R::Label["data"] = asmatrix(fDfTrain), ROOT::R::Label["label"] = fFactorNumeric);
    ROOT::R::TRDataFrame params;
+   params["objective"] = "binary:logistic";
    params["eta"] = fEta;
    params["max.depth"] = fMaxDepth;
 
@@ -140,7 +141,8 @@ void MethodRXGB::Train()
                          ROOT::R::Label["label"] = fFactorNumeric,
                          ROOT::R::Label["weight"] = fWeightTrain,
                          ROOT::R::Label["nrounds"] = fNRounds,
-                         ROOT::R::Label["params"] = params);
+                         ROOT::R::Label["params"] = params,
+                         ROOT::R::Label["objective"] = "binary:logistic" );
 
    fModel = new ROOT::R::TRObject(Model);
    TString path = GetWeightFileDir() + "/RXGBModel.RData";
@@ -161,6 +163,7 @@ void MethodRXGB::DeclareOptions()
 //_______________________________________________________________________
 void MethodRXGB::ProcessOptions()
 {
+    //NOTE: to write error control here
 }
 
 //_______________________________________________________________________
