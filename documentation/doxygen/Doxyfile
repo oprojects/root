@@ -754,51 +754,52 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = . \
-                         ../../core/base/ \
-                         ../../core/cont/ \
-                         ../../core/meta/ \
-                         ../../core/metautils/ \
-                         ../../core/multiproc/ \
-                         ../../core/rint/ \
-                         ../../core/thread/ \
-                         ../../core/unix/ \
-                         ../../geom/gdml/ \
-                         ../../geom/geom \
-                         ../../geom/geombuilder/ \
-                         ../../geom/geompainter/ \
-                         ../../graf2d/asimage/ \
-                         ../../graf2d/fitsio/ \
-                         ../../graf2d/gpad/ \
-                         ../../graf2d/graf/ \
-                         ../../graf2d/gviz/ \
-                         ../../graf2d/postscript/ \
-                         ../../graf3d/eve/ \
-                         ../../graf3d/g3d/ \
-                         ../../graf3d/gl/ \
-                         ../../graf3d/gviz3d/ \
-                         ../../hist \
-                         ../../io/io/ \
-                         ../../io/sql/ \
-                         ../../io/xml/ \
-                         ../../io/xmlparser/ \
-                         ../../math/ \
-                         ../../misc/memstat/ \
-                         ../../montecarlo/eg/ \
-                         ../../montecarlo/pythia8/ \
-                         ../../montecarlo/vmc/ \
-                         ../../net/auth/ \
-                         ../../net/http/ \
-                         ../../net/krb5auth/ \
-                         ../../net/net/ \
-                         ../../net/netx/ \
-                         ../../net/netxng/ \
-                         ../../proof \
-                         ../../tmva \
-                         ../../roofit \
-                         ../../tree \
-                         ../../sql/ \
-                         ../../gui/gui/ \
-                         ../../gui/fitpanel/
+                           ../../tmva 
+#                         ../../core/base/ \
+#                         ../../core/cont/ \
+#                         ../../core/meta/ \
+#                         ../../core/metautils/ \
+#                         ../../core/multiproc/ \
+#                         ../../core/rint/ \
+#                         ../../core/thread/ \
+#                         ../../core/unix/ \
+#                         ../../geom/gdml/ \
+#                         ../../geom/geom \
+#                         ../../geom/geombuilder/ \
+#                         ../../geom/geompainter/ \
+#                         ../../graf2d/asimage/ \
+#                         ../../graf2d/fitsio/ \
+#                         ../../graf2d/gpad/ \
+#                         ../../graf2d/graf/ \
+#                         ../../graf2d/gviz/ \
+#                         ../../graf2d/postscript/ \
+#                         ../../graf3d/eve/ \
+#                         ../../graf3d/g3d/ \
+#                         ../../graf3d/gl/ \
+#                         ../../graf3d/gviz3d/ \
+#                         ../../hist \
+#                         ../../io/io/ \
+#                         ../../io/sql/ \
+#                         ../../io/xml/ \
+#                         ../../io/xmlparser/ \
+#                         ../../math/ \
+#                         ../../misc/memstat/ \
+#                         ../../montecarlo/eg/ \
+#                         ../../montecarlo/pythia8/ \
+#                         ../../montecarlo/vmc/ \
+#                         ../../net/auth/ \
+#                         ../../net/http/ \
+#                         ../../net/krb5auth/ \
+#                         ../../net/net/ \
+#                         ../../net/netx/ \
+#                         ../../net/netxng/ \
+#                         ../../proof \
+#                         ../../tmva \
+#                         ../../roofit \
+#                         ../../tree \
+#                         ../../sql/ \
+#                         ../../gui/gui/ \
+#                         ../../gui/fitpanel/
 #                         ../../gui/ged/ \
 
 

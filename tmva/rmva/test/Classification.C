@@ -75,7 +75,7 @@ void Classification()
    factory->BookMethod(TMVA::Types::kC50, "C50",
                        "!H:NTrials=10:Rules=kFALSE:ControlSubSet=kFALSE:ControlBands=0:ControlWinnow=kFALSE:ControlNoGlobalPruning=kTRUE:ControlCF=0.25:ControlMinCases=2:ControlFuzzyThreshold=kTRUE:ControlSample=0:ControlEarlyStopping=kTRUE:!V");
 
-   factory->BookMethod(TMVA::Types::kRXGB, "RXGB", "!V:NRounds=80:MaxDepth=2:Eta=1");
+   factory->BookMethod(TMVA::Types::kRXGB, "RXGB", "!V:NRounds=2000:MaxDepth=6:Eta=0.3");
 
    factory->BookMethod(TMVA::Types::kRSNNS, "RMLP", "!H:VarTransform=N:Size=c(5):Maxit=200:InitFunc=Randomize_Weights:LearnFunc=Std_Backpropagation:LearnFuncParams=c(0.2,0):!V");
 

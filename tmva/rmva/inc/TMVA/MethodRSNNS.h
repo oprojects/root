@@ -14,16 +14,14 @@
 #ifndef ROOT_TMVA_RMethodRSNNS
 #define ROOT_TMVA_RMethodRSNNS
 
-//////////////////////////////////////////////////////////////////////////
-//                                                                      //
-// RMethodRSNNS                                                         //
-//                                                                      //
-//                                                                      //
-//////////////////////////////////////////////////////////////////////////
-
 #ifndef ROOT_TMVA_RMethodBase
 #include "TMVA/RMethodBase.h"
 #endif
+/**
+ @namespace TMVA
+ namespace associated TMVA package for ROOT.
+ 
+ */
 
 namespace TMVA {
 
@@ -31,27 +29,73 @@ namespace TMVA {
    class Reader;   // DSMTEST
    class DataSetManager;  // DSMTEST
    class Types;
+   
+       /**
+        \class MethodRSNNS
+         \brief RMVA class for all methods  based on RSNNS
+          The Stuttgart Neural Network Simulator (SNNS) is a library containing many standard implementations of neural networks. 
+          This package wraps the SNNS functionality to make it available from within R. 
+          Using the RSNNS low-level interface, all of the algorithmic functionality and flexibility of SNNS can be accessed. 
+          Furthermore, the package contains a convenient high-level interface, so that the most common neural network topologies and learning algorithms integrate seamlessly into R.          
+          
+          \section BookingRMLP The Booking options for RMLP are
+          
+         \authors Omar Zapata(ITM/UdeA), Lorenzo Moneta(CERN), Sergei Gleyzer(U. of Florida)
+         
+         \link http://oproject.org/RMVA
+         \ingroup TMVA
+       */
+   
    class MethodRSNNS : public RMethodBase {
 
    public :
 
-      // constructors
+         /**
+         Default constructor that inherits from TMVA::RMethodBase and it have a ROOT::R::TRInterface instance for internal use.
+         \param jobName Name taken from method type
+         \param methodType Associate TMVA::Types::EMVA (available MVA methods)
+         \param methodTitle Sub method associate to method type.
+         \param dsi TMVA::DataSetInfo object
+         \param theOption Booking options for method
+         \param theBaseDir object to TDirectory with the path to calculate histograms and results for current method.
+         */
       MethodRSNNS(const TString &jobName,
                   const TString &methodTitle,
                   DataSetInfo &theData,
                   const TString &theOption = "",
                   TDirectory *theTargetDir = NULL);
-
+         /**
+         Constructor used for Testing + Application of the MVA, only (no training), using given weight file. 
+         inherits from TMVA::MethodBase and it have a ROOT::R::TRInterface instance for internal use.
+         \param methodType Associate TMVA::Types::EMVA (available MVA methods)
+         \param dsi TMVA::DataSetInfo object
+         \param theBaseDir object to TDirectory with the path to calculate histograms and results for current method.
+         */
       MethodRSNNS(DataSetInfo &dsi,
                   const TString &theWeightFile,
                   TDirectory *theTargetDir = NULL);
 
 
       ~MethodRSNNS(void);
+         /**
+         Pure abstract method to build the train system 
+         and to save the fModel object in a .RData file for model persistence
+         */
+
       void     Train();
-      // options treatment
+         /**
+         Pure abstract method for options treatment(some default options initialization)
+         and package options initialization
+         */
       void     Init();
+         /**
+         Pure abstract method to declare booking options associate to multivariate algorithm.
+        \see BookingRMLP
+         */      
       void     DeclareOptions();
+         /**
+         Pure abstract method to parse booking options associate to multivariate algorithm.
+         */      
       void     ProcessOptions();
       // create ranking
       const Ranking *CreateRanking()

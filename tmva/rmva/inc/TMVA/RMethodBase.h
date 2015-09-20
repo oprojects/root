@@ -1,16 +1,6 @@
 // @(#)root/tmva/rmva $Id$
 // Author: Omar Zapata,Lorenzo Moneta, Sergei Gleyzer 2015
 
-/**********************************************************************************
- * Project: TMVA - a Root-integrated toolkit for multivariate data analysis       *
- * Package: TMVA                                                                  *
- * Class  : RMethodBase                                                           *
- *                                                                                *
- * Description:                                                                   *
- *      Virtual base class for all MVA method based on ROOTR                      *
- *                                                                                *
- **********************************************************************************/
-
 #ifndef ROOT_TMVA_RMethodBase
 #define ROOT_TMVA_RMethodBase
 
@@ -28,6 +18,10 @@ class TDirectory;
 class TSpline;
 class TH1F;
 class TH1D;
+/**
+ @namespace TMVA
+ namespace associated TMVA package for ROOT.
+ */
 
 namespace TMVA {
 
@@ -39,11 +33,11 @@ namespace TMVA {
    class DataSetInfo;
       /**
       \class RMethodBase
-         Virtual base class for all TMVA methods based on ROOTR
+         Virtual base class for all TMVA methods based on ROOT::R
          <a href="http://oproject.org/ROOTR">  see http://oproject.org/ROOTR</a><br>
          <h2>Users Guide </h2>
          <a href="http://oproject.org/RMVA"> http://oproject.org/RMVA</a><br>
-
+         \authors Omar Zapata, Lorenzo Moneta, Sergei Gleyzer
          \ingroup TMVA
        */
    class RMethodBase : public MethodBase {
