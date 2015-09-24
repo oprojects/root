@@ -159,9 +159,10 @@ namespace TMVA {
  
  
       TString GetSpliOptions(){return fSplitOptions;}
-      TString GetSigCut(){return fSignalCut;}
-      TString GetBkgCut(){return fBkgCut;}
+      TCut GetSigCut(){return fSignalCut;}
+      TCut GetBkgCut(){return fBkgCut;}
       UInt_t GetNVariables();
+      std::vector<TString> GetListOfVariables();
       
    private:
 
@@ -206,8 +207,14 @@ namespace TMVA {
 
       //New variables for EvaluateImportance
       TString                                   fSplitOptions;     //! options given in the method PrepareTrainingAndTestTree
-      TString                                   fSignalCut;
-      TString                                   fBkgCut;
+      TCut                                      fSignalCut;
+      TCut                                      fBkgCut;
+   public://mejorar esto
+      TTree                                    *fTreeS;
+      TTree                                    *fTreeB;
+      Double_t                                  fSignalWeight     = 1.0;
+      Double_t                                  fBackgroundWeight = 1.0;
+
    protected:
 
       ClassDef(DataLoader,0)

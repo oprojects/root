@@ -82,7 +82,7 @@
 #include "TMVA/ResultsRegression.h"
 #include "TMVA/ResultsMulticlass.h"
 #include <list>
-
+#include <bitset>
 const Int_t  MinNoTrainingEvents = 10;
 //const Int_t  MinNoTestEvents     = 1;
 TFile* TMVA::Factory::fgTargetFile = 0;
@@ -1462,28 +1462,90 @@ void TMVA::Factory::EvaluateAllMethods( void )
 }
 
 
+class SeedStorage
+{
+    private:
+    std::bitset<32> fSeed;
+    TMVA::MethodBase *fSeedMethod;
+    
+    std::map<UInt_t,TMVA::MethodBase *> fSubSeeds;
+    public:
+    SeedStorage(UInt_t s,TMVA::MethodBase *method):fSeed(s){ fSeedMethod=method; }
+    std::bitset<32>  GetSeed(){return fSeed;}
+    TMVA::MethodBase* GetSeedMethod(){return fSeedMethod;}
+    
+    void AddSubSeed(UInt_t ss,TMVA::MethodBase *method){fSubSeeds[ss]=method;}
+    TMVA::MethodBase *GetSubSeed(UInt_t ss){return fSubSeeds[ss];}    
+};
+
 void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, TString theOption )
 {
     TRandom3* rangen = new TRandom3(0);  //Random Gen.
     uint64_t x = 0; uint64_t y = 0; 
     
-    UInt_t nbits=loader->GetNVariables();
+    const UInt_t nbits=loader->GetNVariables();
+    std::vector<TString> varNames=loader->GetListOfVariables();
     
-    for( UInt_t n = 0; n < nseeds; n++)
+    std::map<UInt_t,SeedStorage*>  SeedMap;
+    
+    for( int n = 0; n < nseeds; n++)
     {
         x = rangen -> Integer(nseeds);
-        std::cout << "Random Integer: " << x <<std::endl;
-        for (UInt_t i = 0; i < nbits; ++i)
+        std::bitset<32>  xbitset(x);
+        std::cout << "Random Integer: " << xbitset <<std::endl;
+        if(x==0) continue;//dataloader need at least one variable
+        if(fMethodsMap.find(xbitset.to_string())!=fMethodsMap.end()) continue;
+        
+        TMVA::DataLoader *seedloader=new TMVA::DataLoader(xbitset.to_string());
+        
+        for(int index=0;index<nbits;index++)
+        {
+            if(xbitset[index]) seedloader->AddVariable(varNames[index], 'F' );
+        }
+        
+        seedloader->AddSignalTree    ( loader->fTreeS,loader->fSignalWeight);
+        seedloader->AddBackgroundTree( loader->fTreeB,loader->fBackgroundWeight);   
+        
+        //Loading Dataset variables
+        seedloader->PrepareTrainingAndTestTree( loader->GetSigCut(), loader->GetBkgCut(),loader->GetSpliOptions());
+        //Booking Seed
+        TMVA::MethodBase *method=BookMethod(seedloader,theMethod,methodTitle,theOption);
+        
+        SeedStorage *SSObj=new SeedStorage(x,method);
+        SeedMap[x]=SSObj;
+        for (int i = 0; i < 32; ++i)
         {
             if (x & (1 << i))
             {
                 y = x & ~(1 << i);
-                std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<y<<std::endl;
+                std::bitset<32>  ybitset(y);
+                if(fMethodsMap.find(ybitset.to_string())!=fMethodsMap.end()) continue;
+                
+                TMVA::DataLoader *subseedloader=new TMVA::DataLoader(ybitset.to_string());
+                for(int index=0;index<nbits;index++)
+                {
+                    if(ybitset[index]) subseedloader->AddVariable(varNames[index], 'F' );           
+                }
+                
+                subseedloader->AddSignalTree    ( loader->fTreeS,loader->fSignalWeight);
+                subseedloader->AddBackgroundTree( loader->fTreeB,loader->fBackgroundWeight);   
+                //Loading Dataset variables
+                subseedloader->PrepareTrainingAndTestTree( loader->GetSigCut(), loader->GetBkgCut(),loader->GetSpliOptions());
+                
+                //Booking SubSeed
+                TMVA::MethodBase *submethod=BookMethod(subseedloader,theMethod,methodTitle,theOption);
+                SSObj->AddSubSeed(y,submethod);
+                //                 std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
             }
         }
-        //    typedef std::map<uint64_t,TMVA::DataLoader*>  
-        
-    }
+    } 
+    
+       TrainAllMethods();
+    
+       TestAllMethods();
+    
+       EvaluateAllMethods();    
+    
 }
 
 

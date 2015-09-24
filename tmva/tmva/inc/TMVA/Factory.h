@@ -84,7 +84,6 @@ namespace TMVA {
 
       typedef std::vector<IMethod*> MVector;
       std::map<TString,MVector*>  fMethodsMap;//all methods for every dataset with the same name
-      std::map<TString,MVector*>  fImportanceMethodsMap;//all methods for every dataset with the same name to calculate importance
 
       // no default  constructor
       Factory( TString theJobName, TFile* theTargetFile, TString theOption = "" );

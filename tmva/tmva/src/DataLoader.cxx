@@ -540,4 +540,9 @@ UInt_t TMVA::DataLoader::GetNVariables()
 {
     return DefaultDataSetInfo().GetNVariables();
 }
-      
+
+std::vector<TString> TMVA::DataLoader::GetListOfVariables()
+{
+    return DefaultDataSetInfo().GetListOfVariables();
+}
+
