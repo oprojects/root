@@ -1461,3 +1461,29 @@ void TMVA::Factory::EvaluateAllMethods( void )
    gTools().TMVACitation( Log(), Tools::kHtmlLink );
 }
 
+
+void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, TString theOption )
+{
+    TRandom3* rangen = new TRandom3(0);  //Random Gen.
+    uint64_t x = 0; uint64_t y = 0; 
+    
+    UInt_t nbits=loader->GetNVariables();
+    
+    for( UInt_t n = 0; n < nseeds; n++)
+    {
+        x = rangen -> Integer(nseeds);
+        std::cout << "Random Integer: " << x <<std::endl;
+        for (UInt_t i = 0; i < nbits; ++i)
+        {
+            if (x & (1 << i))
+            {
+                y = x & ~(1 << i);
+                std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<y<<std::endl;
+            }
+        }
+        //    typedef std::map<uint64_t,TMVA::DataLoader*>  
+        
+    }
+}
+
+

@@ -156,15 +156,13 @@ namespace TMVA {
       //  prepare input tree for training
       void PrepareTrainingAndTestTree( const TCut& cut, const TString& splitOpt );
       void PrepareTrainingAndTestTree( TCut sigcut, TCut bkgcut, const TString& splitOpt );
-
-      // ... deprecated, kept for backwards compatibility 
-      void PrepareTrainingAndTestTree( const TCut& cut, Int_t Ntrain, Int_t Ntest = -1 );
-
-      void PrepareTrainingAndTestTree( const TCut& cut, Int_t NsigTrain, Int_t NbkgTrain, Int_t NsigTest, Int_t NbkgTest, 
-                                       const TString& otherOpt="SplitMode=Random:!V" );
-
  
  
+      TString GetSpliOptions(){return fSplitOptions;}
+      TString GetSigCut(){return fSignalCut;}
+      TString GetBkgCut(){return fBkgCut;}
+      UInt_t GetNVariables();
+      
    private:
 
  
@@ -206,6 +204,10 @@ namespace TMVA {
 
       Types::EAnalysisType                      fAnalysisType;    //! the training type
 
+      //New variables for EvaluateImportance
+      TString                                   fSplitOptions;     //! options given in the method PrepareTrainingAndTestTree
+      TString                                   fSignalCut;
+      TString                                   fBkgCut;
    protected:
 
       ClassDef(DataLoader,0)

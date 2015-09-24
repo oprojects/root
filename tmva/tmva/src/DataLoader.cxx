@@ -503,36 +503,13 @@ void TMVA::DataLoader::AddCut( const TCut& cut, const TString& className )
 }
 
 //_______________________________________________________________________
-void TMVA::DataLoader::PrepareTrainingAndTestTree( const TCut& cut, 
-                                                Int_t NsigTrain, Int_t NbkgTrain, Int_t NsigTest, Int_t NbkgTest,
-                                                const TString& otherOpt )
-{
-   // prepare the training and test trees
-   SetInputTreesFromEventAssignTrees();
-
-   AddCut( cut  );
-
-   DefaultDataSetInfo().SetSplitOptions( Form("nTrain_Signal=%i:nTrain_Background=%i:nTest_Signal=%i:nTest_Background=%i:%s", 
-                                              NsigTrain, NbkgTrain, NsigTest, NbkgTest, otherOpt.Data()) );
-}
-
-//_______________________________________________________________________
-void TMVA::DataLoader::PrepareTrainingAndTestTree( const TCut& cut, Int_t Ntrain, Int_t Ntest )
-{
-   // prepare the training and test trees 
-   // kept for backward compatibility
-   SetInputTreesFromEventAssignTrees();
-
-   AddCut( cut  );
-
-   DefaultDataSetInfo().SetSplitOptions( Form("nTrain_Signal=%i:nTrain_Background=%i:nTest_Signal=%i:nTest_Background=%i:SplitMode=Random:EqualTrainSample:!V", 
-                                              Ntrain, Ntrain, Ntest, Ntest) );
-}
-
-//_______________________________________________________________________
 void TMVA::DataLoader::PrepareTrainingAndTestTree( const TCut& cut, const TString& opt )
 {
    // prepare the training and test trees
+   fSplitOptions=opt;
+//    fSignalCut=sigcut;
+//    fBkgCut=bkgcut;
+   
    // -> same cuts for signal and background
    SetInputTreesFromEventAssignTrees();
 
@@ -545,7 +522,10 @@ void TMVA::DataLoader::PrepareTrainingAndTestTree( const TCut& cut, const TStrin
 void TMVA::DataLoader::PrepareTrainingAndTestTree( TCut sigcut, TCut bkgcut, const TString& splitOpt )
 {
    // prepare the training and test trees
-
+   fSplitOptions=splitOpt;
+   fSignalCut=sigcut;
+   fBkgCut=bkgcut;
+   
    // if event-wise data assignment, add local trees to dataset first
    SetInputTreesFromEventAssignTrees();
 
@@ -556,3 +536,8 @@ void TMVA::DataLoader::PrepareTrainingAndTestTree( TCut sigcut, TCut bkgcut, con
    DefaultDataSetInfo().SetSplitOptions( splitOpt );
 }
 
+UInt_t TMVA::DataLoader::GetNVariables()
+{
+    return DefaultDataSetInfo().GetNVariables();
+}
+      

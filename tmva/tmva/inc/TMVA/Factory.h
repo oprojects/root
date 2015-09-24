@@ -84,6 +84,7 @@ namespace TMVA {
 
       typedef std::vector<IMethod*> MVector;
       std::map<TString,MVector*>  fMethodsMap;//all methods for every dataset with the same name
+      std::map<TString,MVector*>  fImportanceMethodsMap;//all methods for every dataset with the same name to calculate importance
 
       // no default  constructor
       Factory( TString theJobName, TFile* theTargetFile, TString theOption = "" );
@@ -118,7 +119,10 @@ namespace TMVA {
       // performance evaluation
       void EvaluateAllMethods( void );
       void EvaluateAllVariables(DataLoader *loader, TString options = "" ); 
-  
+      
+      void EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, TString theOption = "" );
+      
+      
       // delete all methods and reset the method vector
       void DeleteAllMethods( void );
 
