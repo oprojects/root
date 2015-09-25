@@ -1475,7 +1475,9 @@ class SeedStorage
     TMVA::MethodBase* GetSeedMethod(){return fSeedMethod;}
     
     void AddSubSeed(UInt_t ss,TMVA::MethodBase *method){fSubSeeds[ss]=method;}
-    TMVA::MethodBase *GetSubSeed(UInt_t ss){return fSubSeeds[ss];}    
+    TMVA::MethodBase *GetSubSeed(UInt_t ss){return fSubSeeds[ss];}   
+    
+    UInt_t GetSubSeedSize(){return fSubSeeds.size();}
 };
 
 void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, TString theOption )
@@ -1488,17 +1490,17 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
     
     std::map<UInt_t,SeedStorage*>  SeedMap;
     
-    for( int n = 0; n < nseeds; n++)
+    for( UInt_t n = 0; n < nseeds; n++)
     {
         x = rangen -> Integer(nseeds);
         std::bitset<32>  xbitset(x);
-        std::cout << "Random Integer: " << xbitset <<std::endl;
+//         std::cout << "Random Integer: " << xbitset<<" "<< x <<std::endl;
         if(x==0) continue;//dataloader need at least one variable
         if(fMethodsMap.find(xbitset.to_string())!=fMethodsMap.end()) continue;
         
         TMVA::DataLoader *seedloader=new TMVA::DataLoader(xbitset.to_string());
         
-        for(int index=0;index<nbits;index++)
+        for(UInt_t index=0;index<nbits;index++)
         {
             if(xbitset[index]) seedloader->AddVariable(varNames[index], 'F' );
         }
@@ -1513,16 +1515,19 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
         
         SeedStorage *SSObj=new SeedStorage(x,method);
         SeedMap[x]=SSObj;
-        for (int i = 0; i < 32; ++i)
+        for (UInt_t i = 0; i < 32; ++i)
         {
             if (x & (1 << i))
             {
                 y = x & ~(1 << i);
                 std::bitset<32>  ybitset(y);
+                //need at least one variable
+                if(y==0) continue;
+                //if exists added the method pointer to the map
                 if(fMethodsMap.find(ybitset.to_string())!=fMethodsMap.end()) continue;
                 
                 TMVA::DataLoader *subseedloader=new TMVA::DataLoader(ybitset.to_string());
-                for(int index=0;index<nbits;index++)
+                for(UInt_t index=0;index<nbits;index++)
                 {
                     if(ybitset[index]) subseedloader->AddVariable(varNames[index], 'F' );           
                 }
@@ -1535,16 +1540,22 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
                 //Booking SubSeed
                 TMVA::MethodBase *submethod=BookMethod(subseedloader,theMethod,methodTitle,theOption);
                 SSObj->AddSubSeed(y,submethod);
-                //                 std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
+                //if the subseed is not printed, thats because the loader with the same name is in the fMethodsMap
+//                 std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
             }
         }
     } 
+    std::cout<<Form("Total Booked Seed Methods [%u]",SeedMap.size())<<std::endl;
+    UInt_t counter=0;
     
-       TrainAllMethods();
+    for(auto itr=SeedMap.begin();itr!=SeedMap.end();itr++) counter+=itr->second->GetSubSeedSize();
+    std::cout<<Form("Total Booked SubSeeds Methods [%u]",counter)<<std::endl;
     
-       TestAllMethods();
+    TrainAllMethods();
     
-       EvaluateAllMethods();    
+    TestAllMethods();
+    
+    EvaluateAllMethods();    
     
 }
 
