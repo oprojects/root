@@ -89,10 +89,10 @@ TMVA::DataLoader::DataLoader( TString thedlName)
 
    // render silent
 //    if (gTools().CheckForSilentOption( GetOptions() )) Log().InhibitOutput(); // make sure is silent if wanted to
-   if(std::find(_fDataSetNames.begin(),_fDataSetNames.end(),thedlName) != _fDataSetNames.end())
-   {
-      Log() << kFATAL << "<DataLoader> Trying to create a DataLoader with a name that already exists: \"" <<thedlName<<"\"" << Endl;
-   }else _fDataSetNames.push_back(thedlName);
+//    if(std::find(_fDataSetNames.begin(),_fDataSetNames.end(),thedlName) != _fDataSetNames.end())
+//    {
+//       Log() << kFATAL << "<DataLoader> Trying to create a DataLoader with a name that already exists: \"" <<thedlName<<"\"" << Endl;
+//    }else _fDataSetNames.push_back(thedlName);
 }
 
 
@@ -114,8 +114,18 @@ TMVA::DataLoader::~DataLoader( void )
    // problem with call of REGISTER_METHOD macro ...
    //   ClassifierDataLoader::DestroyInstance();
    //   Types::DestroyInstance();
-   Tools::DestroyInstance();
-   Config::DestroyInstance();
+   //removing element from static array of names
+//    UInt_t size=_fDataSetNames.size();
+//    for(UInt_t i=0;i<size;i++) 
+//        if(_fDataSetNames[i]==fName)
+//        {
+//             _fDataSetNames.erase(_fDataSetNames.begin()+i);
+//             return;
+//        }
+//must be in factory       
+//    Tools::DestroyInstance();
+//    Config::DestroyInstance();
+
 }
 
 

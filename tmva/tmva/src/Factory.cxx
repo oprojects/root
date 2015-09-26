@@ -83,6 +83,7 @@
 #include "TMVA/ResultsMulticlass.h"
 #include <list>
 #include <bitset>
+#include <omp.h>
 const Int_t  MinNoTrainingEvents = 10;
 //const Int_t  MinNoTestEvents     = 1;
 TFile* TMVA::Factory::fgTargetFile = 0;
@@ -226,7 +227,7 @@ void TMVA::Factory::DeleteAllMethods( void )
 	  delete (*itrMethod);
       }
       methods->clear();
-      delete methods;
+//       delete methods;
    }
 }
 
@@ -1461,23 +1462,40 @@ void TMVA::Factory::EvaluateAllMethods( void )
    gTools().TMVACitation( Log(), Tools::kHtmlLink );
 }
 
-
-class SeedStorage
+//Class to save seed and subseeds associated to the seed
+class SeedStore
 {
     private:
-    std::bitset<32> fSeed;
-    TMVA::MethodBase *fSeedMethod;
+    //seed and ROC     
+    std::bitset<32> fSeed; 
+    Double_t fROC;
     
-    std::map<UInt_t,TMVA::MethodBase *> fSubSeeds;
+    std::vector<UInt_t> fKeys;//subseeds keys to read ROC values from map
+    std::map<UInt_t,Double_t> fSubSeeds;//subseeds map with ROC value
     public:
-    SeedStorage(UInt_t s,TMVA::MethodBase *method):fSeed(s){ fSeedMethod=method; }
+        
+    SeedStore(UInt_t s,Double_t roc):fSeed(s){ fROC=roc;}
+    //methods to get the seed and the ROC value
     std::bitset<32>  GetSeed(){return fSeed;}
-    TMVA::MethodBase* GetSeedMethod(){return fSeedMethod;}
+    Double_t GetSeedROC(){return fROC;}
     
-    void AddSubSeed(UInt_t ss,TMVA::MethodBase *method){fSubSeeds[ss]=method;}
-    TMVA::MethodBase *GetSubSeed(UInt_t ss){return fSubSeeds[ss];}   
+    //method to add subseeds to the map
+    void AddSubSeed(UInt_t ss,Double_t roc)
+    {
+        fSubSeeds[ss]=roc;
+        fKeys.push_back(ss);
+    }
     
+    //method to get ROC for every subseed using the keys vector
+    //NOTE: keys vector have the subseeds sorted in input order,
+    //thats needed to fill the importance vector
+    Double_t GetSubSeedROC(UInt_t ss){return fSubSeeds[ss];}   
+    
+    //utility methods
     UInt_t GetSubSeedSize(){return fSubSeeds.size();}
+    std::map<UInt_t,Double_t> GetSubSeedMap(){return fSubSeeds;}
+    std::vector<UInt_t> GetSubSeedKeys(){return fKeys;}
+    
 };
 
 void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, TString theOption )
@@ -1485,36 +1503,64 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
     TRandom3* rangen = new TRandom3(0);  //Random Gen.
     uint64_t x = 0; uint64_t y = 0; 
     
+    //getting number of variables and variable names from loader
     const UInt_t nbits=loader->GetNVariables();
     std::vector<TString> varNames=loader->GetListOfVariables();
     
-    std::map<UInt_t,SeedStorage*>  SeedMap;
+    //vector to save importances
+    std::vector<Double_t> importances(nbits);
+    
+    //vector to save every seed with subseeds
+    std::vector<SeedStore*>  SeedMap;
+    
+    Double_t roc;//computed ROC value
     
     for( UInt_t n = 0; n < nseeds; n++)
     {
         x = rangen -> Integer(nseeds);
         std::bitset<32>  xbitset(x);
-//         std::cout << "Random Integer: " << xbitset<<" "<< x <<std::endl;
+        std::cout << "Seed: "<< n <<std::endl;
+        std::cout << "Random Integer: " << xbitset<<" "<< x <<std::endl;
         if(x==0) continue;//dataloader need at least one variable
-        if(fMethodsMap.find(xbitset.to_string())!=fMethodsMap.end()) continue;
         
+        //creating loader for seed
         TMVA::DataLoader *seedloader=new TMVA::DataLoader(xbitset.to_string());
         
+        //adding variables from seed
         for(UInt_t index=0;index<nbits;index++)
         {
             if(xbitset[index]) seedloader->AddVariable(varNames[index], 'F' );
         }
         
+         //Loading Dataset 
         seedloader->AddSignalTree    ( loader->fTreeS,loader->fSignalWeight);
         seedloader->AddBackgroundTree( loader->fTreeB,loader->fBackgroundWeight);   
-        
-        //Loading Dataset variables
         seedloader->PrepareTrainingAndTestTree( loader->GetSigCut(), loader->GetBkgCut(),loader->GetSpliOptions());
+
         //Booking Seed
-        TMVA::MethodBase *method=BookMethod(seedloader,theMethod,methodTitle,theOption);
+        BookMethod(seedloader,theMethod,methodTitle,theOption);
         
-        SeedStorage *SSObj=new SeedStorage(x,method);
-        SeedMap[x]=SSObj;
+        //Train/Test/Evaluation
+        TrainAllMethods();    
+        TestAllMethods();
+        EvaluateAllMethods();
+        
+        //getting ROC 
+        roc=GetROCIntegral(xbitset.to_string(),methodTitle);
+        //std::cout<< "Seed: "<< n <<" x:" <<xbitset<<"  ROC "<<GetROCIntegral(xbitset.to_string(),methodTitle)<<std::endl;
+        
+        //cleaning information to process subseeds
+        DeleteAllMethods( );
+        fgTargetFile->Delete(seedloader->GetName());
+        delete seedloader;
+        
+        //saving results 
+        SeedStore *ssObj=new SeedStore(x,roc);
+        SeedMap.push_back(ssObj);
+        
+        //subseed (adding defualt subseed 0 with roc 0.5)
+        ssObj->AddSubSeed(0,0.5);
+        
         for (UInt_t i = 0; i < 32; ++i)
         {
             if (x & (1 << i))
@@ -1523,40 +1569,69 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
                 std::bitset<32>  ybitset(y);
                 //need at least one variable
                 if(y==0) continue;
-                //if exists added the method pointer to the map
-                if(fMethodsMap.find(ybitset.to_string())!=fMethodsMap.end()) continue;
                 
+                //creating loader for subseed
                 TMVA::DataLoader *subseedloader=new TMVA::DataLoader(ybitset.to_string());
+                 //adding variables from subseed
                 for(UInt_t index=0;index<nbits;index++)
                 {
                     if(ybitset[index]) subseedloader->AddVariable(varNames[index], 'F' );           
                 }
                 
+                //Loading Dataset 
                 subseedloader->AddSignalTree    ( loader->fTreeS,loader->fSignalWeight);
                 subseedloader->AddBackgroundTree( loader->fTreeB,loader->fBackgroundWeight);   
-                //Loading Dataset variables
                 subseedloader->PrepareTrainingAndTestTree( loader->GetSigCut(), loader->GetBkgCut(),loader->GetSpliOptions());
                 
                 //Booking SubSeed
-                TMVA::MethodBase *submethod=BookMethod(subseedloader,theMethod,methodTitle,theOption);
-                SSObj->AddSubSeed(y,submethod);
-                //if the subseed is not printed, thats because the loader with the same name is in the fMethodsMap
-//                 std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
+                BookMethod(subseedloader,theMethod,methodTitle,theOption);
+
+                //Train/Test/Evaluation
+                TrainAllMethods();
+                TestAllMethods();
+                EvaluateAllMethods();
+        
+                //getting ROC 
+                roc=GetROCIntegral(ybitset.to_string(),methodTitle);
+                //std::cout<< "SubSeed: "<< i <<" y:" <<ybitset<<"ROC "<<GetROCIntegral(ybitset.to_string(),methodTitle)<<std::endl;
+                
+                //cleaning information
+                DeleteAllMethods();
+                fgTargetFile->Delete(subseedloader->GetName());//deleting directories in global file
+                delete subseedloader;
+                 
+                //adding subseed information 
+                ssObj->AddSubSeed(y,roc);
+                
+                //debug information
+                //std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
             }
         }
-    } 
-    std::cout<<Form("Total Booked Seed Methods [%u]",SeedMap.size())<<std::endl;
+    }
+    //Debug information
+    std::cout<<Form("Total Seeds [%u]",SeedMap.size())<<std::endl;
     UInt_t counter=0;
     
-    for(auto itr=SeedMap.begin();itr!=SeedMap.end();itr++) counter+=itr->second->GetSubSeedSize();
-    std::cout<<Form("Total Booked SubSeeds Methods [%u]",counter)<<std::endl;
+    for(auto itr=SeedMap.begin();itr!=SeedMap.end();itr++) counter+=(*itr)->GetSubSeedSize();
+    std::cout<<Form("Total SubSeeds [%u]",counter)<<std::endl;
+
+
+    //calculating var importances
+    for(int i=0;i<SeedMap.size();i++)
+    {
+        std::cout<<"Seed = "<<SeedMap[i]->GetSeed()<<" ROC = "<<SeedMap[i]->GetSeedROC()<<std::endl;
+        for(int j=0;j<SeedMap[i]->GetSubSeedKeys().size();j++)
+        {
+            importances[j]+=SeedMap[i]->GetSeedROC()-SeedMap[i]->GetSubSeedROC(SeedMap[i]->GetSubSeedKeys()[j]);
+            std::cout<<"SubSeed = "<<std::bitset<32>(SeedMap[i]->GetSubSeedKeys()[j])<<" ROC = "<<SeedMap[i]->GetSubSeedROC(SeedMap[i]->GetSubSeedKeys()[j])<<std::endl;
+            std::cout<<Form("Importance[%i] = ",j)<<importances[j]<<std::endl;
+        }
+    }
     
-    TrainAllMethods();
-    
-    TestAllMethods();
-    
-    EvaluateAllMethods();    
-    
+    for(int i=0;i<nbits;i++)
+    {
+        std::cout<<varNames[nbits-i]<<" = "<<importances[i]<<std::endl;
+    }
 }
 
 
