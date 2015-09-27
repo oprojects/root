@@ -103,13 +103,13 @@ TMVA::DataLoader::~DataLoader( void )
    //   delete fATreeEvent;
 
    std::vector<TMVA::VariableTransformBase*>::iterator trfIt = fDefaultTrfs.begin();
-   for (;trfIt != fDefaultTrfs.end(); trfIt++) delete (*trfIt);
+   for (;trfIt != fDefaultTrfs.end(); trfIt++) {if(*trfIt) delete (*trfIt);}
 
-   delete fDataInputHandler;
+   if(fDataInputHandler) delete fDataInputHandler;
 
    // destroy singletons
    //   DataSetManager::DestroyInstance(); // DSMTEST replaced by following line
-   delete fDataSetManager; // DSMTEST
+   if(fDataSetManager) delete fDataSetManager; // DSMTEST
 
    // problem with call of REGISTER_METHOD macro ...
    //   ClassifierDataLoader::DestroyInstance();

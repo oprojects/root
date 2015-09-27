@@ -81,9 +81,10 @@
 #include "TMVA/ResultsClassification.h"
 #include "TMVA/ResultsRegression.h"
 #include "TMVA/ResultsMulticlass.h"
+#include<TCanvas.h>
 #include <list>
 #include <bitset>
-#include <omp.h>
+
 const Int_t  MinNoTrainingEvents = 10;
 //const Int_t  MinNoTestEvents     = 1;
 TFile* TMVA::Factory::fgTargetFile = 0;
@@ -224,7 +225,7 @@ void TMVA::Factory::DeleteAllMethods( void )
       MVector::iterator itrMethod = methods->begin();
       for (; itrMethod != methods->end(); itrMethod++) {
 	  Log() << kDEBUG << "Delete method: " << (*itrMethod)->GetName() << Endl;
-	  delete (*itrMethod);
+	  if(*itrMethod) delete (*itrMethod);
       }
       methods->clear();
 //       delete methods;
@@ -1462,43 +1463,8 @@ void TMVA::Factory::EvaluateAllMethods( void )
    gTools().TMVACitation( Log(), Tools::kHtmlLink );
 }
 
-//Class to save seed and subseeds associated to the seed
-class SeedStore
-{
-    private:
-    //seed and ROC     
-    std::bitset<32> fSeed; 
-    Double_t fROC;
-    
-    std::vector<UInt_t> fKeys;//subseeds keys to read ROC values from map
-    std::map<UInt_t,Double_t> fSubSeeds;//subseeds map with ROC value
-    public:
-        
-    SeedStore(UInt_t s,Double_t roc):fSeed(s){ fROC=roc;}
-    //methods to get the seed and the ROC value
-    std::bitset<32>  GetSeed(){return fSeed;}
-    Double_t GetSeedROC(){return fROC;}
-    
-    //method to add subseeds to the map
-    void AddSubSeed(UInt_t ss,Double_t roc)
-    {
-        fSubSeeds[ss]=roc;
-        fKeys.push_back(ss);
-    }
-    
-    //method to get ROC for every subseed using the keys vector
-    //NOTE: keys vector have the subseeds sorted in input order,
-    //thats needed to fill the importance vector
-    Double_t GetSubSeedROC(UInt_t ss){return fSubSeeds[ss];}   
-    
-    //utility methods
-    UInt_t GetSubSeedSize(){return fSubSeeds.size();}
-    std::map<UInt_t,Double_t> GetSubSeedMap(){return fSubSeeds;}
-    std::vector<UInt_t> GetSubSeedKeys(){return fKeys;}
-    
-};
 
-void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, TString theOption )
+void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, const char *theOption )
 {
     TRandom3* rangen = new TRandom3(0);  //Random Gen.
     
@@ -1506,42 +1472,23 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
     
     //getting number of variables and variable names from loader
     const UInt_t nbits=loader->GetNVariables();
-    std::vector<TString> varNames=loader->GetListOfVariables();
+    std::vector<TString> varNames(nbits);
+    varNames=loader->GetListOfVariables();
     
-//     uint16_t range=pow(2,nbits);
+    uint16_t range=pow(2,nbits);
     
     //vector to save importances
     std::vector<Double_t> importances(nbits);
-    
-    //vector to save every seed with subseeds
-//     std::vector<SeedStore*>  SeedMap;
     
     Double_t SROC,SSROC;//computed ROC value
     
     for( UInt_t n = 0; n < nseeds; n++)
     {
-        x = rangen -> Integer(nseeds);
+        x = rangen -> Integer(range);
+// 	x=72;//helge
         std::bitset<32>  xbitset(x);
         if(x==0) continue;//dataloader need at least one variable
         
-        //code to evict repeated  seed
-        //NOTE: this can improve the performance because 
-        //I dont need train/test the seed and subseeds again
-//         Bool_t repeated=kFALSE;
-//         std::vector<SeedStore*>::iterator itr=SeedMap.begin();
-//         while(itr!=SeedMap.end())
-//         {
-//                 if((*itr)->GetSeed()==xbitset)
-//                 {
-//                     repeated=kTRUE;
-//                     break;
-//                 }
-//                 itr++;
-//         }
-//         if(repeated) continue;    
-        
-//         std::cout << "Seed: "<< n <<std::endl;
-//         std::cout << "Random Integer: " << xbitset<<" "<< x <<std::endl;
         
         //creating loader for seed
         TMVA::DataLoader *seedloader=new TMVA::DataLoader(xbitset.to_string());
@@ -1558,26 +1505,25 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
         seedloader->PrepareTrainingAndTestTree( loader->GetSigCut(), loader->GetBkgCut(),loader->GetSpliOptions());
 
         //Booking Seed
-        BookMethod(seedloader,theMethod,methodTitle,theOption);
+        MethodBase *smethod=BookMethod(seedloader,theMethod,methodTitle,theOption);
         
         //Train/Test/Evaluation
         TrainAllMethods();    
         TestAllMethods();
         EvaluateAllMethods();
-        
+        fgTargetFile->Flush();
+
         //getting ROC 
         SROC=GetROCIntegral(xbitset.to_string(),methodTitle);
         std::cout<< "Seed: "<< x <<" x:" <<xbitset<<"  ROC "<<SROC<<std::endl;
         
         //cleaning information to process subseeds
-        DeleteAllMethods( );
+// 	delete smethod;
+	fMethodsMap.clear();
         fgTargetFile->Delete(seedloader->GetName());
         delete seedloader;
-        
-//         //saving results 
-//         SeedStore *ssObj=new SeedStore(x,SROC);
-//         SeedMap.push_back(ssObj);
-        
+	gSystem->mkdir(xbitset.to_string().c_str());
+                
         for (UInt_t i = 0; i < 32; ++i)
         {
             if (x & (1 << i))
@@ -1592,7 +1538,8 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
 		    //subseed (adding defualt subseed 0 with roc 0.5)
                     //ssObj->AddSubSeed(0,0.5);
                    importances[y]=SROC-0.5;
-                   std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<"ROC "<<0.5<<std::endl;
+//                    importances[y]+=SROC;//temp to tests
+                   std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<"ROC "<<0.0<<std::endl;
 		   continue;
 		}
                 
@@ -1610,30 +1557,36 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
                 subseedloader->PrepareTrainingAndTestTree( loader->GetSigCut(), loader->GetBkgCut(),loader->GetSpliOptions());
                 
                 //Booking SubSeed
-                BookMethod(subseedloader,theMethod,methodTitle,theOption);
+                MethodBase *ssmethod=BookMethod(subseedloader,theMethod,methodTitle,theOption);
 
                 //Train/Test/Evaluation
                 TrainAllMethods();
                 TestAllMethods();
                 EvaluateAllMethods();
+		fgTargetFile->Flush();
 		
                 //getting ROC 
                 SSROC=GetROCIntegral(ybitset.to_string(),methodTitle);
-                std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<"ROC "<<SSROC<<std::endl;
-                importances[y]=SROC-SSROC;
+                importances[y]+=SROC-SSROC;
+                std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<" SSROC "<<SSROC<<" Importance = "<<importances[y]<<std::endl;
                 //cleaning information
-                DeleteAllMethods();
+//                 DeleteAllMethods();
+// 		delete ssmethod;
+                fMethodsMap.clear();
                 fgTargetFile->Delete(subseedloader->GetName());//deleting directories in global file
                 delete subseedloader;
+                gSystem->mkdir(ybitset.to_string().c_str());
                  
-                //adding subseed information 
-                //ssObj->AddSubSeed(y,SSROC);
-                
                 //debug information
                 //std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
             }
         }
     }
+    for(UInt_t i=0;i<nbits;i++)
+    {
+        std::cout<<varNames[i]<<" = "<<std::setprecision(10)<<importances[i]<<std::endl;
+    }
+    
     //can be improved using subseed counter in class SeedStore
 //     //General information (Total seeds without repetitions)
 //     std::cout<<Form("Total Seeds [%u]",SeedMap.size())<<std::endl;
@@ -1654,11 +1607,92 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
 //             std::cout<<Form("Importance[%i] = ",j)<<importances[j]<<std::endl;
 //         }
 //     }
-    
-    for(UInt_t i=0;i<nbits;i++)
-    {
-        std::cout<<varNames[i]<<" = "<<importances[i]<<std::endl;
-    }
+
+
+//   std::string gif1  = "tmva_relative.gif";
+// 
+//   char giffilename1[80];
+// 
+//   sprintf(giffilename1, gif1.c_str());
+// 
+//   
+//   TCanvas* canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 1000, 1000);
+//   canvas1->Divide(1,1);
+//   TH1F* test  = new TH1F("test","",9, 0, 9);
+//   TH1F* test2  = new TH1F("test2","",9, 0, 9);
+// 
+//   gStyle->SetOptStat(000000);
+//   int count = 1;
+//   Float_t ie_importance=0.0;
+//   Float_t normalization = 0.0;
+//       for(UInt_t i=0;i<nbits;i++)
+//     {
+//         std::cout<<varNames[i]<<" = "<<std::setprecision(10)<<importances[i]<<std::endl;
+// 	normalization = normalization + importances[i];
+//     }
+// 
+// //   while ( getline(stream, line) )
+// //     {
+// //       istringstream inp(line.c_str());
+// //       Float_t ie_importance;
+// //       inp >> ie_importance;
+//     
+// //       normalization = normalization + ie_importance;
+// //       ROC_importances[count] = ie_importance;
+// //       count++;
+// //     }
+// 
+//   Float_t roc = 0.0;
+//   
+//   gStyle->SetTitleXOffset(0.4);
+//   gStyle->SetTitleXOffset(1.2);
+//                    
+//   char* label[9]={"fLength","fWidth","fSize","fConc","fAsym","fM3Long","fM3Trans","fAlpha","fDist"};
+// 
+//   Double_t x_ie[nbits], y_ie[nbits];
+//   for (Int_t i = 1; i < nbits+1; i++)
+//     {
+//      x_ie[i-1]=(i-1)*1.;
+//      roc = 100.0*importances[i-1]/normalization;
+//      y_ie[i-1]=roc;
+// //      std::cout<<" i-1 "<<i-1<<" roc "<<roc<<endl;
+//      test->GetXaxis()->SetBinLabel(i,label[i-1]);
+//      if (roc>0){
+//      test->SetBinContent(i,roc);
+//      }
+//      if (roc<0){
+//      test2->SetBinContent(i,roc);
+// 
+//      }
+//    }
+//   TGraph *g_ie = new TGraph(nbits+2, x_ie, y_ie);
+//   g_ie->SetTitle("");
+//   TH1F *h = new TH1F("h","labels",nbits+1,x_ie[0],x_ie[nbits]);
+//   
+//   canvas1->cd(1);
+//   test->LabelsOption("v >", "X");
+//   test->SetBarWidth(0.97);
+//   test2->SetBarWidth(0.97);
+//   Int_t ci, ca;
+//   ca = TColor::GetColor("#006600");
+//   test->SetFillColor(ca);
+//   ci = TColor::GetColor("#990000");
+//   test2->SetFillColor(ci);
+//   
+//   test->GetYaxis()->SetTitle("Importance (%)");
+//   test->GetYaxis()->SetTitleSize(0.045);
+//   test->GetYaxis()->CenterTitle();
+//   test->GetYaxis()->SetTitleOffset(1.24);
+// 
+//   test->GetYaxis()->SetRangeUser(-7,50);
+//   test->SetDirectory(0);
+//  
+//   test->Draw("B");
+//   test2->Draw("B same");
+// 
+//   canvas1->Update();
+//   canvas1->SaveAs(giffilename1); 
+
 }
 
 
