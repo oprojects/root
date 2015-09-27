@@ -1501,27 +1501,47 @@ class SeedStore
 void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, TString theOption )
 {
     TRandom3* rangen = new TRandom3(0);  //Random Gen.
+    
     uint64_t x = 0; uint64_t y = 0; 
     
     //getting number of variables and variable names from loader
     const UInt_t nbits=loader->GetNVariables();
     std::vector<TString> varNames=loader->GetListOfVariables();
     
+//     uint16_t range=pow(2,nbits);
+    
     //vector to save importances
     std::vector<Double_t> importances(nbits);
     
     //vector to save every seed with subseeds
-    std::vector<SeedStore*>  SeedMap;
+//     std::vector<SeedStore*>  SeedMap;
     
-    Double_t roc;//computed ROC value
+    Double_t SROC,SSROC;//computed ROC value
     
     for( UInt_t n = 0; n < nseeds; n++)
     {
         x = rangen -> Integer(nseeds);
         std::bitset<32>  xbitset(x);
-        std::cout << "Seed: "<< n <<std::endl;
-        std::cout << "Random Integer: " << xbitset<<" "<< x <<std::endl;
         if(x==0) continue;//dataloader need at least one variable
+        
+        //code to evict repeated  seed
+        //NOTE: this can improve the performance because 
+        //I dont need train/test the seed and subseeds again
+//         Bool_t repeated=kFALSE;
+//         std::vector<SeedStore*>::iterator itr=SeedMap.begin();
+//         while(itr!=SeedMap.end())
+//         {
+//                 if((*itr)->GetSeed()==xbitset)
+//                 {
+//                     repeated=kTRUE;
+//                     break;
+//                 }
+//                 itr++;
+//         }
+//         if(repeated) continue;    
+        
+//         std::cout << "Seed: "<< n <<std::endl;
+//         std::cout << "Random Integer: " << xbitset<<" "<< x <<std::endl;
         
         //creating loader for seed
         TMVA::DataLoader *seedloader=new TMVA::DataLoader(xbitset.to_string());
@@ -1546,20 +1566,17 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
         EvaluateAllMethods();
         
         //getting ROC 
-        roc=GetROCIntegral(xbitset.to_string(),methodTitle);
-        //std::cout<< "Seed: "<< n <<" x:" <<xbitset<<"  ROC "<<GetROCIntegral(xbitset.to_string(),methodTitle)<<std::endl;
+        SROC=GetROCIntegral(xbitset.to_string(),methodTitle);
+        std::cout<< "Seed: "<< x <<" x:" <<xbitset<<"  ROC "<<SROC<<std::endl;
         
         //cleaning information to process subseeds
         DeleteAllMethods( );
         fgTargetFile->Delete(seedloader->GetName());
         delete seedloader;
         
-        //saving results 
-        SeedStore *ssObj=new SeedStore(x,roc);
-        SeedMap.push_back(ssObj);
-        
-        //subseed (adding defualt subseed 0 with roc 0.5)
-        ssObj->AddSubSeed(0,0.5);
+//         //saving results 
+//         SeedStore *ssObj=new SeedStore(x,SROC);
+//         SeedMap.push_back(ssObj);
         
         for (UInt_t i = 0; i < 32; ++i)
         {
@@ -1568,7 +1585,16 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
                 y = x & ~(1 << i);
                 std::bitset<32>  ybitset(y);
                 //need at least one variable
-                if(y==0) continue;
+		//NOTE: if subssed is zero then is the special case
+		//that count in xbitset is 1
+                if(y==0)
+		{
+		    //subseed (adding defualt subseed 0 with roc 0.5)
+                    //ssObj->AddSubSeed(0,0.5);
+                   importances[y]=SROC-0.5;
+                   std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<"ROC "<<0.5<<std::endl;
+		   continue;
+		}
                 
                 //creating loader for subseed
                 TMVA::DataLoader *subseedloader=new TMVA::DataLoader(ybitset.to_string());
@@ -1590,47 +1616,48 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
                 TrainAllMethods();
                 TestAllMethods();
                 EvaluateAllMethods();
-        
+		
                 //getting ROC 
-                roc=GetROCIntegral(ybitset.to_string(),methodTitle);
-                //std::cout<< "SubSeed: "<< i <<" y:" <<ybitset<<"ROC "<<GetROCIntegral(ybitset.to_string(),methodTitle)<<std::endl;
-                
+                SSROC=GetROCIntegral(ybitset.to_string(),methodTitle);
+                std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<"ROC "<<SSROC<<std::endl;
+                importances[y]=SROC-SSROC;
                 //cleaning information
                 DeleteAllMethods();
                 fgTargetFile->Delete(subseedloader->GetName());//deleting directories in global file
                 delete subseedloader;
                  
                 //adding subseed information 
-                ssObj->AddSubSeed(y,roc);
+                //ssObj->AddSubSeed(y,SSROC);
                 
                 //debug information
                 //std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
             }
         }
     }
-    //Debug information
-    std::cout<<Form("Total Seeds [%u]",SeedMap.size())<<std::endl;
-    UInt_t counter=0;
-    
-    for(auto itr=SeedMap.begin();itr!=SeedMap.end();itr++) counter+=(*itr)->GetSubSeedSize();
-    std::cout<<Form("Total SubSeeds [%u]",counter)<<std::endl;
+    //can be improved using subseed counter in class SeedStore
+//     //General information (Total seeds without repetitions)
+//     std::cout<<Form("Total Seeds [%u]",SeedMap.size())<<std::endl;
+//     UInt_t counter=0;
+//     
+//     for(auto itr=SeedMap.begin();itr!=SeedMap.end();itr++) counter+=(*itr)->GetSubSeedSize();
+//     std::cout<<Form("Total SubSeeds [%u]",counter)<<std::endl;
 
 
-    //calculating var importances
-    for(int i=0;i<SeedMap.size();i++)
-    {
-        std::cout<<"Seed = "<<SeedMap[i]->GetSeed()<<" ROC = "<<SeedMap[i]->GetSeedROC()<<std::endl;
-        for(int j=0;j<SeedMap[i]->GetSubSeedKeys().size();j++)
-        {
-            importances[j]+=SeedMap[i]->GetSeedROC()-SeedMap[i]->GetSubSeedROC(SeedMap[i]->GetSubSeedKeys()[j]);
-            std::cout<<"SubSeed = "<<std::bitset<32>(SeedMap[i]->GetSubSeedKeys()[j])<<" ROC = "<<SeedMap[i]->GetSubSeedROC(SeedMap[i]->GetSubSeedKeys()[j])<<std::endl;
-            std::cout<<Form("Importance[%i] = ",j)<<importances[j]<<std::endl;
-        }
-    }
+//     //calculating var importances
+//     for(UInt_t i=0;i<SeedMap.size();i++)
+//     {
+//         std::cout<<"Seed = "<<SeedMap[i]->GetSeed()<<" ROC = "<<SeedMap[i]->GetSeedROC()<<std::endl;
+//         for(UInt_t j=0;j<SeedMap[i]->GetSubSeedKeys().size();j++)
+//         {
+//             importances[j]+=SeedMap[i]->GetSeedROC()-SeedMap[i]->GetSubSeedROC(SeedMap[i]->GetSubSeedKeys()[j]);
+//             std::cout<<"SubSeed = "<<std::bitset<32>(SeedMap[i]->GetSubSeedKeys()[j])<<" ROC = "<<SeedMap[i]->GetSubSeedROC(SeedMap[i]->GetSubSeedKeys()[j])<<std::endl;
+//             std::cout<<Form("Importance[%i] = ",j)<<importances[j]<<std::endl;
+//         }
+//     }
     
-    for(int i=0;i<nbits;i++)
+    for(UInt_t i=0;i<nbits;i++)
     {
-        std::cout<<varNames[nbits-i]<<" = "<<importances[i]<<std::endl;
+        std::cout<<varNames[i]<<" = "<<importances[i]<<std::endl;
     }
 }
 
