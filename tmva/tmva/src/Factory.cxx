@@ -1522,7 +1522,7 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
 	fMethodsMap.clear();
         fgTargetFile->Delete(seedloader->GetName());
         delete seedloader;
-	gSystem->mkdir(xbitset.to_string().c_str());
+	gSystem->mkdir(xbitset.to_string().c_str(),kTRUE);
                 
         for (UInt_t i = 0; i < 32; ++i)
         {
@@ -1575,7 +1575,7 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
                 fMethodsMap.clear();
                 fgTargetFile->Delete(subseedloader->GetName());//deleting directories in global file
                 delete subseedloader;
-                gSystem->mkdir(ybitset.to_string().c_str());
+                gSystem->mkdir(ybitset.to_string().c_str(),kTRUE);
                  
                 //debug information
                 //std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
