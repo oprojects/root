@@ -513,7 +513,7 @@ void TMVA::DataLoader::AddCut( const TCut& cut, const TString& className )
 }
 
 //_______________________________________________________________________
-void TMVA::DataLoader::PrepareTrainingAndTestTree( const TCut& cut, const TString& opt )
+void TMVA::DataLoader::PrepareTrainingAndTestTree( const TCut cut, const TString opt )
 {
    // prepare the training and test trees
    fSplitOptions=opt;
@@ -529,7 +529,7 @@ void TMVA::DataLoader::PrepareTrainingAndTestTree( const TCut& cut, const TStrin
 }
 
 //_______________________________________________________________________
-void TMVA::DataLoader::PrepareTrainingAndTestTree( TCut sigcut, TCut bkgcut, const TString& splitOpt )
+void TMVA::DataLoader::PrepareTrainingAndTestTree( TCut sigcut, TCut bkgcut, const TString splitOpt )
 {
    // prepare the training and test trees
    fSplitOptions=splitOpt;

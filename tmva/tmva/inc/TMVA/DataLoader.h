@@ -154,8 +154,8 @@ namespace TMVA {
 
 
       //  prepare input tree for training
-      void PrepareTrainingAndTestTree( const TCut& cut, const TString& splitOpt );
-      void PrepareTrainingAndTestTree( TCut sigcut, TCut bkgcut, const TString& splitOpt );
+      void PrepareTrainingAndTestTree( const TCut cut, const TString splitOpt );
+      void PrepareTrainingAndTestTree( TCut sigcut, TCut bkgcut, const TString splitOpt );
  
  
       TString GetSpliOptions(){return fSplitOptions;}
