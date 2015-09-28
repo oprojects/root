@@ -562,40 +562,15 @@ Double_t TMVA::Factory::GetROCIntegral(TString datasetname,TString theMethodName
       }
       
       TMVA::Results *results=method->Data()->GetResults(method->GetMethodName(),Types::kTesting,Types::kClassification);
+      
+      std::vector<Float_t>* mvaRes = dynamic_cast<ResultsClassification*>(results)->GetValueVector();
+      std::vector<Bool_t>*  mvaResType= dynamic_cast<ResultsClassification*>(results)->GetValueVectorTypes();
+      
+      TMVA::ROCCurve *fROCCurve=new TMVA::ROCCurve(*mvaRes,*mvaResType);
+      if(!fROCCurve)	Log() << kFATAL<< Form("ROCCurve object was not created in Method = %s not found with Dataset = %s ",theMethodName.Data(),datasetname.Data()) << Endl;
 
-      TH1D *mvaS=0;
-      TH1D *mvaB=0;
-      
-      mvaS=dynamic_cast<TH1D*>(results->GetStorage()->FindObject(Form("MVA_%s_S",method->GetMethodName().Data())));
-      mvaB=dynamic_cast<TH1D*>(results->GetStorage()->FindObject(Form("MVA_%s_B",method->GetMethodName().Data())));
-	
-      if(mvaS==0||mvaB==0)
-      {
-	mvaS=dynamic_cast<TH1D*>(results->GetStorage()->FindObject(Form("[%s]MVA_%s_S",method->DataInfo().GetName(),method->GetMethodName().Data())));
-	mvaB=dynamic_cast<TH1D*>(results->GetStorage()->FindObject(Form("[%s]MVA_%s_B",method->DataInfo().GetName(),method->GetMethodName().Data())));			
-      }
-      TMVA::ROCCalc *fROCalc=0;
-      if(mvaS==0||mvaB==0)
-      {
-	  Log() << kERROR <<Form("Cannot cal ROCCal intergral for DataSet = [%s] in Method = %s",method->DataInfo().GetName(),method->GetMethodName().Data())<<Endl; 
-      }else
-      {
-	fROCalc=new TMVA::ROCCalc(mvaS,mvaB);
-      }
-      Double_t fROCalcValue=0;
-      if(fROCalc)
-      {
-	//looking for errors in ROCCalc constructor
-	if(!fROCalc->GetStatus())
-	  Log() << kERROR <<Form("ROCalc in ERROR status for DataSet = [%s] in Method = %s",method->DataInfo().GetName(),method->GetMethodName().Data())<<Endl; 
-	  fROCalc->ResetStatus(); 
-	  fROCalcValue=fROCalc->GetROCIntegral();
-	//looking for errors in ROCCalc after call GetROCIntegral()
-	if(!fROCalc->GetStatus())
-	  Log() << kERROR <<Form("ROCalc in ERROR status for DataSet = [%s] in Method = %s",method->DataInfo().GetName(),method->GetMethodName().Data())<<Endl; 
-	delete fROCalc;
-      }
-      
+      Double_t fROCalcValue=fROCCurve->GetROCIntegral();
+    
       return fROCalcValue;
 }
 
@@ -1481,21 +1456,26 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
     uint64_t x = 0; uint64_t y = 0; 
     
     //getting number of variables and variable names from loader
-    const UInt_t nbits=loader->GetNVariables();
-    std::vector<TString> varNames(nbits);
-    varNames=loader->GetListOfVariables();
+    const int nbits=loader->GetNVariables();
+    std::vector<TString> varNames=loader->GetListOfVariables();
     
     uint16_t range=pow(2,nbits);
     
     //vector to save importances
     std::vector<Double_t> importances(nbits);
+    for(int i=0;i<nbits;i++)importances[i]=0;
     
     Double_t SROC,SSROC;//computed ROC value
     
-    for( UInt_t n = 0; n < nseeds; n++)
+    int seeds[]={430,451,33,414,135,331,11,451,137,69};
+    for( int n = 0; n < nseeds; n++)
     {
-        x = rangen -> Integer(range);
-// 	x=72;//helge
+//         x = rangen -> Integer(range);
+        x = seeds[n];
+//        for( int n = 0; n < 512; n++)
+//        {
+//         x = n;
+	
         std::bitset<32>  xbitset(x);
         if(x==0) continue;//dataloader need at least one variable
         
@@ -1504,7 +1484,7 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
         TMVA::DataLoader *seedloader=new TMVA::DataLoader(xbitset.to_string());
         
         //adding variables from seed
-        for(UInt_t index=0;index<nbits;index++)
+        for(int index=0;index<nbits;index++)
         {
             if(xbitset[index]) seedloader->AddVariable(varNames[index], 'F' );
         }
@@ -1521,7 +1501,6 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
         TrainAllMethods();    
         TestAllMethods();
         EvaluateAllMethods();
-        fgTargetFile->Flush();
 
         //getting ROC 
         SROC=GetROCIntegral(xbitset.to_string(),methodTitle);
@@ -1529,12 +1508,12 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
         
         //cleaning information to process subseeds
 // 	delete smethod;
-	fMethodsMap.clear();
         fgTargetFile->Delete(seedloader->GetName());
         delete seedloader;
-	gSystem->mkdir(xbitset.to_string().c_str(),kTRUE);
+	fMethodsMap.clear();
+// 	gSystem->mkdir(xbitset.to_string().c_str(),kTRUE);
                 
-        for (UInt_t i = 0; i < 32; ++i)
+        for (uint32_t i = 0; i < 32; ++i)
         {
             if (x & (1 << i))
             {
@@ -1543,13 +1522,14 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
                 //need at least one variable
 		//NOTE: if subssed is zero then is the special case
 		//that count in xbitset is 1
+		Double_t ny=log(x-y)/0.693147;
                 if(y==0)
 		{
 		    //subseed (adding defualt subseed 0 with roc 0.5)
                     //ssObj->AddSubSeed(0,0.5);
-                   importances[y]=SROC-0.5;
+                   importances[ny]=SROC-0.5;
 //                    importances[y]+=SROC;//temp to tests
-                   std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<"ROC "<<0.0<<std::endl;
+                   std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<"ROC "<<0.5<<std::endl;
 		   continue;
 		}
                 
@@ -1577,24 +1557,24 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
 		
                 //getting ROC 
                 SSROC=GetROCIntegral(ybitset.to_string(),methodTitle);
-                importances[y]+=SROC-SSROC;
-                std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<" SSROC "<<SSROC<<" Importance = "<<importances[y]<<std::endl;
+                importances[ny]+=SROC-SSROC;
+//                 std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<" log "<<log(2.0)<<" x-y "<<x-y<<" "<<std::bitset<32>(x-y)<<" ny "<<ny<<" SROC "<<SROC <<" SSROC "<<SSROC<<" Importance = "<<importances[ny]<<std::endl;
                 //cleaning information
 //                 DeleteAllMethods();
 // 		delete ssmethod;
-                fMethodsMap.clear();
                 fgTargetFile->Delete(subseedloader->GetName());//deleting directories in global file
                 delete subseedloader;
-                gSystem->mkdir(ybitset.to_string().c_str(),kTRUE);
+                fMethodsMap.clear();
+//                 gSystem->mkdir(ybitset.to_string().c_str(),kTRUE);
                  
                 //debug information
                 //std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
             }
         }
     }
-    for(UInt_t i=0;i<nbits;i++)
+    for(int j=0;j<nbits;j++)
     {
-        std::cout<<varNames[i]<<" = "<<std::setprecision(10)<<importances[i]<<std::endl;
+        std::cout<<varNames[(nbits-1)-j]<<" = "<<importances[j]<<std::endl;
     }
     
     //can be improved using subseed counter in class SeedStore
@@ -1619,89 +1599,89 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
 //     }
 
 
-//   std::string gif1  = "tmva_relative.gif";
-// 
-//   char giffilename1[80];
-// 
-//   sprintf(giffilename1, gif1.c_str());
-// 
-//   
-//   TCanvas* canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 1000, 1000);
-//   canvas1->Divide(1,1);
-//   TH1F* test  = new TH1F("test","",9, 0, 9);
-//   TH1F* test2  = new TH1F("test2","",9, 0, 9);
-// 
-//   gStyle->SetOptStat(000000);
-//   int count = 1;
-//   Float_t ie_importance=0.0;
-//   Float_t normalization = 0.0;
-//       for(UInt_t i=0;i<nbits;i++)
+  std::string gif1  = "tmva_relative.gif";
+
+  char giffilename1[80];
+
+  sprintf(giffilename1, gif1.c_str());
+
+  
+  TCanvas* canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 1000, 1000);
+  canvas1->Divide(1,1);
+  TH1F* test  = new TH1F("test","",9, 0, 9);
+  TH1F* test2  = new TH1F("test2","",9, 0, 9);
+
+  gStyle->SetOptStat(000000);
+  int count = 1;
+  Float_t ie_importance=0.0;
+  Float_t normalization = 0.0;
+      for(UInt_t i=0;i<nbits;i++)
+    {
+        std::cout<<varNames[i]<<" = "<<std::setprecision(10)<<importances[i]<<std::endl;
+	normalization = normalization + importances[i];
+    }
+
+//   while ( getline(stream, line) )
 //     {
-//         std::cout<<varNames[i]<<" = "<<std::setprecision(10)<<importances[i]<<std::endl;
-// 	normalization = normalization + importances[i];
+//       istringstream inp(line.c_str());
+//       Float_t ie_importance;
+//       inp >> ie_importance;
+    
+//       normalization = normalization + ie_importance;
+//       ROC_importances[count] = ie_importance;
+//       count++;
 //     }
-// 
-// //   while ( getline(stream, line) )
-// //     {
-// //       istringstream inp(line.c_str());
-// //       Float_t ie_importance;
-// //       inp >> ie_importance;
-//     
-// //       normalization = normalization + ie_importance;
-// //       ROC_importances[count] = ie_importance;
-// //       count++;
-// //     }
-// 
-//   Float_t roc = 0.0;
-//   
-//   gStyle->SetTitleXOffset(0.4);
-//   gStyle->SetTitleXOffset(1.2);
-//                    
-//   char* label[9]={"fLength","fWidth","fSize","fConc","fAsym","fM3Long","fM3Trans","fAlpha","fDist"};
-// 
-//   Double_t x_ie[nbits], y_ie[nbits];
-//   for (Int_t i = 1; i < nbits+1; i++)
-//     {
-//      x_ie[i-1]=(i-1)*1.;
-//      roc = 100.0*importances[i-1]/normalization;
-//      y_ie[i-1]=roc;
-// //      std::cout<<" i-1 "<<i-1<<" roc "<<roc<<endl;
-//      test->GetXaxis()->SetBinLabel(i,label[i-1]);
-//      if (roc>0){
-//      test->SetBinContent(i,roc);
-//      }
-//      if (roc<0){
-//      test2->SetBinContent(i,roc);
-// 
-//      }
-//    }
-//   TGraph *g_ie = new TGraph(nbits+2, x_ie, y_ie);
-//   g_ie->SetTitle("");
-//   TH1F *h = new TH1F("h","labels",nbits+1,x_ie[0],x_ie[nbits]);
-//   
-//   canvas1->cd(1);
-//   test->LabelsOption("v >", "X");
-//   test->SetBarWidth(0.97);
-//   test2->SetBarWidth(0.97);
-//   Int_t ci, ca;
-//   ca = TColor::GetColor("#006600");
-//   test->SetFillColor(ca);
-//   ci = TColor::GetColor("#990000");
-//   test2->SetFillColor(ci);
-//   
-//   test->GetYaxis()->SetTitle("Importance (%)");
-//   test->GetYaxis()->SetTitleSize(0.045);
-//   test->GetYaxis()->CenterTitle();
-//   test->GetYaxis()->SetTitleOffset(1.24);
-// 
-//   test->GetYaxis()->SetRangeUser(-7,50);
-//   test->SetDirectory(0);
-//  
-//   test->Draw("B");
-//   test2->Draw("B same");
-// 
-//   canvas1->Update();
-//   canvas1->SaveAs(giffilename1); 
+
+  Float_t roc = 0.0;
+  
+  gStyle->SetTitleXOffset(0.4);
+  gStyle->SetTitleXOffset(1.2);
+                   
+  char* label[9]={"fLength","fWidth","fSize","fConc","fAsym","fM3Long","fM3Trans","fAlpha","fDist"};
+
+  Double_t x_ie[nbits], y_ie[nbits];
+  for (Int_t i = 1; i < nbits+1; i++)
+    {
+     x_ie[i-1]=(i-1)*1.;
+     roc = 100.0*importances[i-1]/normalization;
+     y_ie[i-1]=roc;
+//      std::cout<<" i-1 "<<i-1<<" roc "<<roc<<endl;
+     test->GetXaxis()->SetBinLabel(i,label[i-1]);
+     if (roc>0){
+     test->SetBinContent(i,roc);
+     }
+     if (roc<0){
+     test2->SetBinContent(i,roc);
+
+     }
+   }
+  TGraph *g_ie = new TGraph(nbits+2, x_ie, y_ie);
+  g_ie->SetTitle("");
+  TH1F *h = new TH1F("h","labels",nbits+1,x_ie[0],x_ie[nbits]);
+  
+  canvas1->cd(1);
+  test->LabelsOption("v >", "X");
+  test->SetBarWidth(0.97);
+  test2->SetBarWidth(0.97);
+  Int_t ci, ca;
+  ca = TColor::GetColor("#006600");
+  test->SetFillColor(ca);
+  ci = TColor::GetColor("#990000");
+  test2->SetFillColor(ci);
+  
+  test->GetYaxis()->SetTitle("Importance (%)");
+  test->GetYaxis()->SetTitleSize(0.045);
+  test->GetYaxis()->CenterTitle();
+  test->GetYaxis()->SetTitleOffset(1.24);
+
+  test->GetYaxis()->SetRangeUser(-7,50);
+  test->SetDirectory(0);
+ 
+  test->Draw("B");
+  test2->Draw("B same");
+
+  canvas1->Update();
+  canvas1->SaveAs(giffilename1); 
 
 }
 
