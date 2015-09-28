@@ -1138,6 +1138,7 @@ void TMVA::MethodBase::TestClassification()
 
    Log() << kINFO <<Form("Dataset[%s] : ",DataInfo().GetName())<< "Loop over test events and fill histograms with classifier response..." << Endl;
    if (mvaProb) Log() << kINFO << "Also filling probability and rarity histograms (on request)..." << Endl;
+   std::vector<Bool_t>* mvaResTypes = mvaRes->GetValueVectorTypes();
    for (Long64_t ievt=0; ievt<GetNEvents(); ievt++) {
 
       const Event* ev = GetEvent(ievt);
@@ -1145,6 +1146,7 @@ void TMVA::MethodBase::TestClassification()
       Float_t w = ev->GetWeight();
 
       if (DataInfo().IsSignal(ev)) {
+	mvaResTypes->push_back(kTRUE);
          mva_s ->Fill( v, w );
          if (mvaProb) {
             proba_s->Fill( (*mvaProb)[ievt][0], w );
@@ -1154,6 +1156,7 @@ void TMVA::MethodBase::TestClassification()
          mva_eff_s ->Fill( v, w );
       }
       else {
+	mvaResTypes->push_back(kFALSE);
          mva_b ->Fill( v, w );
          if (mvaProb) {
             proba_b->Fill( (*mvaProb)[ievt][0], w );

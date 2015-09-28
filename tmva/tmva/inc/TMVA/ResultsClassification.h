@@ -67,10 +67,11 @@ namespace TMVA {
 
       Types::EAnalysisType  GetAnalysisType() { return Types::kClassification; }
 
-
+      std::vector<Bool_t>* GetValueVectorTypes()    { return &fMvaValuesTypes; }
    private:
 
       std::vector< Float_t >  fMvaValues;   //! mva values (Results)
+      std::vector< Bool_t>    fMvaValuesTypes;
       mutable std::vector< Float_t >  fRet;         //! return val
       mutable MsgLogger*      fLogger;      //! message logger
       MsgLogger& Log() const { return *fLogger; }
