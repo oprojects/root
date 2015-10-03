@@ -1463,15 +1463,16 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
     
     //vector to save importances
     std::vector<Double_t> importances(nbits);
+    Double_t importances_norm=0;
     for(int i=0;i<nbits;i++)importances[i]=0;
     
     Double_t SROC,SSROC;//computed ROC value
     
-    int seeds[]={430,451,33,414,135,331,11,451,137,69};
+//     int seeds[]={430,451,33,414,135,331,11,451,137,69};
     for( int n = 0; n < nseeds; n++)
     {
-//         x = rangen -> Integer(range);
-        x = seeds[n];
+        x = rangen -> Integer(range);
+//         x = seeds[n];
 //        for( int n = 0; n < 512; n++)
 //        {
 //         x = n;
@@ -1525,10 +1526,8 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
 		Double_t ny=log(x-y)/0.693147;
                 if(y==0)
 		{
-		    //subseed (adding defualt subseed 0 with roc 0.5)
-                    //ssObj->AddSubSeed(0,0.5);
                    importances[ny]=SROC-0.5;
-//                    importances[y]+=SROC;//temp to tests
+		   importances_norm+=importances[ny];
                    std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<"ROC "<<0.5<<std::endl;
 		   continue;
 		}
@@ -1558,6 +1557,7 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
                 //getting ROC 
                 SSROC=GetROCIntegral(ybitset.to_string(),methodTitle);
                 importances[ny]+=SROC-SSROC;
+		importances_norm+=importances[ny];
 //                 std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<" log "<<log(2.0)<<" x-y "<<x-y<<" "<<std::bitset<32>(x-y)<<" ny "<<ny<<" SROC "<<SROC <<" SSROC "<<SSROC<<" Importance = "<<importances[ny]<<std::endl;
                 //cleaning information
 //                 DeleteAllMethods();
@@ -1571,6 +1571,11 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
                 //std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
             }
         }
+    }
+    //data normalization
+    for(int j=0;j<nbits;j++)
+    {
+      importances[j]=(importances_norm/importances[j])*100;
     }
     for(int j=0;j<nbits;j++)
     {
