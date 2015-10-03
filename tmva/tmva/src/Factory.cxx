@@ -1459,7 +1459,7 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
     const int nbits=loader->GetNVariables();
     std::vector<TString> varNames=loader->GetListOfVariables();
     
-    uint16_t range=pow(2,nbits);
+    long int range=pow(2,nbits);
     
     //vector to save importances
     std::vector<Double_t> importances(nbits);
@@ -1472,6 +1472,7 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
     for( int n = 0; n < nseeds; n++)
     {
         x = rangen -> Integer(range);
+// 	std::cout<<"range "<<range<<" x "<<x<<std::endl;
 //         x = seeds[n];
 //        for( int n = 0; n < 512; n++)
 //        {
@@ -1558,7 +1559,7 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
                 SSROC=GetROCIntegral(ybitset.to_string(),methodTitle);
                 importances[ny]+=SROC-SSROC;
 		importances_norm+=importances[ny];
-//                 std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<" log "<<log(2.0)<<" x-y "<<x-y<<" "<<std::bitset<32>(x-y)<<" ny "<<ny<<" SROC "<<SROC <<" SSROC "<<SSROC<<" Importance = "<<importances[ny]<<std::endl;
+                std::cout<< "SubSeed: "<< y <<" y:" <<ybitset<<" x-y "<<x-y<<" "<<std::bitset<32>(x-y)<<" ny "<<ny<<" SROC "<<SROC <<" SSROC "<<SSROC<<" Importance = "<<importances[ny]<<std::endl;
                 //cleaning information
 //                 DeleteAllMethods();
 // 		delete ssmethod;
@@ -1575,7 +1576,8 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
     //data normalization
     for(int j=0;j<nbits;j++)
     {
-      importances[j]=(importances_norm/importances[j])*100;
+      //to evit divide by zero if some Importance is zero
+      if(importances[j]!=0) importances[j]=(importances_norm/importances[j])*100;
     }
     for(int j=0;j<nbits;j++)
     {
@@ -1613,8 +1615,8 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
   
   TCanvas* canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 1000, 1000);
   canvas1->Divide(1,1);
-  TH1F* test  = new TH1F("test","",9, 0, 9);
-  TH1F* test2  = new TH1F("test2","",9, 0, 9);
+  TH1F* test  = new TH1F("test","",nbits, 0, nbits);
+  TH1F* test2  = new TH1F("test2","",nbits, 0, nbits);
 
   gStyle->SetOptStat(000000);
   int count = 1;
@@ -1626,23 +1628,11 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
 	normalization = normalization + importances[i];
     }
 
-//   while ( getline(stream, line) )
-//     {
-//       istringstream inp(line.c_str());
-//       Float_t ie_importance;
-//       inp >> ie_importance;
-    
-//       normalization = normalization + ie_importance;
-//       ROC_importances[count] = ie_importance;
-//       count++;
-//     }
-
   Float_t roc = 0.0;
   
   gStyle->SetTitleXOffset(0.4);
   gStyle->SetTitleXOffset(1.2);
                    
-  char* label[9]={"fLength","fWidth","fSize","fConc","fAsym","fM3Long","fM3Trans","fAlpha","fDist"};
 
   Double_t x_ie[nbits], y_ie[nbits];
   for (Int_t i = 1; i < nbits+1; i++)
@@ -1651,7 +1641,7 @@ void TMVA::Factory::EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types:
      roc = 100.0*importances[i-1]/normalization;
      y_ie[i-1]=roc;
 //      std::cout<<" i-1 "<<i-1<<" roc "<<roc<<endl;
-     test->GetXaxis()->SetBinLabel(i,label[i-1]);
+     test->GetXaxis()->SetBinLabel(i,varNames[i-1].Data());
      if (roc>0){
      test->SetBinContent(i,roc);
      }
