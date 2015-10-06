@@ -1476,6 +1476,7 @@ void TMVA::Factory::EvaluateImportance(DataLoader *loader, UInt_t nseeds, Types:
 //    delete smethod;
       fgTargetFile->cd();
       fgTargetFile->Delete(seedloader->GetName());
+      fgTargetFile->Delete(Form("%s;1",seedloader->GetName()));
       fgTargetFile->Flush();
       delete seedloader;
       fMethodsMap.clear();
@@ -1524,6 +1525,7 @@ void TMVA::Factory::EvaluateImportance(DataLoader *loader, UInt_t nseeds, Types:
             //cleaning information
             fgTargetFile->cd();
             fgTargetFile->Delete(subseedloader->GetName());//deleting directories in global file
+            fgTargetFile->Delete(Form("%s;1",subseedloader->GetName()));//deleting directories in global file
             fgTargetFile->Flush();
             delete subseedloader;
             fMethodsMap.clear();
@@ -1534,16 +1536,6 @@ void TMVA::Factory::EvaluateImportance(DataLoader *loader, UInt_t nseeds, Types:
          }
       }
    }
-//     //data normalization
-//     for(int j=0;j<nbits;j++)
-//     {
-//       //to evit divide by zero if some Importance is zero
-//       if(importances[j]!=0) importances[j]=(importances_norm/importances[j]);
-//     }
-//     for(int j=0;j<nbits;j++)
-//     {
-//         std::cout<<varNames[(nbits-1)-j]<<" = "<<importances[j]<<std::endl;
-//     }
 
 //Output (plot)
    std::string gif1  = "tmva_relative.gif";
