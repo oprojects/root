@@ -86,6 +86,8 @@
 #include <list>
 #include <bitset>
 
+#include<omp.h>
+
 const Int_t  MinNoTrainingEvents = 10;
 //const Int_t  MinNoTestEvents     = 1;
 TFile *TMVA::Factory::fgTargetFile = 0;
@@ -1439,7 +1441,6 @@ void TMVA::Factory::EvaluateImportance(DataLoader *loader, UInt_t nseeds, Types:
    for (int i = 0; i < nbits; i++)importances[i] = 0;
 
    Double_t SROC, SSROC; //computed ROC value
-
    for (UInt_t n = 0; n < nseeds; n++) {
       x = rangen -> Integer(range);
 
@@ -1473,15 +1474,23 @@ void TMVA::Factory::EvaluateImportance(DataLoader *loader, UInt_t nseeds, Types:
       std::cout << "Seed: n " << n << " x " << x << " xbitset:" << xbitset << "  ROC " << SROC << std::endl;
 
       //cleaning information to process subseeds
-//    delete smethod;
+      TMVA::MethodBase *smethod=dynamic_cast<TMVA::MethodBase*>(fMethodsMap[xbitset.to_string().c_str()][0][0]);
+      TMVA::ResultsClassification  *sresults = (TMVA::ResultsClassification*)smethod->Data()->GetResults(smethod->GetMethodName(), Types::kTesting, Types::kClassification);
+      sresults->Delete();
+      delete sresults;
       fgTargetFile->cd();
       fgTargetFile->Delete(seedloader->GetName());
       fgTargetFile->Delete(Form("%s;1",seedloader->GetName()));
       fgTargetFile->Flush();
       delete seedloader;
-      fMethodsMap.clear();
+      std::vector<TMVA::VariableTransformBase *>::iterator trfIt = fDefaultTrfs.begin();
       gSystem->Exec(Form("rm -rf %s", xbitset.to_string().c_str()));
-
+      
+      this->DeleteAllMethods();
+      
+      fMethodsMap.clear();
+      //removing global result because it is requiring alot amount of RAM for all seeds
+      
       for (uint32_t i = 0; i < 32; ++i) {
          if (x & (1 << i)) {
             y = x & ~(1 << i);
@@ -1523,14 +1532,19 @@ void TMVA::Factory::EvaluateImportance(DataLoader *loader, UInt_t nseeds, Types:
             importances_norm += importances[ny];
             std::cout << "SubSeed: " << y << " y:" << ybitset << " x-y " << x - y << " " << std::bitset<32>(x - y) << " ny " << ny << " SROC " << SROC << " SSROC " << SSROC << " Importance = " << importances[ny] << std::endl;
             //cleaning information
+	    TMVA::MethodBase *ssmethod=dynamic_cast<TMVA::MethodBase*>(fMethodsMap[ybitset.to_string().c_str()][0][0]);
+            TMVA::ResultsClassification *ssresults = (TMVA::ResultsClassification*)ssmethod->Data()->GetResults(ssmethod->GetMethodName(), Types::kTesting, Types::kClassification);
+	    ssresults->Delete();
+            delete ssresults;
             fgTargetFile->cd();
             fgTargetFile->Delete(subseedloader->GetName());//deleting directories in global file
             fgTargetFile->Delete(Form("%s;1",subseedloader->GetName()));//deleting directories in global file
             fgTargetFile->Flush();
             delete subseedloader;
+            this->DeleteAllMethods();
             fMethodsMap.clear();
             gSystem->Exec(Form("rm -rf %s", ybitset.to_string().c_str()));
-
+            
             //debug information
             //std::cout << " seed = "<<n<<" bit i = "<<i<<" subseed y = "<<std::bitset<32>(y)<<std::endl;
          }
