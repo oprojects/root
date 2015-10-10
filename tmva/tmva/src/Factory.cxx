@@ -1586,11 +1586,10 @@ void TMVA::Factory::EvaluateImportance(DataLoader *loader, UInt_t nseeds, Types:
       test->GetXaxis()->SetBinLabel(i, varNames[i - 1].Data());
       if (roc > 0) {
          test->SetBinContent(i, roc);
-      }
+      }else test->SetBinContent(i, 0);
       if (roc < 0) {
          test2->SetBinContent(i, roc);
-
-      }
+      }else test2->SetBinContent(i, 0);
    }
    TGraph *g_ie = new TGraph(nbits + 2, x_ie, y_ie);
    g_ie->SetTitle("");
