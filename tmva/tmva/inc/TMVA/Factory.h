@@ -120,6 +120,7 @@ namespace TMVA {
       void EvaluateAllVariables(DataLoader *loader, TString options = "" ); 
       
       void EvaluateImportance( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, const char *theOption = "" );
+      void EvaluateImportance( DataLoader *loader,Types::EMVA theMethod,  TString methodTitle, const char *theOption = "" );
       
       
       // delete all methods and reset the method vector
