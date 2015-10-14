@@ -406,16 +406,30 @@ check_libcompat() {
 
     case $arch in
     macosx)
-        logmsg " lipo $chklibcompat -verify_arch i386"
-        if lipo $chklibcompat -verify_arch i386 ; then
+        case $chklibcompat in
+        *.tbd)
             ret=1
-        fi
+            ;;
+        *)
+            logmsg " lipo $chklibcompat -verify_arch i386"
+            if lipo $chklibcompat -verify_arch i386 ; then
+                ret=1
+            fi
+            ;;
+        esac
         ;;
     macosx64)
-        logmsg " lipo $chklibcompat -verify_arch x86_64"
-        if lipo $chklibcompat -verify_arch x86_64 ; then
+        case $chklibcompat in
+        *.tbd)
             ret=1
-        fi
+            ;;
+        *)
+            logmsg " lipo $chklibcompat -verify_arch x86_64"
+            if lipo $chklibcompat -verify_arch x86_64 ; then
+                ret=1
+            fi
+            ;;
+        esac
         ;;
     esac
 
@@ -620,7 +634,7 @@ check_library() {
     done
     slibs=""
     for i in $lib ; do
-        for ext in .so .sl .dylib .dll.a ; do      # .dll.a for cygwin gcc
+        for ext in .so .sl .tbd .dylib .dll.a ; do      # .dll.a for cygwin gcc
             slibs="$slibs $i$ext"
         done
     done
@@ -4542,7 +4556,6 @@ check_explicit "$enable_hdfs" "$enable_hdfs_explicit" \
 #
 # Check for libdns_sd
 #
-bonjourcppflags=
 case $platform in
     linux|macosx|ios)
         ;;
@@ -4627,9 +4640,6 @@ if test ! "x$enable_bonjour" = "xno" ; then
         if test "x$avahiincdir" = "x"; then
             enable_bonjour="no"
         fi
-    fi
-    if test ! "x$enable_bonjour" = "xno" ; then
-       bonjourcppflags="-DBUILD_BONJOUR"
     fi
 fi
 check_explicit "$enable_bonjour" "$enable_bonjour_explicit" \
@@ -5251,7 +5261,7 @@ if test "x$enable_xrootd" = "xyes" ; then
    #
    # Check libraries now
    hasxrdutils="no"
-   libxrdoucbjr=""
+   libxrdutils=""
    #
    # Release date of version 3.1.0 containing the new lib packaging
    decreftre=300000000
@@ -5291,8 +5301,8 @@ if test "x$enable_xrootd" = "xyes" ; then
       else
          xrdlibext="$found_ext"
          tmpxrdlibdir="$found_dir"
-         if test "x$ll" = "xlibXrdUtils" || test "x$ll" = "xlibXrdOuc"; then
-            libxrdoucbjr="$found_lib"
+         if test "x$ll" = "xlibXrdUtils"; then
+            libxrdutils="$found_lib"
          fi
       fi
    done
@@ -5318,15 +5328,9 @@ if test "x$enable_xrootd" = "xyes" ; then
    fi
 
    #
-   # Check if bonjour is available for code potentially using it ...
+   # Set xrdlibdir if XrdUtils is available for code potentially using it ...
    if test "x$enable_xrootd" = "xyes"; then
       xrdlibdir="$tmpxrdlibdir"
-      if test "x$enable_bonjour" = "xyes"; then
-         check_symbol XrdOucBonjour "$libxrdoucbjr" "$xrdlibdir"
-         if test  $found_symbol -eq 0 ; then
-            bonjourcppflags=
-         fi
-      fi
    fi
 
    #
@@ -7502,7 +7506,6 @@ sed -e "s|@aclocaldir@|$aclocaldir|"            \
     -e "s|@asimagelib@|$asimagelib|"            \
     -e "s|@asimagelibdir@|$asimagelibdir|"      \
     -e "s|@bindir@|$bindir|"                    \
-    -e "s|@bonjourcppflags@|$bonjourcppflags|"  \
     -e "s|@buildasimage@|$enable_asimage|"      \
     -e "s|@builtinafterimage@|$enable_builtin_afterimage|"  \
     -e "s|@buildftgl@|$enable_builtin_ftgl|"    \
@@ -7827,6 +7830,7 @@ sed \
     -e "s|@hasstdexpstringview@|$hasstdexpstringview|" \
     -e "s|@hasllvm@|$hasllvm|"             \
     -e "s|@llvmdir@|$llvmdir|"             \
+    -e "s|@usemt@|undef|"                  \
     < RConfigure.tmp > RConfigure-out.tmp
 rm -f RConfigure.tmp
 
