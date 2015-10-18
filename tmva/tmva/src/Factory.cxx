@@ -1823,291 +1823,171 @@ void TMVA::Factory::EvaluateImportance(DataLoader *loader, Types::EMVA theMethod
 }
 
 
-
-
-
-/*************************************************************/
-/* Internal functions to compute all  elements in a dataset  */
-/* Using bit manipulation templates                          */
-/*    bit counting, mask, search and bitwise Xor             */
-/*************************************************************/
-
-template <typename T, int tot, int shift, T M>
-struct extend_helper {
-  static T const mask = extend_helper<T,tot, shift*2, M | (M<<shift)>::mask;
-};
-
-template <typename T, int tot, T M>
-struct extend_helper <T,tot,tot,M> {
-  static T const mask = M;
-};
-
-template <typename T, int shift, T M>
-struct extend {
-  static T const mask = extend_helper<T,sizeof(T)*8,shift,M>::mask;
-};
-
-template <typename T, int tot, int now>
-struct count_helper {
-  static T const tmp = ~(~(T(1) << now) + 1);
-  static T const mask = extend<T,2*now,tmp>::mask;
-  static int count(T n) {
-    T one = n & mask;
-    T two = ((n & (mask << now)) >> now);
-    n = one + two;
-    return count_helper<T,tot,2*now>::count(n);
-  }
-};
-
-template <typename T, int tot>
-struct count_helper<T,tot,tot> {
-  static int count(T n) {
-    return (int)n;
-  }
-};
-
-template <typename T>
-int count_bits(T n) {
-  return count_helper<T,sizeof(T)*8,1>::count(n);
-};
-
-template <typename T>
-inline T mask_lowest_bit(T n) {
-  //return ((~n) + 1) & n;
-  return (-n) & n;
-}
-
-template <typename T>
-inline T bitmask(int width) {
-  return ~(~(T(1) << width) + 1);
-}
-
-template <typename T>
-char const * bits_str(T n, int width) {
-  static int const size = sizeof(T)*8;
-  static char buf[size+1] = {0};
-  int i,j;
-  for (i=0,j=size; i < width; ++i,--j)
-    buf[j-1] = '0'+((n>>i)&0x1);
-  return &buf[j];
-}
-
-
-template<class datatype> void bit_shuffle(datatype number, float AUC, float LFr[], int nvar, datatype vsize)
-{
-  int const width = nvar;                        
-  datatype mask = bitmask<datatype>(width);   
-  number &= mask;
-  datatype n = number;                        
-  datatype end = 1 << width;                  
-  datatype add = mask_lowest_bit(~n);         
-  datatype valid_size = vsize;
-  datatype nzerobits = count_bits((~n) & mask);
-  if (nzerobits >= valid_size){ 
-    do {
-      datatype zerobits = count_bits((~n) & mask);
-      if (zerobits == valid_size)
-	LFr[n] += AUC;	
-      n = (n+add) | number;
-    } while (n < end);
-  }
-};
-
-
-
-std::vector<Double_t> importances_calc(int nvar,int roc_size,std::vector<Double_t> ROC)
-{
-  std::vector<Double_t> results(nvar);
-  float m;
-  float* LFraw = NULL;
-  std::ofstream ofs2("importances.txt",  std::ios::trunc);
-  if (!ofs2.is_open()) {
-    std::cout <<"Could not open outfile2 " <<"importances.txt"<<": " <<strerror(errno) <<std::endl;
-    exit(0);
-  }
-
-  LFraw = new float[roc_size];
-  for (int i = 0; i < roc_size; i++)
-    LFraw[i]=0.0;
-
-  float x;
-  float y;
-  for (unsigned z = 0; z < nvar; z++)
-    {
-      LFraw = new float[roc_size];
-      for (int i = 0; i < roc_size; i++)
-      LFraw[i]=0.0;
-      x = y =0.0;
-      for (int j = 0; j < roc_size; j++)
-        {
-      	  unsigned num = j;
-           bit_shuffle<unsigned>(num, ROC[num], LFraw, nvar, z);
-    	}
-      
-      for (int k = 0; k < roc_size; k++){
-	x = LFraw[k];
-	double cardinality = 1.0*(nvar - z);
-
-	if (x){
-          y = 1.0*((pow(2.,cardinality) - x)/pow(2.,cardinality));
-	  results[z]+=y;
-	  std::cout<<k<<" "<<y<<std::endl;
-// 	  std::cout<<y<<std::endl;
-// 	  ofs2.write((char*)&k, sizeof(k));
-// 	  ofs2.write((char*)&y, sizeof(y));
-	}
-      }
-      delete [] LFraw;
-      LFraw = NULL;
-    }	
-  /* clean-up */
-  delete [] LFraw;
-  LFraw = NULL;
-
-  ofs2.close();
-
-  return results;
-}
-
-
 void TMVA::Factory::EvaluateImportanceAll(DataLoader *loader, Types::EMVA theMethod,  TString methodTitle, const char *theOption)
 {
-
-   uint64_t x = 0;
-   uint64_t y = 0;
-
-   //getting number of variables and variable names from loader
-   const int nbits = loader->GetNVariables();
-   std::vector<TString> varNames = loader->GetListOfVariables();
-
-   long int range = pow(2, nbits);
-
-   //vector to save importances
-   std::vector<Double_t> importances(nbits);
-   //vector to save ROC
-   std::vector<Double_t> ROC(range);
-   ROC[0]=0.5;
-   Double_t importances_norm = 0;
-   for (int i = 0; i < nbits; i++)importances[i] = 0;
-
-   Double_t SROC, SSROC; //computed ROC value
-   for ( x = 1; x <range ; x++) {
-      
-      std::bitset<32>  xbitset(x);
-      if (x == 0) continue; //dataloader need at least one variable
-
-      //creating loader for seed
-      TMVA::DataLoader *seedloader = new TMVA::DataLoader(xbitset.to_string());
-
-      //adding variables from seed
-      for (int index = 0; index < nbits; index++) {
-         if (xbitset[index]) seedloader->AddVariable(varNames[index], 'F');
-      }
-
-      //Loading Dataset
-      seedloader->AddSignalTree(loader->fTreeS, loader->fSignalWeight);
-      seedloader->AddBackgroundTree(loader->fTreeB, loader->fBackgroundWeight);
-      seedloader->PrepareTrainingAndTestTree(loader->GetSigCut(), loader->GetBkgCut(), loader->GetSpliOptions());
-
-      //Booking Seed
-      BookMethod(seedloader, theMethod, methodTitle, theOption);
-
-      //Train/Test/Evaluation
-      TrainAllMethods();
-      TestAllMethods();
-      EvaluateAllMethods();
-
-      //getting ROC
-      ROC[x] = GetROCIntegral(xbitset.to_string(), methodTitle);
-      
-      std::cout << "Seed: " << " x " << x << " xbitset:" << xbitset << "  ROC " << ROC[x] << std::endl;
-
-      //cleaning information to process subseeds
-      TMVA::MethodBase *smethod=dynamic_cast<TMVA::MethodBase*>(fMethodsMap[xbitset.to_string().c_str()][0][0]);
-      TMVA::ResultsClassification  *sresults = (TMVA::ResultsClassification*)smethod->Data()->GetResults(smethod->GetMethodName(), Types::kTesting, Types::kClassification);
-      sresults->Delete();
-      delete sresults;
-      fgTargetFile->cd();
-      fgTargetFile->Delete(seedloader->GetName());
-      fgTargetFile->Delete(Form("%s;1",seedloader->GetName()));
-      fgTargetFile->Flush();
-      delete seedloader;
-      std::vector<TMVA::VariableTransformBase *>::iterator trfIt = fDefaultTrfs.begin();
-      gSystem->Exec(Form("rm -rf %s", xbitset.to_string().c_str()));
-      
-      this->DeleteAllMethods();
-      
-      fMethodsMap.clear();
-      //removing global result because it is requiring alot amount of RAM for all seeds
-      
+  
+  uint64_t x = 0;
+  uint64_t y = 0;
+  
+  //getting number of variables and variable names from loader
+  const int nbits = loader->GetNVariables();
+  std::vector<TString> varNames = loader->GetListOfVariables();
+  
+  long int range = pow(2, nbits);
+  
+  //vector to save importances
+  std::vector<Double_t> importances(nbits);
+  //vector to save ROC
+  std::vector<Double_t> ROC(range);
+  ROC[0]=0.5;
+  Double_t importances_norm = 0;
+  for (int i = 0; i < nbits; i++)importances[i] = 0;
+  
+  Double_t SROC, SSROC; //computed ROC value
+  for ( x = 1; x <range ; x++) {
+    
+    std::bitset<32>  xbitset(x);
+    if (x == 0) continue; //dataloader need at least one variable
+    
+    //creating loader for seed
+    TMVA::DataLoader *seedloader = new TMVA::DataLoader(xbitset.to_string());
+    
+    //adding variables from seed
+    for (int index = 0; index < nbits; index++) {
+      if (xbitset[index]) seedloader->AddVariable(varNames[index], 'F');
+    }
+    
+    //Loading Dataset
+    seedloader->AddSignalTree(loader->fTreeS, loader->fSignalWeight);
+    seedloader->AddBackgroundTree(loader->fTreeB, loader->fBackgroundWeight);
+    seedloader->PrepareTrainingAndTestTree(loader->GetSigCut(), loader->GetBkgCut(), loader->GetSpliOptions());
+    
+    //Booking Seed
+    BookMethod(seedloader, theMethod, methodTitle, theOption);
+    
+    //Train/Test/Evaluation
+    TrainAllMethods();
+    TestAllMethods();
+    EvaluateAllMethods();
+    
+    //getting ROC
+    ROC[x] = GetROCIntegral(xbitset.to_string(), methodTitle);
+    
+    std::cout << "Seed: " << " x " << x << " xbitset:" << xbitset << "  ROC " << ROC[x] << std::endl;
+    
+    //cleaning information to process subseeds
+    TMVA::MethodBase *smethod=dynamic_cast<TMVA::MethodBase*>(fMethodsMap[xbitset.to_string().c_str()][0][0]);
+    TMVA::ResultsClassification  *sresults = (TMVA::ResultsClassification*)smethod->Data()->GetResults(smethod->GetMethodName(), Types::kTesting, Types::kClassification);
+    sresults->Delete();
+    delete sresults;
+    fgTargetFile->cd();
+    fgTargetFile->Delete(seedloader->GetName());
+    fgTargetFile->Delete(Form("%s;1",seedloader->GetName()));
+    fgTargetFile->Flush();
+    delete seedloader;
+    std::vector<TMVA::VariableTransformBase *>::iterator trfIt = fDefaultTrfs.begin();
+    gSystem->Exec(Form("rm -rf %s", xbitset.to_string().c_str()));
+    
+    this->DeleteAllMethods();
+    
+    fMethodsMap.clear();
+    //removing global result because it is requiring alot amount of RAM for all seeds
   }
-/*Computing importance*/
-importances=importances_calc(nbits,range,ROC);
-//Output (plot)
-   std::string gif1  = "tmva_relative.gif";
-
-   char giffilename1[80];
-
-   sprintf(giffilename1, gif1.c_str());
-
-
-   TCanvas *canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 1000, 1000);
-   canvas1->Divide(1, 1);
-   TH1F *test  = new TH1F("test", "", nbits, 0, nbits);
-   TH1F *test2  = new TH1F("test2", "", nbits, 0, nbits);
-
-   gStyle->SetOptStat(000000);
-   
-   Float_t normalization = 0.0;
-   for (int i = 0; i < nbits; i++) {
+  
+  
+  for ( x = 0; x <range ; x++) 
+  {
+    SROC=ROC[x];
+    for (uint32_t i = 0; i < 32; ++i) {
+      if (x & (1 << i)) {
+	y = x & ~(1 << i);
+	std::bitset<32>  ybitset(y);
+	//need at least one variable
+	//NOTE: if subssed is zero then is the special case
+	//that count in xbitset is 1
+	Double_t ny = log(x - y) / 0.693147;
+	if (y == 0) {
+	  importances[ny] = SROC - 0.5;
+	  std::cout << "SubSeed: " << y << " y:" << ybitset << "ROC " << 0.5 << std::endl;
+	  continue;
+	}
+	
+	//getting ROC
+	SSROC = ROC[y];
+	importances[ny] += SROC - SSROC;
+	std::cout << "SubSeed: " << y << " y:" << ybitset << " x-y " << x - y << " " << std::bitset<32>(x - y) << " ny " << ny << " SROC " << SROC << " SSROC " << SSROC << " Importance = " << importances[ny] << std::endl;
+	//cleaning information
+      }
+      
+    }
+  }
+    
+    //Output (plot)
+    std::string gif1  = "tmva_relative.gif";
+    
+    char giffilename1[80];
+    
+    sprintf(giffilename1, gif1.c_str());
+    
+    
+    TCanvas *canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 1000, 1000);
+    canvas1->Divide(1, 1);
+    TH1F *test  = new TH1F("test", "", nbits, 0, nbits);
+    TH1F *test2  = new TH1F("test2", "", nbits, 0, nbits);
+    
+    gStyle->SetOptStat(000000);
+    
+    Float_t normalization = 0.0;
+    for (int i = 0; i < nbits; i++) {
       normalization = normalization + importances[i];
-   }
-
-   Float_t roc = 0.0;
-
-   gStyle->SetTitleXOffset(0.4);
-   gStyle->SetTitleXOffset(1.2);
-
-
-   Double_t x_ie[nbits], y_ie[nbits];
-   for (Int_t i = 1; i < nbits + 1; i++) {
+    }
+    
+    Float_t roc = 0.0;
+    
+    gStyle->SetTitleXOffset(0.4);
+    gStyle->SetTitleXOffset(1.2);
+    
+    
+    Double_t x_ie[nbits], y_ie[nbits];
+    for (Int_t i = 1; i < nbits + 1; i++) {
       x_ie[i - 1] = (i - 1) * 1.;
       roc = 100.0 * importances[i - 1] / normalization;
       y_ie[i - 1] = roc;
       std::cout << Form("%s = %f ", varNames[i - 1].Data(), roc)<<"%"<< std::endl;
       test->GetXaxis()->SetBinLabel(i, varNames[i - 1].Data());
       if (roc > 0) {
-         test->SetBinContent(i, roc);
+	test->SetBinContent(i, roc);
       }else test->SetBinContent(i, 0);
       if (roc < 0) {
-         test2->SetBinContent(i, roc);
+	test2->SetBinContent(i, roc);
       }else test2->SetBinContent(i, 0);
-   }
-   TGraph *g_ie = new TGraph(nbits + 2, x_ie, y_ie);
-   g_ie->SetTitle("");
-
-   canvas1->cd(1);
-   test->LabelsOption("v >", "X");
-   test->SetBarWidth(0.97);
-   test2->SetBarWidth(0.97);
-   Int_t ci, ca;
-   ca = TColor::GetColor("#006600");
-   test->SetFillColor(ca);
-   ci = TColor::GetColor("#990000");
-   test2->SetFillColor(ci);
-
-   test->GetYaxis()->SetTitle("Importance (%)");
-   test->GetYaxis()->SetTitleSize(0.045);
-   test->GetYaxis()->CenterTitle();
-   test->GetYaxis()->SetTitleOffset(1.24);
-
-   test->GetYaxis()->SetRangeUser(-7, 50);
-   test->SetDirectory(0);
-
-   test->Draw("B");
-   test2->Draw("B same");
-
-   canvas1->Update();
-   canvas1->SaveAs(giffilename1);
-
-}
+    }
+    TGraph *g_ie = new TGraph(nbits + 2, x_ie, y_ie);
+    g_ie->SetTitle("");
+    
+    canvas1->cd(1);
+    test->LabelsOption("v >", "X");
+    test->SetBarWidth(0.97);
+    test2->SetBarWidth(0.97);
+    Int_t ci, ca;
+    ca = TColor::GetColor("#006600");
+    test->SetFillColor(ca);
+    ci = TColor::GetColor("#990000");
+    test2->SetFillColor(ci);
+    
+    test->GetYaxis()->SetTitle("Importance (%)");
+    test->GetYaxis()->SetTitleSize(0.045);
+    test->GetYaxis()->CenterTitle();
+    test->GetYaxis()->SetTitleOffset(1.24);
+    
+    test->GetYaxis()->SetRangeUser(-7, 50);
+    test->SetDirectory(0);
+    
+    test->Draw("B");
+    test2->Draw("B same");
+    
+    canvas1->Update();
+    canvas1->SaveAs(giffilename1);
+    
+  }
+  
