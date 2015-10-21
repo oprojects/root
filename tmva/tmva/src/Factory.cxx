@@ -1786,12 +1786,12 @@ void TMVA::Factory::EvaluateImportance(DataLoader *loader, Types::EMVA theMethod
       y_ie[i - 1] = roc;
       std::cout << Form("%s = %f ", varNames[i - 1].Data(), roc)<<"%"<< std::endl;
       test->GetXaxis()->SetBinLabel(i, varNames[i - 1].Data());
-      if (roc > 0) {
+//       if (roc > 0) {
          test->SetBinContent(i, roc);
-      }
-      if (roc < 0) {
-         test2->SetBinContent(i, roc);
-      }
+//       }
+//       if (roc < 0) {
+// //          test2->SetBinContent(i+1, roc);
+//       }
    }
    TGraph *g_ie = new TGraph(nbits + 2, x_ie, y_ie);
    g_ie->SetTitle("");
@@ -1959,8 +1959,8 @@ void TMVA::Factory::EvaluateImportanceAll(DataLoader *loader, Types::EMVA theMet
 	test->SetBinContent(i, roc);
       }else test->SetBinContent(i, 0);
       if (roc < 0) {
-	test2->SetBinContent(i, roc);
-      }else test2->SetBinContent(i, 0);
+	test2->SetBinContent(i+1, roc);
+      }else test2->SetBinContent(i+1, 0);
     }
     TGraph *g_ie = new TGraph(nbits + 2, x_ie, y_ie);
     g_ie->SetTitle("");
