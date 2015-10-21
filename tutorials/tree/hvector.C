@@ -20,72 +20,13 @@
 
 void write()
 {
-
-   TFile *f = TFile::Open("hvector.root","RECREATE");
-
-   if (!f) { return; }
-
-   // Create one histograms
-   TH1F *hpx = new TH1F("hpx","This is the px distribution",100,-4,4);
-   hpx->SetFillColor(48);
-
-   std::vector<float> vpx;
-   std::vector<float> vpy;
-   std::vector<float> vpz;
-   std::vector<float> vrand;
-
-   // Create a TTree
-   TTree *t = new TTree("tvec","Tree with vectors");
-   t->Branch("vpx",&vpx);
-   t->Branch("vpy",&vpy);
-   t->Branch("vpz",&vpz);
-   t->Branch("vrand",&vrand);
-
-
-  // Create a new canvas.
-   TCanvas *c1 = new TCanvas("c1","Dynamic Filling Example",200,10,700,500);
-   c1->SetFillColor(42);
-   c1->GetFrame()->SetFillColor(21);
-   c1->GetFrame()->SetBorderSize(6);
-   c1->GetFrame()->SetBorderMode(-1);
-
-   gRandom->SetSeed();
-   const Int_t kUPDATE = 1000;
-   for (Int_t i = 0; i < 25000; i++) {
-      Int_t npx = (Int_t)(gRandom->Rndm(1)*15);
-
-      vpx.clear();
-      vpy.clear();
-      vpz.clear();
-      vrand.clear();
-
-      for (Int_t j = 0; j < npx; ++j) {
-
-         Float_t px,py,pz;
-         gRandom->Rannor(px,py);
-         pz = px*px + py*py;
-         Float_t random = gRandom->Rndm(1);
-
-         hpx->Fill(px);
-
-         vpx.push_back(px);
-         vpy.push_back(py);
-         vpz.push_back(pz);
-         vrand.push_back(random);
-
-      }
-      if (i && (i%kUPDATE) == 0) {
-         if (i == kUPDATE) hpx->Draw();
-         c1->Modified();
-         c1->Update();
-         if (gSystem->ProcessEvents())
-            break;
-      }
-      t->Fill();
-   }
-   f->Write();
-
-   delete f;
+   TFile f("tree.root","recreate");
+   TTree t1("t1","a simple Tree with simple variables");
+   Float_t px, py, pz;
+   t1.Branch("px",&px,"px/F");
+   t1.Branch("py",&py,"py/F");
+   t1.Branch("pz",&pz,"pz/F");
+   
 }
 
 
