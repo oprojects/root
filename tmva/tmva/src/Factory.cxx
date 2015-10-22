@@ -1424,6 +1424,14 @@ void TMVA::Factory::EvaluateAllMethods(void)
 
 void TMVA::Factory::EvaluateImportance(DataLoader *loader, UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, const char *theOption)
 {
+  if(nseeds<1) EvaluateImportanceAll(loader,theMethod,methodTitle,theOption);
+  else if(nseeds==1) EvaluateImportanceDefault(loader,theMethod,methodTitle,theOption);
+  else EvaluateImportanceInternal(loader,nseeds,theMethod,methodTitle,theOption);
+}
+
+
+void TMVA::Factory::EvaluateImportanceInternal(DataLoader *loader, UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, const char *theOption)
+{
    TRandom3 *rangen = new TRandom3(0);  //Random Gen.
 
    uint64_t x = 0;
@@ -1626,7 +1634,7 @@ long int sum(long int i)
   for(long int n=0;n<i;n++) _sum+=pow(2,n);
   return _sum;
 }
-void TMVA::Factory::EvaluateImportance(DataLoader *loader, Types::EMVA theMethod,  TString methodTitle, const char *theOption)
+void TMVA::Factory::EvaluateImportanceDefault(DataLoader *loader, Types::EMVA theMethod,  TString methodTitle, const char *theOption)
 {
 
    uint64_t x = 0;
