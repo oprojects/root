@@ -598,7 +598,6 @@ ALLEXECS     :=
 INCLUDEFILES :=
 
 ##### RULES #####
-#$(ALLHDRS)  : include/module.modulemap
 .SUFFIXES: .cxx .mm .d
 .PRECIOUS: include/%.h
 
@@ -810,7 +809,7 @@ $(COMPILEDATA): $(ROOT_SRCDIR)/config/Makefile.$(ARCH) config/Makefile.comp Make
 	   "$(EXPLICITLINK)"
 
 include/module.modulemap:    $(ROOT_SRCDIR)/build/unix/module.modulemap
-		cp $< $@
+	cp $< $@
 
 # We rebuild GITCOMMITH only when we would re-link libCore anyway.
 # Thus it depends on all dependencies of libCore (minus TROOT.o
@@ -1034,6 +1033,7 @@ distclean:: clean
 	-@mv -f include/RConfigure.h include/RConfigure.h-
 	-@mv -f include/RConfigOptions.h include/RConfigOptions.h-
 	@rm -f include/*.h $(ROOTMAP) $(CORELIB) $(COREMAP)
+	@rm -f include/module.modulemap
 	-@mv -f include/RConfigure.h- include/RConfigure.h
 	-@mv -f include/RConfigOptions.h- include/RConfigOptions.h
 	@rm -f bin/*.dll bin/*.exp bin/*.lib bin/*.pdb \
@@ -1081,7 +1081,7 @@ maintainer-clean:: distclean
 	@rm -rf bin lib include htmldoc system.rootrc config/Makefile.config \
 	   config/Makefile.comp $(ROOTRC) etc/system.rootauthrc \
 	   etc/system.rootdaemonrc etc/root.mimes etc/daemons/rootd.rc.d \
-	   etc/daemons/rootd.xinetd etc/daemons/proofd.rc.d \
+	   etc/daemons/rootd.xinetd etc/daemons/proofd.rc.d etc/cling \
 	   etc/daemons/proofd.xinetd main/src/proofserv.sh main/src/roots.sh \
 	   macros/html.C \
 	   build/misc/root-help.el build-arch-stamp build-indep-stamp \
