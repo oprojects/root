@@ -535,6 +535,8 @@ namespace cling {
     ///                                  starting from the last.
     ///
     void unload(unsigned numberOfTransactions);
+    void runAndRemoveStaticDestructors();
+    void runAndRemoveStaticDestructors(unsigned numberOfTransactions);
 
     bool isPrintingDebug() const { return m_PrintDebug; }
     void enablePrintDebug(bool print = true) { m_PrintDebug = print; }

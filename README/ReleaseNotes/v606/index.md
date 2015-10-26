@@ -56,6 +56,8 @@ We reduced thread serialization in `TClass::GetCheckSum`, `TClass::GetBaseClassO
 
 `TObjArray::Delete` was updated to allow its caller to explicitly avoid costly checks (extra RecursiveRemove and lock)
 
+We removed the need to create a TThread object per thread in a multi-threaded application.
+
 ### TDirectory::TContext
 
 We added a default constructor to `TDirectory::TContext` which record the current directory
@@ -205,6 +207,12 @@ The ending of a polyline creation is based on the closeness of the two last
 entered points. The previous algorithm was based on user coordinates. It is now
 based on pixel to avoid the problem reported here: https://root.cern.ch/phpBB3/viewtopic.php?f=3&t=20343
 
+### TCanvas
+
+When the first canvas created by ROOT was in batch mode, it was note possible to
+comme back in interactive mode for the next canvases. this problem was reported here:
+https://root.cern.ch/phpBB3/viewtopic.php?f=3&t=20354
+
 ## 3D Graphics Libraries
 
 
@@ -266,6 +274,7 @@ If host has several network interfaces, one could select one for binding:
 ### Notebooks
 We provided integration of ROOT with Jupyter notebooks. For what concerns Python notebooks, tab completion, output and graphics capturing have been enabled. It is possible to switch from Python to C++ and have a C++ notebook at disposal.
 New tutorials and code examples have been provided here: https://root.cern.ch/code-examples#notebooks
+We made it easier to use ROOT notebooks locally, by providing a 'root --notebook' command option to start a local notebook server customised with all the ROOT features. This command option is only present when building with CMake.
 
 ## JavaScript ROOT
 
