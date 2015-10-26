@@ -1422,7 +1422,7 @@ void TMVA::Factory::EvaluateAllMethods(void)
 }
 
 
-void TMVA::Factory::EvaluateImportance(DataLoader *loader, UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, const char *theOption)
+void TMVA::Factory::EvaluateImportance(DataLoader *loader, Int_t nseeds, Types::EMVA theMethod,  TString methodTitle, const char *theOption)
 {
   if(nseeds<1) EvaluateImportanceAll(loader,theMethod,methodTitle,theOption);
   else if(nseeds==1) EvaluateImportanceDefault(loader,theMethod,methodTitle,theOption);
@@ -1592,12 +1592,12 @@ void TMVA::Factory::EvaluateImportanceInternal(DataLoader *loader, UInt_t nseeds
       y_ie[i - 1] = roc;
       std::cout << Form("%s = %f ", varNames[i - 1].Data(), roc)<<"%"<< std::endl;
       test->GetXaxis()->SetBinLabel(i, varNames[i - 1].Data());
-      if (roc > 0) {
+//       if (roc > 0) {
          test->SetBinContent(i, roc);
-      }else test->SetBinContent(i, 0);
-      if (roc < 0) {
-         test2->SetBinContent(i, roc);
-      }else test2->SetBinContent(i, 0);
+//       }else test->SetBinContent(i, 0);
+//       if (roc < 0) {
+//          test2->SetBinContent(i, roc);
+//       }else test2->SetBinContent(i, 0);
    }
    TGraph *g_ie = new TGraph(nbits + 2, x_ie, y_ie);
    g_ie->SetTitle("");
@@ -1963,12 +1963,12 @@ void TMVA::Factory::EvaluateImportanceAll(DataLoader *loader, Types::EMVA theMet
       y_ie[i - 1] = roc;
       std::cout << Form("%s = %f ", varNames[i - 1].Data(), roc)<<"%"<< std::endl;
       test->GetXaxis()->SetBinLabel(i, varNames[i - 1].Data());
-      if (roc > 0) {
+//       if (roc > 0) {
 	test->SetBinContent(i, roc);
-      }else test->SetBinContent(i, 0);
-      if (roc < 0) {
-	test2->SetBinContent(i+1, roc);
-      }else test2->SetBinContent(i+1, 0);
+//       }else test->SetBinContent(i, 0);
+//       if (roc < 0) {
+// 	test2->SetBinContent(i+1, roc);
+//       }else test2->SetBinContent(i+1, 0);
     }
     TGraph *g_ie = new TGraph(nbits + 2, x_ie, y_ie);
     g_ie->SetTitle("");
