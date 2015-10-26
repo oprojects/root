@@ -298,7 +298,7 @@ Double_t MethodPyAdaBoost::GetMvaValue(Double_t *errLower, Double_t *errUpper)
    }
    PyArrayObject *result = (PyArrayObject *)PyObject_CallMethod(fClassifier, (char *)"predict_proba", (char *)"(O)", pEvent);
    double *proba = (double *)(PyArray_DATA(result));
-   mvaValue = proba[1]; //getting signal prob
+   mvaValue = proba[0]; //getting signal prob
    Py_DECREF(result);
    Py_DECREF(pEvent);
    return mvaValue;
