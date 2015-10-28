@@ -1479,7 +1479,7 @@ void TMVA::Factory::EvaluateImportanceInternal(DataLoader *loader, UInt_t nseeds
 
       //getting ROC
       SROC = GetROCIntegral(xbitset.to_string(), methodTitle);
-      std::cout << "Seed: n " << n << " x " << x << " xbitset:" << xbitset << "  ROC " << SROC << std::endl;
+     // std::cout << "Seed: n " << n << " x " << x << " xbitset:" << xbitset << "  ROC " << SROC << std::endl;
 
       //cleaning information to process subseeds
       TMVA::MethodBase *smethod=dynamic_cast<TMVA::MethodBase*>(fMethodsMap[xbitset.to_string().c_str()][0][0]);
@@ -1510,7 +1510,7 @@ void TMVA::Factory::EvaluateImportanceInternal(DataLoader *loader, UInt_t nseeds
             if (y == 0) {
                importances[ny] = SROC - 0.5;
                importances_norm += importances[ny];
-               std::cout << "SubSeed: " << y << " y:" << ybitset << "ROC " << 0.5 << std::endl;
+             //  std::cout << "SubSeed: " << y << " y:" << ybitset << "ROC " << 0.5 << std::endl;
                continue;
             }
 
@@ -1538,7 +1538,7 @@ void TMVA::Factory::EvaluateImportanceInternal(DataLoader *loader, UInt_t nseeds
             SSROC = GetROCIntegral(ybitset.to_string(), methodTitle);
             importances[ny] += SROC - SSROC;
             importances_norm += importances[ny];
-            std::cout << "SubSeed: " << y << " y:" << ybitset << " x-y " << x - y << " " << std::bitset<32>(x - y) << " ny " << ny << " SROC " << SROC << " SSROC " << SSROC << " Importance = " << importances[ny] << std::endl;
+           // std::cout << "SubSeed: " << y << " y:" << ybitset << " x-y " << x - y << " " << std::bitset<32>(x - y) << " ny " << ny << " SROC " << SROC << " SSROC " << SSROC << " Importance = " << importances[ny] << std::endl;
             //cleaning information
 	    TMVA::MethodBase *ssmethod=dynamic_cast<TMVA::MethodBase*>(fMethodsMap[ybitset.to_string().c_str()][0][0]);
             TMVA::ResultsClassification *ssresults = (TMVA::ResultsClassification*)ssmethod->Data()->GetResults(ssmethod->GetMethodName(), Types::kTesting, Types::kClassification);
@@ -1567,7 +1567,7 @@ void TMVA::Factory::EvaluateImportanceInternal(DataLoader *loader, UInt_t nseeds
    sprintf(giffilename1, gif1.c_str());
 
 
-   TCanvas *canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 1000, 1000);
+   TCanvas *canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 800, 600);
    canvas1->Divide(1, 1);
    TH1F *test  = new TH1F("test", "", nbits, 0, nbits);
    TH1F *test2  = new TH1F("test2", "", nbits, 0, nbits);
@@ -1625,7 +1625,7 @@ void TMVA::Factory::EvaluateImportanceInternal(DataLoader *loader, UInt_t nseeds
 
    canvas1->Update();
    canvas1->SaveAs(giffilename1);
-
+   canvas1->Draw();
 }
 
 long int sum(long int i)
@@ -1682,7 +1682,7 @@ void TMVA::Factory::EvaluateImportanceDefault(DataLoader *loader, Types::EMVA th
 
       //getting ROC
       SROC = GetROCIntegral(xbitset.to_string(), methodTitle);
-      std::cout << "Seed:  "<< " x " << x << " xbitset:" << xbitset << "  ROC " << SROC << std::endl;
+//      std::cout << "Seed:  "<< " x " << x << " xbitset:" << xbitset << "  ROC " << SROC << std::endl;
 
       //cleaning information to process subseeds
       TMVA::MethodBase *smethod=dynamic_cast<TMVA::MethodBase*>(fMethodsMap[xbitset.to_string().c_str()][0][0]);
@@ -1713,7 +1713,7 @@ void TMVA::Factory::EvaluateImportanceDefault(DataLoader *loader, Types::EMVA th
             if (y == 0) {
                importances[ny] = SROC - 0.5;
                importances_norm += importances[ny];
-               std::cout << "SubSeed: " << y << " y:" << ybitset << "ROC " << 0.5 << std::endl;
+//               std::cout << "SubSeed: " << y << " y:" << ybitset << "ROC " << 0.5 << std::endl;
                continue;
             }
 
@@ -1741,7 +1741,7 @@ void TMVA::Factory::EvaluateImportanceDefault(DataLoader *loader, Types::EMVA th
             SSROC = GetROCIntegral(ybitset.to_string(), methodTitle);
             importances[ny] += SROC - SSROC;
             importances_norm += importances[ny];
-            std::cout << "SubSeed: " << y << " y:" << ybitset << " x-y " << x - y << " " << std::bitset<32>(x - y) << " ny " << ny << " SROC " << SROC << " SSROC " << SSROC << " Importance = " << importances[ny] << std::endl;
+//            std::cout << "SubSeed: " << y << " y:" << ybitset << " x-y " << x - y << " " << std::bitset<32>(x - y) << " ny " << ny << " SROC " << SROC << " SSROC " << SSROC << " Importance = " << importances[ny] << std::endl;
             //cleaning information
 	    TMVA::MethodBase *ssmethod=dynamic_cast<TMVA::MethodBase*>(fMethodsMap[ybitset.to_string().c_str()][0][0]);
             TMVA::ResultsClassification *ssresults = (TMVA::ResultsClassification*)ssmethod->Data()->GetResults(ssmethod->GetMethodName(), Types::kTesting, Types::kClassification);
@@ -1769,7 +1769,7 @@ void TMVA::Factory::EvaluateImportanceDefault(DataLoader *loader, Types::EMVA th
    sprintf(giffilename1, gif1.c_str());
 
 
-   TCanvas *canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 1000, 1000);
+   TCanvas *canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 800,600);
    canvas1->Divide(1, 1);
    TH1F *test  = new TH1F("test", "", nbits, 0, nbits);
    TH1F *test2  = new TH1F("test2", "", nbits, 0, nbits);
@@ -1827,7 +1827,7 @@ void TMVA::Factory::EvaluateImportanceDefault(DataLoader *loader, Types::EMVA th
 
    canvas1->Update();
    canvas1->SaveAs(giffilename1);
-
+   canvas1->Draw();
 }
 
 
@@ -1881,7 +1881,7 @@ void TMVA::Factory::EvaluateImportanceAll(DataLoader *loader, Types::EMVA theMet
     //getting ROC
     ROC[x] = GetROCIntegral(xbitset.to_string(), methodTitle);
     
-    std::cout << "Seed: " << " x " << x << " xbitset:" << xbitset << "  ROC " << ROC[x] << std::endl;
+//    std::cout << "Seed: " << " x " << x << " xbitset:" << xbitset << "  ROC " << ROC[x] << std::endl;
     
     //cleaning information to process subseeds
     TMVA::MethodBase *smethod=dynamic_cast<TMVA::MethodBase*>(fMethodsMap[xbitset.to_string().c_str()][0][0]);
@@ -1916,14 +1916,14 @@ void TMVA::Factory::EvaluateImportanceAll(DataLoader *loader, Types::EMVA theMet
 	Double_t ny = log(x - y) / 0.693147;
 	if (y == 0) {
 	  importances[ny] = SROC - 0.5;
-	  std::cout << "SubSeed: " << y << " y:" << ybitset << "ROC " << 0.5 << std::endl;
+//	  std::cout << "SubSeed: " << y << " y:" << ybitset << "ROC " << 0.5 << std::endl;
 	  continue;
 	}
 	
 	//getting ROC
 	SSROC = ROC[y];
 	importances[ny] += SROC - SSROC;
-	std::cout << "SubSeed: " << y << " y:" << ybitset << " x-y " << x - y << " " << std::bitset<32>(x - y) << " ny " << ny << " SROC " << SROC << " SSROC " << SSROC << " Importance = " << importances[ny] << std::endl;
+//	std::cout << "SubSeed: " << y << " y:" << ybitset << " x-y " << x - y << " " << std::bitset<32>(x - y) << " ny " << ny << " SROC " << SROC << " SSROC " << SSROC << " Importance = " << importances[ny] << std::endl;
 	//cleaning information
       }
       
@@ -1938,7 +1938,7 @@ void TMVA::Factory::EvaluateImportanceAll(DataLoader *loader, Types::EMVA theMet
     sprintf(giffilename1, gif1.c_str());
     
     
-    TCanvas *canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 1000, 1000);
+    TCanvas *canvas1 = new TCanvas("RelativeScaleImportance", "RelativaScaleImportance", 800, 600);
     canvas1->Divide(1, 1);
     TH1F *test  = new TH1F("test", "", nbits, 0, nbits);
     TH1F *test2  = new TH1F("test2", "", nbits, 0, nbits);
@@ -1996,6 +1996,6 @@ void TMVA::Factory::EvaluateImportanceAll(DataLoader *loader, Types::EMVA theMet
     
     canvas1->Update();
     canvas1->SaveAs(giffilename1);
-    
+    canvas1->Draw();
   }
   
