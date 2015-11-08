@@ -1352,13 +1352,17 @@ namespace utils {
     if (!Within)
       S->LookupName(R, S->TUScope);
     else {
-      if (const clang::TagDecl* TD = dyn_cast<clang::TagDecl>(Within)) {
-        if (!TD->getDefinition()) {
-          // No definition, no lookup result.
-          return 0;
-        }
+      const DeclContext* primaryWithin = nullptr;
+      if (const clang::TagDecl *TD = dyn_cast<clang::TagDecl>(Within)) {
+        primaryWithin = dyn_cast_or_null<DeclContext>(TD->getDefinition());
+      } else {
+        primaryWithin = Within->getPrimaryContext();
       }
-      S->LookupQualifiedName(R, const_cast<DeclContext*>(Within));
+      if (!primaryWithin) {
+        // No definition, no lookup result.
+        return 0;
+      }
+      S->LookupQualifiedName(R, const_cast<DeclContext*>(primaryWithin));
     }
 
     if (R.empty())

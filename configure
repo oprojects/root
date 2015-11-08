@@ -100,6 +100,7 @@ options="                    \
    enable_ruby               \
    enable_rfio               \
    enable_rpath              \
+   enable_search_usrlocal    \
    enable_sapdb              \
    enable_shadowpw           \
    enable_shared             \
@@ -186,6 +187,7 @@ enable_builtin_zlib=no
 enable_builtin_lzma=no
 enable_builtin_llvm=yes
 enable_afdsmgrd=no
+enable_search_usrlocal=yes
 
 if test "x$ENABLEALL" = "xyes"; then
     enable_gdml=yes
@@ -611,6 +613,16 @@ check_library() {
         libdirs="$sdklibs"
     fi
 
+    if test "x$enable_search_usrlocal" = "xno" ; then
+       no_usrlocal=""
+       for i in $libdirs; do
+           if [[ $i != /usr/local/* ]] ; then
+               no_usrlocal="$no_usrlocal $i"
+           fi
+       done
+       libdirs="$no_usrlocal"
+    fi
+
     # Write a message
     checking_msg $lib
 
@@ -857,6 +869,15 @@ check_header()  {
             #fi
         done
         hdrdirs="$sdkhdrs"
+    fi
+    if test "x$enable_search_usrlocal" = "xno" ; then
+       no_usrlocal=""
+       for i in $hdrdirs; do
+           if [[ $i != /usr/local/* ]] ; then
+               no_usrlocal="$no_usrlocal $i"
+           fi
+       done
+       hdrdirs="$no_usrlocal"
     fi
 
     # Write a message
@@ -1727,6 +1748,7 @@ enable/disable options, prefix with either --enable- or --disable-
   rpath              Set run-time library load path on executables
   ruby               Ruby ROOT bindings, requires ruby >= 1.8
   sapdb              MaxDB/SapDB support, requires libsqlod and libsqlrte
+  search-usrlocal    Search for libraries and headers in /usr/local
   shadowpw           Shadow password support
   shared             Use shared 3rd party libraries if possible
   soversion          Set version number in sonames (recommended)
@@ -2876,7 +2898,7 @@ if test ! "x$enable_x11" = "xno" ; then
         ${finkdir:+$finkdir/lib} \
         /usr/lib /usr/X11R6/lib /usr/lib/X11 /usr/openwin/lib \
         /usr/local/lib /usr/local/lib/X11 /usr/local/X11R6/lib \
-        /usr/X11/lib /usr/lib/X11R5
+        /usr/X11/lib /usr/lib/X11R5 /opt/X11/lib
     x11libdir=$found_dir
 
     if test "x$found_lib" = "x" ; then
@@ -2889,7 +2911,7 @@ if test ! "x$enable_x11" = "xno" ; then
         ${finkdir:+$finkdir/include} \
         /usr/include /usr/X11R6/include /usr/include/X11 /usr/openwin/include \
         /usr/local/include /usr/local/include/X11 /usr/local/X11R6/include \
-        /usr/X11/include /usr/include/X11R5
+        /usr/X11/include /usr/include/X11R5 /opt/X11/include
     x11incdir=$found_dir
 
     if test "x$found_dir" = "x" ; then
@@ -2903,7 +2925,7 @@ if test ! "x$enable_x11" = "xno" ; then
         ${finkdir:+$finkdir/include} \
         /usr/include /usr/X11R6/include /usr/include/X11 /usr/openwin/include \
         /usr/local/include /usr/local/include/X11 /usr/local/X11R6/include \
-        /usr/X11/include /usr/include/X11R5
+        /usr/X11/include /usr/include/X11R5 /opt/X11/include
 
     if test "x$found_dir" = "x" ; then
         result "`basename $0`: xpm headers MUST be installed"
@@ -2915,7 +2937,7 @@ if test ! "x$enable_x11" = "xno" ; then
         ${finkdir:+$finkdir/include} \
         /usr/include /usr/X11R6/include /usr/include/X11 /usr/openwin/include \
         /usr/local/include /usr/local/include/X11 /usr/local/X11R6/include \
-        /usr/X11/include /usr/include/X11R5
+        /usr/X11/include /usr/include/X11R5 /opt/X11/include
 
     if test "x$found_dir" = "x" ; then
         result "`basename $0`: Xft headers MUST be installed"
@@ -2928,7 +2950,8 @@ if test ! "x$enable_x11" = "xno" ; then
             ${finkdir:+$finkdir/include} \
             /usr/include /usr/X11R6/include /usr/include/X11 \
             /usr/openwin/include /usr/local/include /usr/local/include/X11 \
-            /usr/local/X11R6/include /usr/X11/include /usr/include/X11R5
+            /usr/local/X11R6/include /usr/X11/include /usr/include/X11R5 \
+            /opt/X11/include
 
         if test "x$found_dir" = "x" ; then
             result "`basename $0`: X11/extensions/shape.h header MUST be installed"
@@ -2942,7 +2965,7 @@ if test ! "x$enable_x11" = "xno" ; then
         ${finkdir:+$finkdir/lib} \
         /usr/local/lib /usr/lib /usr/lib/X11 \
         /usr/local/lib/X11 /usr/X11R6/lib /usr/local/X11R6/lib \
-        /usr/X11/lib
+        /usr/X11/lib /opt/X11/lib
     xpmlib=$found_lib
     xpmlibdir=$found_dir
 
@@ -2956,7 +2979,7 @@ if test ! "x$enable_x11" = "xno" ; then
         ${finkdir:+$finkdir/lib} \
         /usr/local/lib /usr/lib /usr/lib/X11 \
         /usr/local/lib/X11 /usr/X11R6/lib /usr/local/X11R6/lib \
-        /usr/X11/lib
+        /usr/X11/lib /opt/X11/lib
 
     if test "x$found_lib" = "x" ; then
         result "`basename $0`: libXft MUST be installed"
@@ -2974,7 +2997,7 @@ if test ! "x$enable_x11" = "xno" ; then
         ${finkdir:+$finkdir/lib} \
         /usr/local/lib /usr/lib /usr/lib/X11 \
         /usr/local/lib/X11 /usr/X11R6/lib /usr/local/X11R6/lib \
-        /usr/X11/lib
+        /usr/X11/lib /opt/X11/lib
 
     if test "x$found_lib" = "x" ; then
         result "`basename $0`: libXext MUST be installed"

@@ -130,6 +130,20 @@ to `TTree::kMaxEntries`.
 
 ## Histogram Libraries
 
+### Change `TGraph::ComputeRange`: in case of log scale the minimum along X and
+Y axis are now set to the lowest positive values of the graph. Previously a % of the
+maximum was used which may hide some points like in the following example
+``` {.cpp}
+{
+   TGraph * gr = new TGraph(10);
+   for (int i = 0;i<10;i++) gr->SetPoint(i,i,TMath::Exp(-10.0*i));
+   for (int i = 5;i<10;i++) gr->SetPoint(i,i,0.);
+   gr->Draw("apl");
+   gr->SetMarkerStyle(20);
+   gPad->SetLogy(true);
+}
+```
+The problem was reported [here](https://root.cern.ch/phpBB3/viewtopic.php?f=3&t=20484).
 
 ## Math Libraries
 
@@ -205,13 +219,19 @@ A left click on a image produced a one pixel zoom.
 
 The ending of a polyline creation is based on the closeness of the two last
 entered points. The previous algorithm was based on user coordinates. It is now
-based on pixel to avoid the problem reported here: https://root.cern.ch/phpBB3/viewtopic.php?f=3&t=20343
+based on pixel to avoid the problem reported
+[here](https://root.cern.ch/phpBB3/viewtopic.php?f=3&t=20343).
 
 ### TCanvas
 
 When the first canvas created by ROOT was in batch mode, it was note possible to
 comme back in interactive mode for the next canvases. this problem was reported here:
 https://root.cern.ch/phpBB3/viewtopic.php?f=3&t=20354
+
+### Cocoa Backend
+
+Sometimes the mouse cursor did not change back to the window manager arrow when
+exiting a `TCanvas`.
 
 ## 3D Graphics Libraries
 

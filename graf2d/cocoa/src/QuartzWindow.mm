@@ -777,6 +777,117 @@ NSPoint GetCursorHotStop(NSImage *image, ECursor cursor)
    return NSMakePoint(imageSize.width / 2, imageSize.height / 2);
 }
 
+//______________________________________________________________________________
+NSCursor *CreateCustomCursor(ECursor currentCursor)
+{
+   // Returns auto-released cursor object.
+   const char *pngFileName = 0;
+
+   switch (currentCursor) {
+   case kMove:
+      pngFileName = "move_cursor.png";
+      break;
+   case kArrowHor:
+      pngFileName = "hor_arrow_cursor.png";
+      break;
+   case kArrowVer:
+      pngFileName = "ver_arrow_cursor.png";
+      break;
+   case kArrowRight:
+      pngFileName = "right_arrow_cursor.png";
+      break;
+   case kRotate:
+      pngFileName = "rotate.png";
+      break;
+   case kBottomLeft:
+   case kTopRight:
+      pngFileName = "top_right_cursor.png";
+      break;
+   case kTopLeft:
+   case kBottomRight:
+      pngFileName = "top_left_cursor.png";
+      break;
+   default:;
+   }
+
+   if (pngFileName) {
+#ifdef ROOTICONPATH
+      const char * const path = gSystem->Which(ROOTICONPATH, pngFileName, kReadPermission);
+#else
+      const char * const path = gSystem->Which("$ROOTSYS/icons", pngFileName, kReadPermission);
+#endif
+      const Util::ScopedArray<const char> arrayGuard(path);
+
+      if (!path || path[0] == 0) {
+         //File was not found.
+         return nil;
+      }
+
+      NSString *nsPath = [NSString stringWithFormat : @"%s", path];//in autorelease pool.
+      NSImage * const cursorImage = [[NSImage alloc] initWithContentsOfFile : nsPath];
+
+      if (!cursorImage)
+         return nil;
+
+      const NSPoint hotSpot(X11::GetCursorHotStop(cursorImage, currentCursor));
+      NSCursor * const customCursor = [[[NSCursor alloc] initWithImage : cursorImage
+                                                         hotSpot : hotSpot] autorelease];
+
+      [cursorImage release];
+
+      return customCursor;
+   }
+
+   return nil;
+}
+
+//______________________________________________________________________________
+NSCursor *CreateCursor(ECursor currentCursor)
+{
+   // Returns auto-released cursor object.
+
+   //Cursors from TVirtaulX:
+   // kBottomLeft, kBottomRight, kTopLeft,  kTopRight,
+   // kBottomSide, kLeftSide,    kTopSide,  kRightSide,
+   // kMove,       kCross,       kArrowHor, kArrowVer,
+   // kHand,       kRotate,      kPointer,  kArrowRight,
+   // kCaret,      kWatch
+
+   NSCursor *cursor = nil;
+   switch (currentCursor) {
+   case kCross:
+      cursor = [NSCursor crosshairCursor];
+      break;
+   case kPointer:
+      cursor = [NSCursor arrowCursor];
+      break;
+   case kHand:
+      cursor = [NSCursor openHandCursor];
+      break;
+   case kLeftSide:
+      cursor = [NSCursor resizeLeftCursor];
+      break;
+   case kRightSide:
+      cursor = [NSCursor resizeRightCursor];
+      break;
+   case kTopSide:
+      cursor = [NSCursor resizeUpCursor];
+      break;
+   case kBottomSide:
+      cursor = [NSCursor resizeDownCursor];
+      break;
+   case kCaret:
+      cursor = [NSCursor IBeamCursor];
+      break;
+   case kRotate:
+   case kWatch:
+   default:
+      cursor = CreateCustomCursor(currentCursor);
+   }
+
+   return cursor;
+}
+
 //TGTextView/TGHtml is a very special window: it's a TGCompositeFrame,
 //which has TGCompositeFrame inside (TGViewFrame). This TGViewFrame
 //delegates Expose events to its parent, and parent tries to draw
@@ -1093,6 +1204,16 @@ void print_mask_info(ULong_t mask)
 }
 
 //______________________________________________________________________________
+- (void) setContentView:(NSView *)cv
+{
+    [super setContentView:cv];
+    if ([cv isKindOfClass:[QuartzView class]])
+        fContentView = (QuartzView *)cv;
+    else
+        fContentView = nil;
+}
+
+//______________________________________________________________________________
 - (void) setFIsDeleted : (BOOL) deleted
 {
    fIsDeleted = deleted;
@@ -1103,7 +1224,8 @@ void print_mask_info(ULong_t mask)
 //______________________________________________________________________________
 - (void) forwardInvocation : (NSInvocation *) anInvocation
 {
-   assert(fContentView != nil && "-forwardInvocation:, fContentView is nil");
+   if (!fContentView)
+      return;
 
    if ([fContentView respondsToSelector : [anInvocation selector]]) {
       [anInvocation invokeWithTarget : fContentView];
@@ -1118,8 +1240,8 @@ void print_mask_info(ULong_t mask)
    NSMethodSignature *signature = [super methodSignatureForSelector : selector];
 
    if (!signature) {
-      assert(fContentView != nil && "-methodSignatureForSelector:, fContentView is nil");
-      signature = [fContentView methodSignatureForSelector : selector];
+      if (fContentView)
+         signature = [fContentView methodSignatureForSelector : selector];
    }
 
    return signature;
@@ -1284,7 +1406,8 @@ void print_mask_info(ULong_t mask)
 - (void) copy : (NSObject<X11Drawable> *) src area : (X11::Rectangle) area withMask : (QuartzImage *) mask
          clipOrigin : (X11::Point) clipXY toPoint : (X11::Point) dstPoint
 {
-   assert(fContentView != nil && "-copy:area:toPoint:, fContentView is nil");
+   if (!fContentView)
+      return;
 
    [fContentView copy : src area : area withMask : mask clipOrigin : clipXY toPoint : dstPoint];
 }
@@ -1292,7 +1415,8 @@ void print_mask_info(ULong_t mask)
 //______________________________________________________________________________
 - (unsigned char *) readColorBits : (X11::Rectangle) area
 {
-   assert(fContentView != nil && "-readColorBits:, fContentView is nil");
+   if (!fContentView)
+      return nullptr;
 
    return [fContentView readColorBits : area];
 }
@@ -1328,7 +1452,8 @@ void print_mask_info(ULong_t mask)
 //______________________________________________________________________________
 - (void) setFBackgroundPixel : (unsigned long) backgroundColor
 {
-   assert(fContentView != nil && "-setFBackgroundPixel:, fContentView is nil");
+   if (!fContentView)
+      return;
 
    if (!fShapeCombineMask) {
       CGFloat rgba[] = {0., 0., 0., 1.};
@@ -1343,7 +1468,8 @@ void print_mask_info(ULong_t mask)
 //______________________________________________________________________________
 - (unsigned long) fBackgroundPixel
 {
-   assert(fContentView != nil && "-fBackgroundPixel, fContentView is nil");
+   if (!fContentView)
+       return 0;
 
    return fContentView.fBackgroundPixel;
 }
@@ -1352,7 +1478,8 @@ void print_mask_info(ULong_t mask)
 - (int) fMapState
 {
    //Top-level window can be only kIsViewable or kIsUnmapped (not unviewable).
-   assert(fContentView != nil && "-fMapState, fContentView is nil");
+   if (!fContentView)
+      return kIsUnmapped;
 
    if ([fContentView isHidden])
       return kIsUnmapped;
@@ -1380,7 +1507,9 @@ void print_mask_info(ULong_t mask)
 //______________________________________________________________________________
 - (void) getAttributes : (WindowAttributes_t *) attr
 {
-   assert(fContentView != 0 && "-getAttributes:, fContentView is nil");
+   if (!fContentView)
+      return;
+ 
    assert(attr && "-getAttributes:, parameter 'attr' is nil");
 
    X11::GetWindowAttributes(self, attr);
@@ -1401,7 +1530,8 @@ void print_mask_info(ULong_t mask)
 //______________________________________________________________________________
 - (void) mapRaised
 {
-   assert(fContentView && "-mapRaised, fContentView is nil");
+   if (!fContentView)
+      return;
 
    const Util::AutoreleasePool pool;
 
@@ -1418,7 +1548,8 @@ void print_mask_info(ULong_t mask)
 //______________________________________________________________________________
 - (void) mapWindow
 {
-   assert(fContentView != nil && "-mapWindow, fContentView is nil");
+   if (!fContentView)
+      return;
 
    const Util::AutoreleasePool pool;
 
@@ -1435,7 +1566,8 @@ void print_mask_info(ULong_t mask)
 //______________________________________________________________________________
 - (void) mapSubwindows
 {
-   assert(fContentView != nil && "-mapSubwindows, fContentView is nil");
+   if (!fContentView)
+      return;
 
    const Util::AutoreleasePool pool;
 
@@ -1446,7 +1578,8 @@ void print_mask_info(ULong_t mask)
 //______________________________________________________________________________
 - (void) unmapWindow
 {
-   assert(fContentView != nil && "-unmapWindow, fContentView is nil");
+   if (!fContentView)
+      return;
 
    [fContentView setHidden : YES];
    [self orderOut : self];
@@ -1466,7 +1599,8 @@ void print_mask_info(ULong_t mask)
    //window does not move, menu closes, and after that you can start draggin a window again.
    //With Cocoa I can not do such a thing (window WILL move), but still can report button release event
    //to close a menu.
-   assert(fContentView != nil && "-sendEvent:, fContentView is nil");
+   if (!fContentView)
+      return;
 
    if (theEvent.type == NSLeftMouseDown || theEvent.type == NSRightMouseDown) {
       bool generateFakeRelease = false;
@@ -1508,8 +1642,8 @@ void print_mask_info(ULong_t mask)
 - (BOOL) windowShouldClose : (id) sender
 {
 #pragma unused(sender)
-
-   assert(fContentView != nil && "-windowShouldClose:, fContentView is nil");
+   if (!fContentView)
+      return NO;
 
    //TODO: check this!!! Children are
    //transient windows and ROOT does not handle
@@ -1541,7 +1675,8 @@ void print_mask_info(ULong_t mask)
 {
 #pragma unused(aNotification)
 
-   assert(fContentView != nil && "-windowDidBecomeKey:, fContentView is nil");
+   if (!fContentView)
+      return;
 
    if (!fContentView.fOverrideRedirect) {
       fHasFocus = YES;
@@ -1777,7 +1912,7 @@ void print_mask_info(ULong_t mask)
 
    const NSUInteger trackerOptions = NSTrackingMouseMoved | NSTrackingMouseEnteredAndExited |
                                      NSTrackingActiveInActiveApp | NSTrackingInVisibleRect |
-                                     NSTrackingEnabledDuringMouseDrag;
+                                     NSTrackingEnabledDuringMouseDrag | NSTrackingCursorUpdate;
 
    NSRect frame = {};
    frame.size.width = self.fWidth;
@@ -2975,50 +3110,36 @@ void print_mask_info(ULong_t mask)
 //______________________________________________________________________________
 - (void) resetCursorRects
 {
-   //Cursors from TVirtaulX:
-   // kBottomLeft, kBottomRight, kTopLeft,  kTopRight,
-   // kBottomSide, kLeftSide,    kTopSide,  kRightSide,
-   // kMove,       kCross,       kArrowHor, kArrowVer,
-   // kHand,       kRotate,      kPointer,  kArrowRight,
-   // kCaret,      kWatch
-
-   NSCursor *cursor = nil;
-
-   switch (fCurrentCursor) {
-   case kCross:
-      cursor = [NSCursor crosshairCursor];
-      break;
-   case kPointer:
-      //Use simple arrow (or this special cursor will be even on GUI widgets).
-      break;
-   case kHand:
-      cursor = [NSCursor openHandCursor];
-      break;
-   case kLeftSide:
-      cursor = [NSCursor resizeLeftCursor];
-      break;
-   case kRightSide:
-      cursor = [NSCursor resizeRightCursor];
-      break;
-   case kTopSide:
-      cursor = [NSCursor resizeUpCursor];
-      break;
-   case kBottomSide:
-      cursor = [NSCursor resizeDownCursor];
-      break;
-   case kCaret:
-      cursor = [NSCursor IBeamCursor];
-      break;
-   case kRotate:
-   case kWatch:
-   default:
-      cursor = [self createCustomCursor];
-   }
-
-   if (cursor)
+   if (NSCursor * const cursor = X11::CreateCursor(fCurrentCursor))
       [self addCursorRect : self.visibleRect cursor : cursor];
-   else
-      [super resetCursorRects];
+}
+
+//______________________________________________________________________________
+- (void) cursorUpdate
+{
+   if (NSCursor * const cursor = X11::CreateCursor(fCurrentCursor)) {
+      // NB: [window invalidateCursorRectsForView] called here has the
+      // same problem as commented below in -cursorUpdate:.
+      [cursor set];
+   }
+}
+
+//______________________________________________________________________________
+- (void) cursorUpdate : (NSEvent *) event
+{
+#pragma unused(event)
+   // It looks like [NSCursor set] method does not work properly when called from
+   // cursorUpdate:, having, say, a parent frame with 'arrow' cursor and a child (completely
+   // filling its parent's area) with 'cross', it happens the 'cross' cursor is not always
+   // set correctly, for example:
+   // if we have a TCanvas and resize it, cursor is 'arrow' inside this canvas,
+   // though it must be 'cross'. This all, as it always happesn with "thinking different"
+   // Apple is somehow related to run loop or something. As always, it's not documented,
+   // so Apple can continue to think different. The idea with performSelector comes from:
+   // http://stackoverflow.com/questions/8430236/nscursor-set-method-has-no-effect
+   // Or may be it's just a bug:
+   // http://stackoverflow.com/questions/13901232/nscursor-set-not-working-on-unfocused-window
+   [self performSelector : @selector(cursorUpdate) withObject : nil afterDelay : 0.05f];
 }
 
 #pragma mark - Emulated X11 properties.
