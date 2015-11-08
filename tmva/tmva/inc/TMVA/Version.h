@@ -41,8 +41,8 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#define TMVA_RELEASE      "4.2.1"
-#define TMVA_RELEASE_DATE "Feb 5, 2015" 
+#define TMVA_RELEASE      "5.0.0 alpha"
+#define TMVA_RELEASE_DATE "Oct 30, 2015" 
 #define TMVA_RELEASE_TIME "14:25:28"
 #define TMVA_VERSION_CODE 262657
 #define TMVA_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
