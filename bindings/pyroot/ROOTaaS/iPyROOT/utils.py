@@ -147,7 +147,7 @@ def commentRemover( text ):
 # Here functions are defined to process C++ code
 def processCppCodeImpl(code):
     #code = commentRemover(code)
-    ROOT.gInterpreter.ProcessLine(code)
+    ROOT.gROOT.ProcessLine(code)
 
 def declareCppCodeImpl(code):
     #code = commentRemover(code)
