@@ -135,6 +135,7 @@ void MethodRXGB::Train()
    ROOT::R::TRDataFrame params;
    params["eta"] = fEta;
    params["max.depth"] = fMaxDepth;
+   params["silent"] = 1; 
 
    SEXP Model = xgbtrain(ROOT::R::Label["data"] = dmatrix,
                          ROOT::R::Label["label"] = fFactorNumeric,
