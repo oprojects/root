@@ -44,5 +44,9 @@ set( ROOTaaSDirName "ROOTaaS")
 install (DIRECTORY ${ROOTaaSDirName} DESTINATION ${runtimedir})
 file(COPY ${ROOTaaSDirName} DESTINATION ${CMAKE_BINARY_DIR}/${runtimedir})
 
+set( JuPyROOTDirName "JuPyROOT")
+install (DIRECTORY ${JuPyROOTDirName} DESTINATION ${runtimedir})
+file(COPY ${JuPyROOTDirName} DESTINATION ${CMAKE_BINARY_DIR}/${runtimedir})
+
 #---Install headers----------------------------------------------------------
 ROOT_INSTALL_HEADERS()

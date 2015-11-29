@@ -1,13 +1,12 @@
 {
- "language": "c++",
- "argv": [
-  "python",
-  "-m",
-  "IPython.kernel",
-  "-f",
-  "{connection_file}",
-  "-c",
-  "import ROOT;ROOT.toCpp();"
- ],
- "display_name": "ROOT Prompt"
+  "display_name": "ROOT",
+  "language": "c++",
+  "argv": [
+      "python",
+      "-m",
+      "ROOTKernel",
+      "-f",
+      "{connection_file}"
+  ]
 }
+
