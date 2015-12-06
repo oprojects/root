@@ -38,7 +38,7 @@ except ImportError:
 try:
     from JuPyROOT.kernel.Utils import GetIOHandler, GetExecutor, GetDeclarer, ACLiC, MagicLoader
     from JuPyROOT.kernel.CppCompleter import CppCompleter
-    from JuPyROOT.js import JSROOT 
+    #from JuPyROOT.js import JSROOT 
 except ImportError:
     raise Exception("Error: JuPyROOT not found")
 
@@ -77,12 +77,11 @@ class ROOTKernel(MetaKernel):
         MetaKernel.__init__(self,**kwargs)
         #JSROOT.enableJSVis()
         #JSROOT.enableJSVisDebug()
-        JSROOT.LoadDrawer()
-        self.ioHandler = GetIOHandler()
+        #JSROOT.LoadDrawer()
         self.Executor  = GetExecutor()
         self.Declarer  = GetDeclarer()#required for %%cpp -d magic
         self.ACLiC     = ACLiC
-        self.magicloader = MagicLoader(self)        
+        #self.magicloader = MagicLoader(self)        
         self.parser = Parser(self.identifier_regex, self.func_call_regex,
                              self.magic_prefixes, self.help_suffix)
         self.completer = CppCompleter()
@@ -103,13 +102,15 @@ class ROOTKernel(MetaKernel):
         std_out=""
         std_err=""
         try:
-            self.ioHandler.clear()
-            self.ioHandler.InitCapture()
+            ioHandler = GetIOHandler()
+            ioHandler.InitCapture()
             root_status = self.Executor(str(code))
-            self.ioHandler.EndCapture()
+            ioHandler.EndCapture()
             
-            std_out = self.ioHandler.getStdout()
-            std_err = self.ioHandler.getStderr()
+            std_out = ioHandler.getStdout()
+            std_err = ioHandler.getStderr()
+            
+            #del ioHandler
             
             canvaslist = ROOT.gROOT.GetListOfCanvases()
             if canvaslist:
@@ -126,9 +127,9 @@ class ROOTKernel(MetaKernel):
         except KeyboardInterrupt:
             self.interpreter.gROOT.SetInterrupt()
             status = 'interrupted'
-            self.ioHandler.EndCapture()
-            std_out = self.ioHandler.getStdout()
-            std_err = self.ioHandler.getStderr()
+            ioHandler.EndCapture()
+            std_out = ioHandler.getStdout()
+            std_err = ioHandler.getStderr()
         if not silent:
             ## Send output on stdout
             stream_content_stdout = {'name': 'stdout', 'text': std_out}

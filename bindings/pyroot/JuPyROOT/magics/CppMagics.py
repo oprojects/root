@@ -11,6 +11,8 @@
 #-----------------------------------------------------------------------------
 from metakernel import Magic, option
 
+from JuPyROOT.kernel.Utils import GetIOHandler, GetExecutor, GetDeclarer, ACLiC, MagicLoader
+
 import sys
 
 #NOTE:actually ROOTaaS is not capturing the error on %%cpp -d if the function is wrong 
@@ -26,8 +28,8 @@ class CppMagics(Magic):
     def cell_cpp(self, args):
         '''Executes the content of the cell as C++ code.'''
         if self.code.strip():
-             self.kernel.ioHandler.clear()
-             self.kernel.ioHandler.InitCapture()
+             ioHandler=GetIOHandler()
+             ioHandler.InitCapture()
              
              if args=='-a':
                  self.kernel.ACLiC(self.code)
@@ -35,9 +37,10 @@ class CppMagics(Magic):
                  self.kernel.Declarer(str(self.code))
              else:
                  self.kernel.Executor(str(self.code))
-             self.kernel.ioHandler.EndCapture()
-             std_out = self.kernel.ioHandler.getStdout()
-             std_err = self.kernel.ioHandler.getStderr()
+             ioHandler.EndCapture()
+             std_out = ioHandler.getStdout()
+             std_err = ioHandler.getStderr()
+             del ioHandler
              if std_out != "":
                 stream_content_stdout = {'name': 'stdout', 'text': std_out}
                 self.kernel.send_response(self.kernel.iopub_socket, 'stream', stream_content_stdout)

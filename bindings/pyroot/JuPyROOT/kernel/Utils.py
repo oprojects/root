@@ -25,12 +25,11 @@ _Executor  = None
 _Declarer  = None
 
 def GetIOHandler():
-    global _ioHandler
-    if not _ioHandler:
-        Handler.LoadHandlers()
-        from ROOT import JuPyROOTExecutorHandler
-        _ioHandler = JuPyROOTExecutorHandler()
-    return _ioHandler
+    #global _ioHandler
+    #if not _ioHandler:
+    from ROOT import JuPyROOTExecutorHandler
+    ioHandler = JuPyROOTExecutorHandler()
+    return ioHandler
     
 def GetExecutor():
     global _Executor
