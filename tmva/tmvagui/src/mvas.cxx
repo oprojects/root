@@ -13,7 +13,7 @@
 
 // input: - Input file (result from TMVA)
 //        - use of TMVA plotting TStyle
-void TMVA::mvas( TString fin, HistType htype, Bool_t useTMVAStyle )
+void TMVA::mvas(TString dataset, TString fin, HistType htype, Bool_t useTMVAStyle )
 {
    // set style and remove existing canvas'
    TMVAGlob::Initialize( useTMVAStyle );
@@ -34,7 +34,7 @@ void TMVA::mvas( TString fin, HistType htype, Bool_t useTMVAStyle )
    Int_t countCanvas = 0;
 
    // search for the right histograms in full list of keys
-   TIter next(file->GetListOfKeys());
+   TIter next(file->GetDirectory(dataset.Data())->GetListOfKeys());
    TKey *key(0);   
    while ((key = (TKey*)next())) {
 

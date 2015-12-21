@@ -34,7 +34,7 @@ using std::endl;
 
 namespace TMVA{
 
-   void mvaeffs( TString fin = "TMVA.root", 
+   void mvaeffs(TString dataset, TString fin = "TMVA.root", 
                  Bool_t useTMVAStyle = kTRUE, TString formula="S/sqrt(S+B)" );
 
    // this macro plots the signal and background efficiencies
@@ -101,7 +101,7 @@ namespace TMVA{
       TString GetFormulaString() { return fFormula; }
       TString GetLatexFormula();
    
-      void ReadHistograms(TFile* file);
+      void ReadHistograms(TString dataset,TFile* file);
       void UpdateSignificanceHists();
       void DrawHistograms();
 

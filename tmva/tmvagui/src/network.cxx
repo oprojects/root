@@ -20,17 +20,19 @@ using std::endl;
 // @author: Matt Jachowski, jachowski@stanford.edu
 
 TFile* Network_GFile = 0;
+TString Network_Dataset = "";
 
 static Int_t c_DarkBackground = TColor::GetColor( "#6e7a85" );
 
 
 Bool_t MovieMode = kFALSE;
 
-void TMVA::draw_network( TFile* f, TDirectory* d, const TString& hName, 
+void TMVA::draw_network(TString dataset, TFile* f, TDirectory* d, const TString& hName, 
                    Bool_t movieMode , const TString& epoch  )
 {
    Bool_t __PRINT_LOGO__ = kTRUE;
    Network_GFile = f;
+   Network_Dataset = dataset;
 
    MovieMode = movieMode;
    if (MovieMode) c_DarkBackground = TColor::GetColor( "#707F7F" );
@@ -57,6 +59,8 @@ void TMVA::draw_network( TFile* f, TDirectory* d, const TString& hName,
    TCanvas* c = new TCanvas( canvasnumber, canvastitle, 
                              ixc, 0 + (icanvas+1)*20, 1000, 650  );
    icanvas++;
+   std::cout<<d->GetPath()<<std::endl;
+   d->GetListOfKeys()->Print();
    TIter next = d->GetListOfKeys();
    TKey *key( 0 );
    Int_t numHists = 0;
@@ -72,9 +76,10 @@ void TMVA::draw_network( TFile* f, TDirectory* d, const TString& hName,
  
       TH2F* h = (TH2F*)key->ReadObj();    
       if (!h) {
-         cout << "Big troubles in \"draw_network\" (1)" << endl;
+         std::cerr << "Big troubles in \"draw_network\" (1)" << endl;
          exit(1);
       }
+      std::cout<<h->GetName()<<std::endl;
       if (TString(h->GetName()).Contains( hName )){
          numHists++;
  
@@ -89,7 +94,7 @@ void TMVA::draw_network( TFile* f, TDirectory* d, const TString& hName,
       }
    }
    if (numHists == 0) {
-      cout << "Error: could not find histograms" << endl;
+      std::cerr << "Error: could not find histograms" << endl;
       //exit(1);
    }
 
@@ -108,7 +113,7 @@ void TMVA::draw_network( TFile* f, TDirectory* d, const TString& hName,
       TH2F* h = (TH2F*)key->ReadObj();    
       //cout << (h->GetName()) << endl;
       if (!h) {
-         cout << "Big troubles in \"draw_network\" (2)" << endl;
+         std::cerr << "Big troubles in \"draw_network\" (2)" << endl;
          exit(1);
       }
       //cout << (h->GetName()) << endl;
@@ -230,7 +235,7 @@ TString* TMVA::get_var_names( Int_t nVars )
    
    TDirectory* dir = 0;
    for (Int_t i=0; i<6; i++) {
-      dir = (TDirectory*)Network_GFile->Get( directories[i] );
+      dir = (TDirectory*)Network_GFile->GetDirectory(Network_Dataset.Data())->Get( directories[i] );
       if (dir != 0) break;
    }
    if (dir==0) {
@@ -415,14 +420,14 @@ void TMVA::draw_synapse(Double_t cx1, Double_t cy1, Double_t cx2, Double_t cy2,
 
 // input: - Input file (result from TMVA),
 //        - use of TMVA plotting TStyle
-void TMVA::network( TString fin , Bool_t useTMVAStyle )
+void TMVA::network(TString dataset, TString fin , Bool_t useTMVAStyle )
 {
    // set style and remove existing canvas'
    TMVAGlob::Initialize( useTMVAStyle );
 
    // checks if file with name "fin" is already open, and if not opens one
    TFile* file = TMVAGlob::OpenFile( fin );  
-   TIter next(file->GetListOfKeys());
+   TIter next(file->GetDirectory(dataset.Data())->GetListOfKeys());
    TKey *key(0);
    while( (key = (TKey*)next()) ) {      
       if (!TString(key->GetName()).BeginsWith("Method_MLP")) continue;
@@ -438,14 +443,14 @@ void TMVA::network( TString fin , Bool_t useTMVAStyle )
         if( ! gROOT->GetClass(titkey->GetClassName())->InheritsFrom("TDirectory") ) continue;
 
         TDirectory* dir = (TDirectory *)titkey->ReadObj();
-        dir->cd();  
+        dir->cd();
         TList titles;
         UInt_t ni = TMVAGlob::GetListOfTitles( dir, titles );
         if (ni==0) {
            cout << "No titles found for Method_MLP" << endl;
            return;
         }
-        draw_network( file, dir );
+        draw_network(dataset,file, dir );
       }
    }
 

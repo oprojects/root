@@ -25,12 +25,12 @@ namespace TMVA{
                                Double_t  rad1, Double_t rad2, Double_t weightNormed );
    TString* get_var_names    ( Int_t nVars );
 
-   void draw_network( TFile* f, TDirectory* d, const TString& hName = "weights_hist", 
+   void draw_network(TString dataset, TFile* f, TDirectory* d, const TString& hName = "weights_hist", 
                       Bool_t movieMode = kFALSE, const TString& epoch = "" );
 
    void draw_activation(TCanvas* c, Double_t cx, Double_t cy, 
                         Double_t radx, Double_t rady, Int_t whichActivation);
-   void network( TString fin = "TMVA.root", Bool_t useTMVAStyle = kTRUE );
+   void network(TString dataset, TString fin = "TMVA.root", Bool_t useTMVAStyle = kTRUE );
 
 }
 #endif

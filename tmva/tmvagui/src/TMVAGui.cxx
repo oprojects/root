@@ -49,7 +49,7 @@ void TMVA::ActionButton( TControlBar* cbar,
 }
 
 // main GUI
-void TMVA::TMVAGui( const char* fName  ) 
+void TMVA::TMVAGui(const char* fDataset,  const char* fName  ) 
 {   
    // Use this script in order to run the various individual macros
    // that plot the output of TMVA (e.g. running TMVAClassification.C),
@@ -79,9 +79,15 @@ void TMVA::TMVAGui( const char* fName  )
       cout << "==> Abort TMVAGui, please verify filename" << endl;
       return;
    }
+//    if(!file->cd(fDataset))
+//    {
+//       cout << "==> Abort TMVAGui, please verify dataset name" << endl;     
+//       file->Close();
+//       return;
+//    }
    // find all references   
-   TMVAGui_keyContent = (TList*)file->GetListOfKeys()->Clone();
-
+   TMVAGui_keyContent = (TList*)file->GetDirectory(fDataset)->GetListOfKeys()->Clone();
+//    TMVAGui_keyContent->Print(); 
    // close file
    file->Close();
 
@@ -110,7 +116,7 @@ void TMVA::TMVAGui( const char* fName  )
       if (tmp.Contains( "Id" )) title = "Input variables (training sample)";
       ActionButton( cbar, 
                     Form( "(%i%c) %s", ic, ch++, title.Data() ),
-                    Form( "TMVA::variables(\"%s\",\"%s\",\"%s\")", fName, str->GetString().Data(), title.Data() ),
+                    Form( "TMVA::variables(\"%s\",\"%s\",\"%s\",\"%s\")",fDataset , fName, str->GetString().Data(), title.Data() ),
                     Form( "Plots all '%s'-transformed input variables (macro variables(...))", str->GetString().Data() ),
                     buttonType, str->GetString() );
    }      
@@ -125,7 +131,7 @@ void TMVA::TMVAGui( const char* fName  )
       if (tmp.Contains( "Id" )) title = "Input variable correlations (scatter profiles)";
       ActionButton( cbar, 
                     Form( "(%i%c) %s", ic, ch++, title.Data() ),
-                    Form( "TMVA::CorrGui(\"%s\",\"%s\",\"%s\")", fName, str->GetString().Data(), title.Data() ),
+                    Form( "TMVA::CorrGui(\"%s\",\"%s\",\"%s\",\"%s\")", fDataset, fName, str->GetString().Data(), title.Data() ),
                     Form( "Plots all correlation profiles between '%s'-transformed input variables (macro CorrGui(...))", 
                           str->GetString().Data() ),
                     buttonType, str->GetString() );
@@ -136,63 +142,63 @@ void TMVA::TMVAGui( const char* fName  )
    title =Form( "(%i) Input Variable Linear Correlation Coefficients", ++ic );
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::correlations(\"%s\")", fName ),
+                 Form( "TMVA::correlations(\"%s\",\"%s\")", fDataset,fName ),
                  "Plots signal and background correlation summaries for all input variables (macro correlations.C)", 
                  buttonType );
 
    title =Form( "(%ia) Classifier Output Distributions (test sample)", ++ic );
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::mvas(\"%s\",  TMVA::kMVAType)", fName ),
+                 Form( "TMVA::mvas(\"%s\",\"%s\",  TMVA::kMVAType)",fDataset , fName ),
                  "Plots the output of each classifier for the test data (macro mvas(...,0))",
                  buttonType, defaultRequiredClassifier );
 
    title =Form( "(%ib) Classifier Output Distributions (test and training samples superimposed)", ic );
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::mvas(\"%s\",  TMVA::kCompareType )", fName),
+                 Form( "TMVA::mvas(\"%s\",\"%s\",  TMVA::kCompareType )",fDataset , fName),
                  "Plots the output of each classifier for the test (histograms) and training (dots) data (macro mvas(...,3))",
                  buttonType, defaultRequiredClassifier );
 
    title = Form( "(%ic) Classifier Probability Distributions (test sample)", ic );
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::mvas(\"%s\", TMVA::kProbaType)", fName ),
+                 Form( "TMVA::mvas(\"%s\",\"%s\", TMVA::kProbaType)",fDataset , fName ),
                  "Plots the probability of each classifier for the test data (macro mvas(...,1))",
                  buttonType, defaultRequiredClassifier );
 
    title =Form( "(%id) Classifier Rarity Distributions (test sample)", ic );
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::mvas(\"%s\", TMVA::kRarityType)", fName ),
+                 Form( "TMVA::mvas(\"%s\",\"%s\", TMVA::kRarityType)",fDataset , fName ),
                  "Plots the Rarity of each classifier for the test data (macro mvas(...,2)) - background distribution should be uniform",
                  buttonType, defaultRequiredClassifier );
 
    title =Form( "(%ia) Classifier Cut Efficiencies", ++ic );
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::mvaeffs(\"%s\")", fName ),
+                 Form( "TMVA::mvaeffs(\"%s\",\"%s\")",fDataset,fName ),
                  "Plots signal and background efficiencies versus cut on classifier output (macro mvaeffs.cxx)",
                  buttonType, defaultRequiredClassifier );
 
    title = Form( "(%ib) Classifier Background Rejection vs Signal Efficiency (ROC curve)", ic );
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::efficiencies(\"%s\")", fName ),
+                 Form( "TMVA::efficiencies(\"%s\",\"%s\")",fDataset,fName ),
                  "Plots background rejection vs signal efficiencies (macro efficiencies.cxx) [\"ROC\" stands for \"Receiver Operation Characteristics\"]",
                  buttonType, defaultRequiredClassifier );
 
    title = Form( "(%ib) Classifier 1/(Backgr. Efficiency) vs Signal Efficiency (ROC curve)", ic );
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::efficiencies(\"%s\",%d)", fName, 3 ),
+                 Form( "TMVA::efficiencies(\"%s\",\"%s\",%d)",fDataset, fName, 3 ),
                  "Plots 1/(background eff.)  vs signal efficiencies (macro efficiencies.cxx) [\"ROC\" stands for \"Receiver Operation Characteristics\"]",
                  buttonType, defaultRequiredClassifier );
 
    title = Form( "(%i) Parallel Coordinates (requires ROOT-version >= 5.17)", ++ic );
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::paracoor(\"%s\")", fName ),
+                 Form( "TMVA::paracoor(\"%s\",\"%s\")",fDataset , fName ),
                  "Plots parallel coordinates for classifiers and input variables (macro paracoor.cxx, requires ROOT >= 5.17)",
                  buttonType, defaultRequiredClassifier );
 
@@ -204,19 +210,19 @@ void TMVA::TMVAGui( const char* fName  )
    title =Form( "(%i) PDFs of Classifiers (requires \"CreateMVAPdfs\" option set)", ++ic );
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::probas(\"%s\")", fName ),
+                 Form( "TMVA::probas(\"%s\",\"%s\")",fDataset , fName ),
                  "Plots the PDFs of the classifier output distributions for signal and background - if requested (macro probas.cxx)",
                  buttonType, defaultRequiredClassifier );
 
    title = Form( "(%i) Likelihood Reference Distributiuons", ++ic);
    ActionButton( cbar,  
                  title,
-                 Form( "TMVA::likelihoodrefs(\"%s\")", fName ), 
+                 Form( "TMVA::likelihoodrefs(\"%s\",\"%s\")",fDataset , fName ), 
                  "Plots to verify the likelihood reference distributions (macro likelihoodrefs.cxx)",
                  buttonType, "Likelihood" );
 
    title = Form( "(%ia) Network Architecture (MLP)", ++ic );
-   TString call = Form( "TMVA::network(\"%s\")", fName );
+   TString call = Form( "TMVA::network(\"%s\",\"%s\")",fDataset , fName );
    ActionButton( cbar,  
                  title,
                  call, 
@@ -252,7 +258,7 @@ void TMVA::TMVAGui( const char* fName  )
    title = Form( "(%i) Plot Foams (PDEFoam)", ++ic );
    ActionButton( cbar,  
                  title,
-                 Form("TMVA::PlotFoams(\"weights/TMVAClassification_PDEFoam.weights_foams.root\")"),
+                 Form("TMVA::PlotFoams(\"%s/weights/TMVAClassification_PDEFoam.weights_foams.root\")",fDataset),
                  "Plot Foams (macro PlotFoams.cxx)",
                  buttonType, "PDEFoam" );
 

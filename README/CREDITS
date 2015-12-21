@@ -343,6 +343,10 @@ N: Thorsten Glebe
 E: T.Glebe@mpi-hd.mpg.de
 D: Original author of the Smatrix package
 
+N: Sergei Gleyzer
+E: Sergei.Gleyzer@cern.ch
+D: TMVA
+
 N: Piotr Golonka
 E: Piotr.Golonka@cern.ch
 D: class TMCParticle
@@ -935,7 +939,3 @@ D: contributed to TStyle::CreateGradientColorTable()
 N: Omar Andres Zapata Mesa
 E: Omar.Zapata@cern.ch
 D: ROOT-R, JupyROOT, TMVA
-
-N: Sergei Gleyzer
-E: Sergei.Gleyzer@cern.ch
-D: TMVA

@@ -495,7 +495,7 @@ int TMVAClassification( TString myMethodList = "" )
    delete factory;
    delete dataloader;
    // Launch the GUI for the root macros
-   if (!gROOT->IsBatch()) TMVA::TMVAGui( outfileName );
+   if (!gROOT->IsBatch()) TMVA::TMVAGui("dataset", outfileName );
 
    return 0;
 }

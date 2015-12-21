@@ -211,7 +211,7 @@ void TMVA::plot_efficiencies( TFile* /*file*/, Int_t type , TDirectory* BinDir)
    return;
 }
 
-void TMVA::efficiencies( TString fin , Int_t type , Bool_t useTMVAStyle )
+void TMVA::efficiencies(TString dataset, TString fin , Int_t type , Bool_t useTMVAStyle )
 {
    // argument: type = 1 --> plot efficiency(B) versus eff(S)
    //           type = 2 --> plot rejection (B) versus efficiency (S)
@@ -224,8 +224,8 @@ void TMVA::efficiencies( TString fin , Int_t type , Bool_t useTMVAStyle )
    if (!file || !file->IsOpen()) {
          file = new TFile(fin);
    }
-
-   plot_efficiencies( file, type, gDirectory );
+   gDirectory->cd(dataset.Data());
+   plot_efficiencies( (TFile*)file->GetDirectory(dataset.Data()), type, gDirectory );
 
    return;
 }

@@ -170,18 +170,18 @@ void TMVA::likelihoodrefs( TDirectory *lhdir ) {
    }
 }
 
-void TMVA::likelihoodrefs( TString fin , Bool_t useTMVAStyle )
+void TMVA::likelihoodrefs(TString dataset, TString fin , Bool_t useTMVAStyle )
 {
    // set style and remove existing canvas'
    TMVAGlob::Initialize( useTMVAStyle );
   
    // checks if file with name "fin" is already open, and if not opens one
-   TMVAGlob::OpenFile( fin );  
+   TFile *file=TMVAGlob::OpenFile( fin );  
 
    // get all titles of the method likelihood
    TList titles;
    TString metlike="Method_Likelihood";
-   UInt_t ninst = TMVAGlob::GetListOfTitles(metlike,titles);
+   UInt_t ninst = TMVAGlob::GetListOfTitles(metlike,titles,file->GetDirectory(dataset.Data()));
    if (ninst==0) {
       cout << "Could not locate directory 'Method_Likelihood' in file " << fin << endl;
       return;

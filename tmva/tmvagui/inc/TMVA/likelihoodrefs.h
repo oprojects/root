@@ -16,6 +16,6 @@ namespace TMVA{
 
    void likelihoodrefs( TDirectory *lhdir ); 
 
-   void likelihoodrefs( TString fin = "TMVA.root", Bool_t useTMVAStyle = kTRUE );
+   void likelihoodrefs(TString dataset, TString fin = "TMVA.root", Bool_t useTMVAStyle = kTRUE );
 }
 #endif

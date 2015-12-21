@@ -269,7 +269,7 @@ void TMVA::StatDialogMVAEffs::UpdateSignificanceHists()
    cout << "--- " << setfill('-') << setw(str.Length()) << "" << setfill(' ') << endl << endl;
 }
 
-void TMVA::StatDialogMVAEffs::ReadHistograms(TFile* file) 
+void TMVA::StatDialogMVAEffs::ReadHistograms(TString dataset,TFile* file) 
 {
    if (fInfoList) { 
       TIter next(fInfoList);
@@ -283,7 +283,7 @@ void TMVA::StatDialogMVAEffs::ReadHistograms(TFile* file)
    fInfoList = new TList;
 
    // search for the right histograms in full list of keys
-   TIter next(file->GetListOfKeys());
+   TIter next(file->GetDirectory(dataset.Data())->GetListOfKeys());
    TKey *key(0);   
    while( (key = (TKey*)next()) ) {
 
@@ -509,7 +509,7 @@ void TMVA::StatDialogMVAEffs::PrintResults( const MethodInfo* info )
    }
 }
 
-void TMVA::mvaeffs( TString fin , 
+void TMVA::mvaeffs(TString dataset, TString fin , 
               Bool_t useTMVAStyle, TString formula )
 {
    TMVAGlob::Initialize( useTMVAStyle );
@@ -517,7 +517,7 @@ void TMVA::mvaeffs( TString fin ,
    StatDialogMVAEffs* gGui = new StatDialogMVAEffs(gClient->GetRoot(), 1000, 1000);
 
    TFile* file = TMVAGlob::OpenFile( fin );
-   gGui->ReadHistograms(file);
+   gGui->ReadHistograms(dataset,file);
    gGui->SetFormula(formula);
    gGui->UpdateSignificanceHists();
    gGui->DrawHistograms();
