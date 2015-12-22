@@ -61,19 +61,18 @@ void TMVA::annconvergencetest( TDirectory *lhdir )
    TMVAGlob::imgconv( c, fname );
 }
 
-void TMVA::annconvergencetest( TString fin , Bool_t useTMVAStyle  )
+void TMVA::annconvergencetest(TString dataset, TString fin , Bool_t useTMVAStyle  )
 {
    // set style and remove existing canvas'
    TMVAGlob::Initialize( useTMVAStyle );
   
    // checks if file with name "fin" is already open, and if not opens one
-   //TFile* file =
-   TMVAGlob::OpenFile( fin );  
+   TFile* file =TMVAGlob::OpenFile( fin );  
 
    // get all titles of the method likelihood
    TList titles;
-   TString metmlp="Method_MLP"; 
-   UInt_t ninst = TMVAGlob::GetListOfTitles(metmlp,titles);
+   TString metmlp=Form("%s/Method_MLP",dataset.Data()); 
+   UInt_t ninst = TMVAGlob::GetListOfTitles(metmlp,titles,file);
    if (ninst==0) {
       cout << "Could not locate directory 'Method_MLP' in file " << fin << endl;
       return;
