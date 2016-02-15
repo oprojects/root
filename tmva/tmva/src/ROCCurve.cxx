@@ -35,6 +35,9 @@
 #ifndef ROOT_TMVA_MsgLogger
 #include "TMVA/MsgLogger.h"
 #endif
+#ifndef ROOT_TGraph
+#include "TGraph.h"
+#endif
 
 #include<vector>
 #include <cassert>
@@ -43,7 +46,7 @@ using namespace std;
 
 
 TMVA::ROCCurve::ROCCurve(const std::vector<Float_t> & mva, const std::vector<Bool_t> & mvat) :
-   fLogger ( new TMVA::MsgLogger("ROCCurve") )
+   fLogger ( new TMVA::MsgLogger("ROCCurve") ),fGraph(NULL)
 {
    assert(mva.size() == mvat.size() );
    for(UInt_t i=0;i<mva.size();i++)
@@ -61,6 +64,7 @@ TMVA::ROCCurve::ROCCurve(const std::vector<Float_t> & mva, const std::vector<Boo
 
 TMVA::ROCCurve::~ROCCurve() {
    delete fLogger;
+   if(fGraph) delete fGraph;
 }
       
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +79,7 @@ Double_t TMVA::ROCCurve::GetROCIntegral(){
   
   std::vector<Float_t>  vec_epsilon_b(1);
   vec_epsilon_b.push_back(0);
-  
+
   Float_t epsilon_s = 0.0;
   Float_t epsilon_b = 0.0;
 
@@ -105,7 +109,7 @@ Double_t TMVA::ROCCurve::GetROCIntegral(){
       {
 	epsilon_b = 1.0*dcounter/(ccounter+dcounter);
       }
-      vec_epsilon_b.push_back(epsilon_b);      
+      vec_epsilon_b.push_back(epsilon_b);
   }
   vec_epsilon_s.push_back(1.0);
   vec_epsilon_b.push_back(1.0);
@@ -117,7 +121,55 @@ Double_t TMVA::ROCCurve::GetROCIntegral(){
 }
 
 
+TGraph* TMVA::ROCCurve::GetROCCurve()
+{
+  int ndivisions = 40;
+  std::vector<Float_t> vec_epsilon_s(1);
+  vec_epsilon_s.push_back(0);
+  
+  std::vector<Float_t>  vec_epsilon_b(1);
+  vec_epsilon_b.push_back(0);
 
+  Float_t epsilon_s = 0.0;
+  Float_t epsilon_b = 0.0;
+
+  for(Float_t i=-1.0;i<1.0;i+=(1.0/ndivisions))
+  {
+      Float_t acounter = 0.0;
+      Float_t bcounter = 0.0;
+      Float_t ccounter = 0.0;
+      Float_t dcounter = 0.0;
+      
+      for(UInt_t j=0;j<fMvaS.size();j++)
+      {
+        if(fMvaS[j] > i) acounter++;
+        else            bcounter++;
+	
+        if(fMvaB[j] > i) ccounter++;
+        else            dcounter++;
+      }
+      
+      if(acounter != 0 || bcounter != 0)
+      {
+	epsilon_s = 1.0*bcounter/(acounter+bcounter);
+      }
+      vec_epsilon_s.push_back(epsilon_s);
+      
+      if(ccounter != 0 || dcounter != 0)
+      {
+	epsilon_b = 1.0*dcounter/(ccounter+dcounter);
+      }
+      vec_epsilon_b.push_back(epsilon_b);
+  }
+  vec_epsilon_s.push_back(1.0);
+  vec_epsilon_b.push_back(1.0);
+  fGraph=new TGraph(vec_epsilon_s.size());
+  for(UInt_t i=0;i<vec_epsilon_s.size();i++)
+  {
+    fGraph->SetPoint (i, vec_epsilon_s[i], vec_epsilon_b[i]);  
+  }
+  return fGraph;
+}
 
 
 

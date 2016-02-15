@@ -579,9 +579,57 @@ Double_t TMVA::Factory::GetROCIntegral(TString datasetname,TString theMethodName
    if (!fROCCurve) Log() << kFATAL << Form("ROCCurve object was not created in Method = %s not found with Dataset = %s ", theMethodName.Data(), datasetname.Data()) << Endl;
 
    Double_t fROCalcValue = fROCCurve->GetROCIntegral();
-
+//    delete fROCCurve;
    return fROCalcValue;
 }
+
+TGraph* TMVA::Factory::GetROCCurve(DataLoader *loader,TString theMethodName)
+{
+  return GetROCCurve((TString)loader->GetName(),theMethodName);
+}
+
+TGraph* TMVA::Factory::GetROCCurve(TString  datasetname,TString theMethodName)
+{
+   if (fMethodsMap.find(datasetname) == fMethodsMap.end()) {
+      Log() << kERROR << Form("DataSet = %s not found in methods map.", datasetname.Data()) << Endl;
+      return 0;
+   }
+   MVector *methods = fMethodsMap[datasetname.Data()];
+   MVector::iterator itrMethod = methods->begin();
+   TMVA::MethodBase *method = 0;
+   while (itrMethod != methods->end()) {
+      TMVA::MethodBase *cmethod = dynamic_cast<TMVA::MethodBase *>(*itrMethod);
+      if (!cmethod) {
+         //msg of error here
+         itrMethod++;
+         continue;
+      }
+      if (cmethod->GetMethodName() == theMethodName) {
+         method = cmethod;
+         break;
+      }
+      itrMethod++;
+   }
+
+   if (!method) {
+      Log() << kERROR << Form("Method = %s not found with Dataset = %s ", theMethodName.Data(), datasetname.Data()) << Endl;
+      return 0;
+   }
+
+   TMVA::Results *results = method->Data()->GetResults(method->GetMethodName(), Types::kTesting, Types::kClassification);
+
+   std::vector<Float_t> *mvaRes = dynamic_cast<ResultsClassification *>(results)->GetValueVector();
+   std::vector<Bool_t>  *mvaResType = dynamic_cast<ResultsClassification *>(results)->GetValueVectorTypes();
+
+   TMVA::ROCCurve *fROCCurve = new TMVA::ROCCurve(*mvaRes, *mvaResType);
+   if (!fROCCurve) Log() << kFATAL << Form("ROCCurve object was not created in Method = %s not found with Dataset = %s ", theMethodName.Data(), datasetname.Data()) << Endl;
+
+   TGraph  *fGraph = fROCCurve->GetROCCurve();
+//    delete fROCCurve;
+   return fGraph;
+  
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// iterates through all booked methods and calls training
