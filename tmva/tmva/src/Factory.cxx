@@ -625,7 +625,8 @@ TGraph* TMVA::Factory::GetROCCurve(TString  datasetname,TString theMethodName)
    if (!fROCCurve) Log() << kFATAL << Form("ROCCurve object was not created in Method = %s not found with Dataset = %s ", theMethodName.Data(), datasetname.Data()) << Endl;
 
    TGraph  *fGraph = fROCCurve->GetROCCurve();
-//    delete fROCCurve;
+   delete fROCCurve;
+   
    return fGraph;
   
 }

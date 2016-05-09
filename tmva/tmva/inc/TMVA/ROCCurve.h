@@ -53,12 +53,14 @@ namespace TMVA {
     TGraph* GetROCCurve();
     
   private:
-    std::vector<Float_t> fMvaS;
-    std::vector<Float_t> fMvaB;
-
-    TGraph *fGraph;
+    void EpsilonCount();
     mutable MsgLogger* fLogger;   //! message logger
     MsgLogger& Log() const { return *fLogger; }                       
+    TGraph *fGraph;
+    std::vector<Float_t> fMvaS;
+    std::vector<Float_t> fMvaB;
+    std::vector<Float_t> fEpsilonSig;
+    std::vector<Float_t> fEpsilonBgk;
 
   };
 }
