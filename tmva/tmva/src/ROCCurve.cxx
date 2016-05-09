@@ -1,5 +1,5 @@
 // @(#)root/tmva $Id$   
-// Author: Omar Zapata, Lorenzo Moneta, Sergei Gleyzer
+// Author: Omar Zapata, Lorenzo Moneta, Sergei Gleyzer and Simon Pfreundschuh
 
 /**********************************************************************************
  * Project: TMVA - a Root-integrated toolkit for multivariate data analysis       *
@@ -54,7 +54,6 @@ TMVA::ROCCurve::ROCCurve(const std::vector<Float_t> & mva, const std::vector<Boo
       if(mvat[i] ) fMvaS.push_back(mva[i]);
       else fMvaB.push_back(mva[i]);
    }
-   EpsilonCount();//call base code to get ROC
 }
 
 
@@ -73,15 +72,6 @@ TMVA::ROCCurve::~ROCCurve() {
 Double_t TMVA::ROCCurve::GetROCIntegral(){
   
   Float_t integral=0;
-  for(UInt_t i=0;i<fEpsilonSig.size()-1;i++)
-  {
-      integral += 0.5*(fEpsilonSig[i+1]-fEpsilonSig[i])*(fEpsilonBgk[i]+fEpsilonBgk[i+1]);
-  }
-   return integral;
-}
-
-void TMVA::ROCCurve::EpsilonCount()
-{
   int ndivisions = 40;
   fEpsilonSig.push_back(0);
   fEpsilonBgk.push_back(0);
@@ -119,10 +109,59 @@ void TMVA::ROCCurve::EpsilonCount()
   }
   fEpsilonSig.push_back(1.0);
   fEpsilonBgk.push_back(1.0);
+  for(UInt_t i=0;i<fEpsilonSig.size()-1;i++)
+  {
+      integral += 0.5*(fEpsilonSig[i+1]-fEpsilonSig[i])*(fEpsilonBgk[i]+fEpsilonBgk[i+1]);
+  }
+   return integral;
 }
 
-TGraph* TMVA::ROCCurve::GetROCCurve()
+
+TGraph* TMVA::ROCCurve::GetROCCurve(const UInt_t points)
 {
+  
+    const UInt_t ndivisions = points - 1;
+    fEpsilonSig.resize(points);
+    fEpsilonBgk.resize(points);
+    // Fixed values.
+    fEpsilonSig[0] = 0.0;
+    fEpsilonSig[ndivisions] = 1.0;
+    fEpsilonBgk[0] = 1.0;
+    fEpsilonBgk[ndivisions] = 0.0;
+
+    for(UInt_t i = 1; i < ndivisions; i++)
+    {
+	Float_t threshold = -1.0 + i * 2.0 / (Float_t) ndivisions;
+	Float_t true_positives = 0.0;
+	Float_t false_positives = 0.0;
+	Float_t true_negatives = 0.0;
+	Float_t false_negatives = 0.0;
+
+	for(UInt_t j=0; j<fMvaS.size(); j++)
+	{
+	    if(fMvaS[j] > threshold)
+		true_positives += 1.0;
+	    else
+		false_negatives += 1.0;
+
+	    if(fMvaB[j] > threshold)
+		false_positives += 1.0;
+	    else
+		true_negatives += 1.0;
+	}
+
+	fEpsilonSig[ndivisions - i] = 0.0;
+	if ((true_positives > 0.0) || (false_negatives > 0.0))
+	    fEpsilonSig[ndivisions - i] =
+		true_positives / (true_positives + false_negatives);
+
+	fEpsilonBgk[ndivisions - i] =0.0;
+	if ((true_negatives > 0.0) || (false_positives > 0.0))
+	    fEpsilonBgk[ndivisions - i] =
+		true_negatives / (true_negatives + false_positives);
+
+    }  
+  
  if(!fGraph)    fGraph=new TGraph(fEpsilonSig.size(),&fEpsilonSig[0],&fEpsilonBgk[0]);
  return fGraph;
 }

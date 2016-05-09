@@ -50,7 +50,7 @@ namespace TMVA {
     
 
     Double_t GetROCIntegral();
-    TGraph* GetROCCurve();
+    TGraph* GetROCCurve(const UInt_t points=100);//nvidisions = #points -1
     
   private:
     void EpsilonCount();

@@ -50,6 +50,7 @@
 #include "TEventList.h"
 #include "TH2.h"
 #include "TText.h"
+#include "TLegend.h"
 #include "TStyle.h"
 #include "TMatrixF.h"
 #include "TMatrixDSym.h"
@@ -579,16 +580,16 @@ Double_t TMVA::Factory::GetROCIntegral(TString datasetname,TString theMethodName
    if (!fROCCurve) Log() << kFATAL << Form("ROCCurve object was not created in Method = %s not found with Dataset = %s ", theMethodName.Data(), datasetname.Data()) << Endl;
 
    Double_t fROCalcValue = fROCCurve->GetROCIntegral();
-//    delete fROCCurve;
+   delete fROCCurve;
    return fROCalcValue;
 }
 
-TGraph* TMVA::Factory::GetROCCurve(DataLoader *loader,TString theMethodName)
+TGraph* TMVA::Factory::GetROCCurve(DataLoader *loader,TString theMethodName,Bool_t fLegend)
 {
-  return GetROCCurve((TString)loader->GetName(),theMethodName);
+  return GetROCCurve((TString)loader->GetName(),theMethodName,fLegend);
 }
 
-TGraph* TMVA::Factory::GetROCCurve(TString  datasetname,TString theMethodName)
+TGraph* TMVA::Factory::GetROCCurve(TString  datasetname,TString theMethodName,Bool_t fLegend)
 {
    if (fMethodsMap.find(datasetname) == fMethodsMap.end()) {
       Log() << kERROR << Form("DataSet = %s not found in methods map.", datasetname.Data()) << Endl;
@@ -624,11 +625,15 @@ TGraph* TMVA::Factory::GetROCCurve(TString  datasetname,TString theMethodName)
    TMVA::ROCCurve *fROCCurve = new TMVA::ROCCurve(*mvaRes, *mvaResType);
    if (!fROCCurve) Log() << kFATAL << Form("ROCCurve object was not created in Method = %s not found with Dataset = %s ", theMethodName.Data(), datasetname.Data()) << Endl;
 
-   TGraph  *fGraph = fROCCurve->GetROCCurve();
-   delete fROCCurve;
-   
-   return fGraph;
-  
+   TGraph  *fGraph = (TGraph  *)fROCCurve->GetROCCurve()->Clone();
+   if(fLegend)
+   {
+        fGraph->GetYaxis()->SetTitle("Background Rejection");
+        fGraph->GetXaxis()->SetTitle("Signal Efficiency");
+        fGraph->SetTitle(Form("Background Rejection vs. Signal Efficiency (%s)",method->GetMethodName().Data()));
+   }
+   delete fROCCurve;   
+   return fGraph;  
 }
 
 

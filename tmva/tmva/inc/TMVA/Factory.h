@@ -155,8 +155,8 @@ namespace TMVA {
       Double_t GetROCIntegral(DataLoader *loader,TString theMethodName);
       Double_t GetROCIntegral(TString  datasetname,TString theMethodName);
 
-      TGraph* GetROCCurve(DataLoader *loader,TString theMethodName);
-      TGraph* GetROCCurve(TString  datasetname,TString theMethodName);
+      TGraph* GetROCCurve(DataLoader *loader,TString theMethodName,Bool_t fLegend=kTRUE);
+      TGraph* GetROCCurve(TString  datasetname,TString theMethodName,Bool_t fLegend=kTRUE);
       
    private:
 
