@@ -72,6 +72,8 @@ class TTree;
 class TDirectory;
 class TCanvas;
 class TH1F;
+class TGraph;
+
 namespace TMVA {
 
    class IMethod;
@@ -155,6 +157,17 @@ namespace TMVA {
       Double_t GetROCIntegral(DataLoader *loader,TString theMethodName);
       Double_t GetROCIntegral(TString  datasetname,TString theMethodName);
 
+      // methods to get TGraph for a indicate method in dataset
+      //optional tiitle and axis added with fLegend=kTRUE
+      TGraph* GetROCCurve(DataLoader *loader,TString theMethodName,Bool_t fLegend=kTRUE);
+      TGraph* GetROCCurve(TString  datasetname,TString theMethodName,Bool_t fLegend=kTRUE);
+      
+      // Draw all ROC curves for all methods in the dataset.
+      TCanvas* GetROCCurve(DataLoader *loader);
+      TCanvas* GetROCCurve(TString datasetname);
+
+      
+      
    private:
 
       // the beautiful greeting message
