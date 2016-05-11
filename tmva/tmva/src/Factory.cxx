@@ -697,10 +697,10 @@ TCanvas * TMVA::Factory::GetROCCurve(TString datasetname)
             fGraph->GetYaxis()->SetTitle("Background Rejection");
             fGraph->GetXaxis()->SetTitle("Signal Efficiency");
             fGraph->SetTitle("Background Rejection vs. Signal Efficiency");
-            fGraph->Draw("AC");
+            fGraph->Draw("ACL");
         }
         else
-            fGraph->Draw("C");
+            fGraph->Draw("LC");
 
         fGraph->SetLineWidth(2);
         fGraph->SetLineColor(++line_color);
