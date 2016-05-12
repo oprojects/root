@@ -71,7 +71,7 @@ namespace TMVA {
    enum HistType { kMVAType = 0, kProbaType = 1, kRarityType = 2, kCompareType = 3 };
 
    //Variable Importance type
-   enum VIType {kShort=0,kAll=1,kRandom=2};
+   enum VIType {kOriginal=0,kAll=1,kRandom=2};
    
    class Types {
 

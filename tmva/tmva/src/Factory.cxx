@@ -1564,7 +1564,7 @@ TH1F* TMVA::Factory::EvaluateImportance(DataLoader *loader,VIType vitype, Types:
   
   //getting number of variables and variable names from loader
   const int nbits = loader->DefaultDataSetInfo().GetNVariables();
-  if(vitype==VIType::kShort)
+  if(vitype==VIType::kOriginal)
   return EvaluateImportanceShort(loader,theMethod,methodTitle,theOption);
   else if(vitype==VIType::kAll)
   return EvaluateImportanceAll(loader,theMethod,methodTitle,theOption);
@@ -1808,7 +1808,7 @@ TH1F* TMVA::Factory::EvaluateImportanceShort(DataLoader *loader, Types::EMVA the
       gSystem->Exec(Form("rm -rf %s", ybitset.to_string().c_str()));
     }
   }
-   std::cout<<"--- Variable Importance Results (Short)"<<std::endl;
+   std::cout<<"--- Variable Importance Results (Original)"<<std::endl;
    return GetImportance(nbits,importances,varNames);
 }
 
@@ -1985,7 +1985,7 @@ TH1F* TMVA::Factory::GetImportance(const int nbits,std::vector<Double_t> importa
   return vih1;
 }
 
-float TMVA::Factory::CrossValidateMethod(DataLoader * loader, Types::EMVA theMethod, TString methodTitle, const char *theOption, bool optParams, int NumFolds, bool remakeDataSet)
+float TMVA::Factory::CrossValidate(DataLoader * loader, Types::EMVA theMethod, TString methodTitle, const char *theOption, bool optParams, int NumFolds, bool remakeDataSet)
 {
 
   //bool optParams = true;
@@ -2043,7 +2043,7 @@ float TMVA::Factory::CrossValidateMethod(DataLoader * loader, Types::EMVA theMet
 	optionsString += it->second;
 	if(it!=--foldParameters.at(t).end()){ optionsString += ":"; }
       }
-      parameterPerformance.push_back(CrossValidateMethod(loader, theMethod, methodTitle, optionsString, false, false));
+      parameterPerformance.push_back(CrossValidate(loader, theMethod, methodTitle, optionsString, false, false));
     }
   }
 
@@ -2108,7 +2108,8 @@ float TMVA::Factory::CrossValidateMethod(DataLoader * loader, Types::EMVA theMet
     }
     std::cout << "Average ROCIntegral: " << sumFOM/(double)NumFolds << std::endl;
   }
-
-  return sumFOM/(double)NumFolds;
   
+  return sumFOM/(double)NumFolds;
+ 
+ 
 }
