@@ -308,7 +308,7 @@ void TMVA::Configurable::PrintOptions() const
    Log() << kVERBOSE << "- By User:" << Endl;
    Bool_t found = kFALSE;
    while (OptionBase* opt = (OptionBase *) optIt()) {
-      if (opt->IsSet()) { Log() << kVERBOSE << "    "; opt->Print(Log()); Log() << Endl; found = kTRUE; }
+       if (opt->IsSet()) { Log() << kVERBOSE << "    "; opt->Print(Log().GetStingStream()); Log() << Endl; found = kTRUE; }
    }
    if (!found) Log() << kVERBOSE << "    <none>" << Endl;
 
@@ -316,7 +316,7 @@ void TMVA::Configurable::PrintOptions() const
    Log() << kVERBOSE << "- Default:" << Endl;
    found = kFALSE;
    while (OptionBase* opt = (OptionBase *) optIt()) {
-      if (!opt->IsSet()) { Log() << kVERBOSE << "    "; opt->Print(Log()); Log() << Endl; found = kTRUE; }
+       if (!opt->IsSet()) { Log() << kVERBOSE << "    "; opt->Print(Log().GetStingStream()); Log() << Endl; found = kTRUE; }
    }
    if (!found) Log() << kVERBOSE << "    <none>" << Endl;
 }

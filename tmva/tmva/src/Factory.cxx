@@ -1638,7 +1638,7 @@ void TMVA::Factory::EvaluateAllMethods( void )
 		}
 		Log() << kINFO << hLine << Endl;
 		Log() << kINFO << Endl; 
-		Log().flush();
+                Log().GetStingStream().flush();
 		if (gTools().CheckForSilentOption( GetOptions() )) Log().InhibitOutput();
 	    }//end fROC
 	  }

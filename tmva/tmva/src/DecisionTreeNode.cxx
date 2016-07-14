@@ -188,7 +188,7 @@ void TMVA::DecisionTreeNode::SetPurity( void )
    }
    else {
       Log() << kINFO << "Zero events in purity calcuation , return purity=0.5" << Endl;
-      this->Print(Log());
+      this->Print(Log().GetStingStream());
       fPurity = 0.5;
    }
    return;
