@@ -66,7 +66,8 @@ ClassImp(TMVA::DataSet)
 /// constructor
 
 TMVA::DataSet::DataSet(const DataSetInfo& dsi) 
-   : fdsi(&dsi),
+   : TNamed(dsi.GetName(),"DataSet"),
+     fdsi(&dsi),
      fEventCollection(4,(std::vector<Event*>*)0),
      fCurrentTreeIdx(0),
      fCurrentEventIdx(0),
@@ -97,7 +98,7 @@ TMVA::DataSet::DataSet(const DataSetInfo& dsi)
 
 
 TMVA::DataSet::DataSet() 
-: fdsi(new DataSetInfo(GetName())),
+:fdsi(new DataSetInfo(GetName())),
 fEventCollection(4,(std::vector<Event*>*)0),
 fCurrentTreeIdx(0),
 fCurrentEventIdx(0),

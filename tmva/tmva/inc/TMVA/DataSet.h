@@ -44,6 +44,9 @@
 #ifndef ROOT_TObject
 #include "TObject.h"
 #endif
+#ifndef ROOT_TNamed
+#include "TNamed.h"
+#endif
 #ifndef ROOT_TString
 #include "TString.h"
 #endif
@@ -77,7 +80,7 @@ namespace TMVA {
    class MsgLogger;
    class Results;
 
-   class DataSet:public TObject {
+   class DataSet:public TNamed {
 
    public:
 
