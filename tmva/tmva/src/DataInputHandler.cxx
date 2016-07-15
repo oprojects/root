@@ -39,6 +39,10 @@
 #include "TMVA/Configurable.h"
 #endif
 
+ClassImp(TMVA::TreeInfo)
+
+ClassImp(TMVA::DataInputHandler)
+
 ////////////////////////////////////////////////////////////////////////////////
 /// constructor
 

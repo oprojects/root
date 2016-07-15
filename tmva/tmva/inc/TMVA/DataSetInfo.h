@@ -234,7 +234,9 @@ namespace TMVA {
       mutable MsgLogger*         fLogger;            //! message logger
       MsgLogger& Log() const { return *fLogger; }
 
-
+   protected:
+       
+       ClassDef(DataSetInfo,0);
    };
 }
 

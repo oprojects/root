@@ -36,6 +36,10 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#ifndef ROOT_TNamed
+#include "TNamed.h"
+#endif
+
 #ifndef ROOT_TList
 #include "TList.h"
 #endif
@@ -51,7 +55,7 @@ namespace TMVA {
    class DataSetFactory; // DSMTEST
    class MsgLogger;
    class Factory;
-   class DataSetManager {
+   class DataSetManager :public TNamed{
       friend class Factory;
    public:
 
@@ -87,12 +91,15 @@ namespace TMVA {
       TMVA::DataSetFactory* fDatasetFactory;
 
       // access to input data
-      DataInputHandler& DataInput() { return fDataInput; }
+      DataInputHandler& DataInput() { return *fDataInput; }
 
-      DataInputHandler&          fDataInput;             //! source of input data
+      DataInputHandler*          fDataInput;             //! source of input data
       TList                      fDataSetInfoCollection; //! all registered dataset definitions
       MsgLogger*                 fLogger;   // message logger
       MsgLogger& Log() const { return *fLogger; }    
+   protected:
+       
+       ClassDef(DataSetManager,0);
    };
 }
 
