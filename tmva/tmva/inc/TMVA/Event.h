@@ -43,7 +43,9 @@
 #ifndef ROOT_TMVA_Types
 #include "TMVA/Types.h"
 #endif
-
+#ifndef ROOT_TObject
+#include "TObject.h"
+#endif
 
 
 class TCut;
@@ -54,7 +56,7 @@ namespace TMVA {
 
    std::ostream& operator<<( std::ostream& os, const Event& event );
 
-   class Event {
+   class Event{
 
       friend std::ostream& operator<<( std::ostream& os, const Event& event );
 

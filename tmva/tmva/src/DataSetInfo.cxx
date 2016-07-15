@@ -64,9 +64,8 @@
 /// constructor
 
 TMVA::DataSetInfo::DataSetInfo(const TString& name)
-   : TObject(),
+: TNamed(name.Data(),"DataSetInfo"),
      fDataSetManager(NULL),
-     fName(name),
      fDataSet( 0 ),
      fNeedsRebuilding( kTRUE ),
      fVariables(),

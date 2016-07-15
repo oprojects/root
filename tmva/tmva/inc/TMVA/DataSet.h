@@ -77,11 +77,13 @@ namespace TMVA {
    class MsgLogger;
    class Results;
 
-   class DataSet {
+   class DataSet:public TObject {
 
    public:
 
-      DataSet(const DataSetInfo&);
+       DataSet(const DataSetInfo&);
+       DataSet();
+       
       virtual ~DataSet();
 
       void      AddEvent( Event *, Types::ETreeType );
@@ -154,10 +156,9 @@ namespace TMVA {
    private:
 
       // data members
-      DataSet();
       void DestroyCollection( Types::ETreeType type, Bool_t deleteEvents );
 
-      const DataSetInfo&         fdsi;                //! datasetinfo that created this dataset
+      const DataSetInfo         *fdsi;                //! datasetinfo that created this dataset NOTE: moved to pointer to support serialization using default constructor
 
       std::vector<Event*>::iterator        fEvtCollIt;
       std::vector< std::vector<Event*>*  > fEventCollection; //! list of events for training/testing/...
@@ -192,6 +193,9 @@ namespace TMVA {
 
       void  ApplyTrainingBlockDivision();
       void  ApplyTrainingSetDivision();
+   protected:
+       
+       ClassDef(DataSet,0);
    };
 }
 

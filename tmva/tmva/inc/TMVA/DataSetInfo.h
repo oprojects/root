@@ -75,14 +75,14 @@ namespace TMVA {
    class MsgLogger;
    class DataSetManager;
 
-   class DataSetInfo : public TObject {
+   class DataSetInfo : public TNamed {
 
    public:
 
       DataSetInfo(const TString& name = "Default");
       virtual ~DataSetInfo();
 
-      virtual const char* GetName() const { return fName.Data(); }
+//       virtual const char* GetName() const { return GetName(); }
 
       // the data set
       void        ClearDataSet() const;
@@ -195,11 +195,10 @@ namespace TMVA {
       void                       SetDataSetManager( DataSetManager* dsm ) { fDataSetManager = dsm; } // DSMTEST
       friend class DataSetManager;  // DSMTEST (datasetmanager test)
 
-   DataSetInfo( const DataSetInfo& ) : TObject() {}
+      DataSetInfo( const DataSetInfo& dsi) : TNamed(dsi.GetName(),dsi.GetTitle()) {}
 
       void PrintCorrelationMatrix( TTree* theTree );
 
-      TString                    fName;              //! name of the dataset info object
 
       mutable DataSet*           fDataSet;           //! dataset, owned by this datasetinfo object
       mutable Bool_t             fNeedsRebuilding;   //! flag if rebuilding of dataset is needed (after change of cuts, vars, etc.)
