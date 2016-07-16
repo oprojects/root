@@ -198,7 +198,7 @@ namespace TMVA {
       void  ApplyTrainingSetDivision();
    protected:
        
-       ClassDef(DataSet,0);
+       ClassDef(DataSet,1);
    };
 }
 

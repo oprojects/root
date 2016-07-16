@@ -77,14 +77,26 @@ TMVA::DataLoader::DataLoader( TString thedlName)
    fDataInputHandler     ( new DataInputHandler ),
    fTransformations      ( "I" ),
    fVerbose              ( kFALSE ),
-   fName                 ( thedlName ),
    fDataAssignType       ( kAssignEvents ),
-   fATreeEvent           ( NULL )
+   fATreeEvent           ()
 {
    fDataSetManager = new DataSetManager( *fDataInputHandler ); // DSMTEST
-
+   SetName(thedlName.Data());
    // render silent
    //    if (gTools().CheckForSilentOption( GetOptions() )) Log().InhibitOutput(); // make sure is silent if wanted to
+}
+
+//_______________________________________________________________________
+TMVA::DataLoader::DataLoader( )
+: Configurable( ),
+fDataSetManager       ( NULL ), //DSMTEST
+fDataInputHandler     ( new DataInputHandler ),
+fTransformations      ( "I" ),
+fVerbose              ( kFALSE ),
+fDataAssignType       ( kAssignEvents ),
+fATreeEvent           ( )
+{
+    fDataSetManager = new DataSetManager( *fDataInputHandler ); // DSMTEST
 }
 
 
@@ -143,7 +155,7 @@ TTree* TMVA::DataLoader::CreateEventAssignTrees( const TString& name )
    std::vector<VariableInfo>& tgts = DefaultDataSetInfo().GetTargetInfos();
    std::vector<VariableInfo>& spec = DefaultDataSetInfo().GetSpectatorInfos();
 
-   if (!fATreeEvent) fATreeEvent = new Float_t[vars.size()+tgts.size()+spec.size()];
+   if (fATreeEvent.size()==0) fATreeEvent.resize(vars.size()+tgts.size()+spec.size());
    // add variables
    for (UInt_t ivar=0; ivar<vars.size(); ivar++) {
       TString vname = vars[ivar].GetExpression();
@@ -674,7 +686,7 @@ std::vector<TTree*> TMVA::DataLoader::SplitSets(TTree * oldTree, int seedNum, in
 
   UInt_t varsSize = vars.size();
 
-  if (!fATreeEvent) fATreeEvent = new Float_t[vars.size()+tgts.size()+spec.size()];
+  if (fATreeEvent.size()==0) fATreeEvent.resize(vars.size()+tgts.size()+spec.size());
   // add variables
   for (UInt_t ivar=0; ivar<vars.size(); ivar++) {
     TString vname = vars[ivar].GetExpression();

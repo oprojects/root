@@ -205,7 +205,7 @@ namespace TMVA {
    // =========================================================
 
 
-   class DataSetFactory {
+   class DataSetFactory :public TObject{
 
       typedef std::vector<Event* >                             EventVector;
       typedef std::vector< EventVector >                        EventVectorOfClasses;
@@ -320,6 +320,9 @@ namespace TMVA {
 
       MsgLogger*                 fLogger;          //! message logger
       MsgLogger& Log() const { return *fLogger; }
+   protected:
+       
+       ClassDef(DataSetFactory,1);
    };
 }
 

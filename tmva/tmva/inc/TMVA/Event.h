@@ -56,7 +56,7 @@ namespace TMVA {
 
    std::ostream& operator<<( std::ostream& os, const Event& event );
 
-   class Event{
+   class Event:public TObject{
 
       friend std::ostream& operator<<( std::ostream& os, const Event& event );
 
@@ -121,6 +121,7 @@ namespace TMVA {
       static void ClearDynamicVariables() {}
 
       void     CopyVarValues( const Event& other );
+      using TObject::Print;
       void     Print        ( std::ostream & o ) const;
 
       static   void SetIsTraining(Bool_t);
@@ -145,6 +146,9 @@ namespace TMVA {
       mutable Double_t               fBoostWeight;     // internal weight to be set by boosting algorithm
       Bool_t                         fDynamic;         // is set when the dynamic values are taken
       mutable Bool_t                 fDoNotBoost;       // mark event as not to be boosted (used to compensate for events with negative event weights
+   protected:
+       
+       ClassDef(Event,1);
    };
 }
 

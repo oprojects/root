@@ -68,10 +68,9 @@ ClassImp(TMVA::Configurable)
 /// constructor
 
 TMVA::Configurable::Configurable( const TString& theOption)
-: fOptions                    ( theOption ),
+:  fOptions                    ( theOption ),
    fLooseOptionCheckingEnabled ( kTRUE ),
    fLastDeclaredOption         ( 0 ),
-   fConfigName                 ( "Configurable" ), // must be replaced by name of class that uses the configurable
    fConfigDescription          ( "No description" ),
    fReferenceFile              ( "None" ),
    fLogger                     ( new MsgLogger(this) )

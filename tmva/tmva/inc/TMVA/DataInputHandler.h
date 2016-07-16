@@ -78,7 +78,7 @@ namespace TMVA {
       Types::ETreeType fTreeType; //! tree is for training/testing/both
       Bool_t           fOwner;    //! true if created from file
    protected:
-       ClassDef(TreeInfo,0);      
+       ClassDef(TreeInfo,1);      
    };
 
    class DataInputHandler :public TObject{
@@ -137,7 +137,7 @@ namespace TMVA {
       mutable MsgLogger*                                 fLogger;   // message logger
       MsgLogger& Log() const { return *fLogger; }
    protected:
-       ClassDef(DataInputHandler,0);      
+       ClassDef(DataInputHandler,1);      
    };
 }
 

@@ -64,12 +64,13 @@ namespace TMVA {
    public:
 
       // no default  constructor
-      DataLoader( TString thedlName);
-
+       DataLoader( TString thedlName);
+       DataLoader();
+       
+       
       // default destructor
       virtual ~DataLoader();
 
-      virtual const char*  GetName() const { return fName.Data(); }
 
       // add events to training and testing trees
       void AddSignalTrainingEvent    ( const std::vector<Double_t>& event, Double_t weight = 1.0 );
@@ -200,7 +201,6 @@ namespace TMVA {
       TString                                   fTransformations; //! List of transformations to test
       Bool_t                                    fVerbose;         //! verbose mode
 
-      TString                                   fName;         //! name, used as directory in output
 
       // flag determining the way training and test data are assigned to DataLoader
       enum DataAssignType { kUndefined = 0, 
@@ -217,13 +217,13 @@ namespace TMVA {
 
       Int_t                                     fATreeType;          // type of event (=classIndex)
       Float_t                                   fATreeWeight;        // weight of the event
-      Float_t*                                  fATreeEvent;         // event variables
+      std::vector<Float_t>                      fATreeEvent;         // event variables
       
       Types::EAnalysisType                      fAnalysisType;    //! the training type
 
    protected:
 
-      ClassDef(DataLoader,0);
+      ClassDef(DataLoader,2);
    };
    //utility function to copy dataloaders
    void DataLoaderCopy(TMVA::DataLoader* des, TMVA::DataLoader* src);

@@ -236,7 +236,7 @@ namespace TMVA {
 
    protected:
        
-       ClassDef(DataSetInfo,0);
+       ClassDef(DataSetInfo,1);
    };
 }
 

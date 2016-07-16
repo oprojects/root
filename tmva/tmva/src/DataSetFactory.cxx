@@ -81,9 +81,9 @@
 #include "TMVA/Types.h"
 #include "TMVA/VariableInfo.h"
 
+ClassImp(TMVA::DataSetFactory)
 using namespace std;
 
-//TMVA::DataSetFactory* TMVA::DataSetFactory::fgInstance = 0;
 
 namespace TMVA {
    // calculate the largest common divider

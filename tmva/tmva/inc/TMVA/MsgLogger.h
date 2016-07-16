@@ -133,7 +133,7 @@ namespace TMVA {
 #endif
       EMsgType                                fMinType;    // minimum type for output
       std::ostringstream                      fMsg;
-      ClassDef(MsgLogger,0); // Ostringstream derivative to redirect and format logging output
+      ClassDef(MsgLogger,1); // Ostringstream derivative to redirect and format logging output
    }; // class MsgLogger
 
    inline MsgLogger& MsgLogger::operator<< ( MsgLogger& parent )

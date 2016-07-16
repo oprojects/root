@@ -99,7 +99,7 @@ namespace TMVA {
       MsgLogger& Log() const { return *fLogger; }    
    protected:
        
-       ClassDef(DataSetManager,0);
+       ClassDef(DataSetManager,1);
    };
 }
 

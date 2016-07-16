@@ -36,6 +36,8 @@
 #include <cassert>
 #include "TCut.h"
 
+ClassImp(TMVA::Event)
+
 Bool_t TMVA::Event::fgIsTraining = kFALSE;
 Bool_t TMVA::Event::fgIgnoreNegWeightsInTraining = kFALSE;
 
@@ -141,7 +143,8 @@ TMVA::Event::Event( const std::vector<Float_t*>*& evdyn, UInt_t nvar )
 /// copy constructor
 
 TMVA::Event::Event( const Event& event ) 
-   : fValues(event.fValues),
+   : TObject(event),
+     fValues(event.fValues),
      fValuesDynamic(event.fValuesDynamic),
      fTargets(event.fTargets),
      fSpectators(event.fSpectators),
