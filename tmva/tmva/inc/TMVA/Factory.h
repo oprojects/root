@@ -82,13 +82,10 @@ namespace TMVA {
    class DataSetManager;
    class DataLoader;
    class VariableTransformBase;
-   
 
    class Factory : public Configurable {
+       friend class ParallelExecutorBase;
    public:
-
-      typedef std::vector<IMethod*> MVector;
-      std::map<TString,MVector*>  fMethodsMap;//all methods for every dataset with the same name
 
       // no default  constructor
       Factory( TString theJobName, TFile* theTargetFile, TString theOption = "" );
@@ -119,6 +116,10 @@ namespace TMVA {
       void TrainAllMethods                 ();
       void TrainAllMethodsForClassification( void ) { TrainAllMethods(); }
       void TrainAllMethodsForRegression    ( void ) { TrainAllMethods(); }
+      
+      //training a single method      
+      void TrainMethod                 (const TString &dataset,const UInt_t method);//used in Parallel Executors
+      
 
       // testing
       void TestAllMethods();
@@ -188,6 +189,15 @@ namespace TMVA {
 
       void SetInputTreesFromEventAssignTrees();
 
+      
+      
+   protected:
+       typedef std::vector<IMethod*> MVector;
+       std::map<TString,MVector*>  fMethodsMap;//all methods for every dataset with the same name
+
+   public:       
+       const std::map<TString,MVector*> &GetMethosMap()const{return fMethodsMap;}
+       
    private:
 
       // data members

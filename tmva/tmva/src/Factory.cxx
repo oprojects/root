@@ -950,6 +950,86 @@ void TMVA::Factory::TrainAllMethods()
    }
 }
 
+
+
+void TMVA::Factory::TrainMethod(const TString &dataset,const UInt_t method)
+{
+    // don't do anything if no method booked
+    if (fMethodsMap.empty()) {
+        Log() << kINFO << "...nothing found to train" << Endl;
+        return;
+    }
+    
+    // here the training starts
+    Log() << kINFO << " " << Endl;
+    Log() << kINFO << "Train all methods for " 
+    << (fAnalysisType == Types::kRegression ? "Regression" : 
+    (fAnalysisType == Types::kMulticlass ? "Multiclass" : "Classification") ) << " ..." << Endl;
+    
+    for(auto &_dataset:fMethodsMap)
+    {
+        if(_dataset.first==dataset)
+        {
+            if(method>=_dataset.second->size())
+            {
+                //Error here
+                return;
+            }
+            Event::SetIsTraining(kTRUE);
+            MethodBase* mva = dynamic_cast<MethodBase*>((*_dataset.second).at(method));
+            if(mva==0) continue;
+            
+            if(mva->DataInfo().GetDataSetManager()->DataInput().GetEntries() <=1) { // 0 entries --> 0 events, 1 entry --> dynamical dataset (or one entry)
+                Log() << kFATAL << "No input data for the training provided!" << Endl;
+            }
+            
+            if(fAnalysisType == Types::kRegression && mva->DataInfo().GetNTargets() < 1 )
+                Log() << kFATAL << "You want to do regression training without specifying a target." << Endl;
+            else if( (fAnalysisType == Types::kMulticlass || fAnalysisType == Types::kClassification) 
+                && mva->DataInfo().GetNClasses() < 2 ) 
+                Log() << kFATAL << "You want to do classification training, but specified less than two classes." << Endl;
+            
+            // first print some information about the default dataset
+            if(!IsSilentFile()) WriteDataInformation(mva->fDataSetInfo);
+            
+            
+            if (mva->Data()->GetNTrainingEvents() < MinNoTrainingEvents) {
+                Log() << kWARNING << "Method " << mva->GetMethodName()
+                << " not trained (training tree has less entries ["
+                << mva->Data()->GetNTrainingEvents()
+                << "] than required [" << MinNoTrainingEvents << "]" << Endl;
+                continue;
+            }
+            
+            Log() << kINFO << "Train method: " << mva->GetMethodName() << " for "
+            << (fAnalysisType == Types::kRegression ? "Regression" :
+            (fAnalysisType == Types::kMulticlass ? "Multiclass classification" : "Classification")) << Endl;
+            mva->TrainMethod();
+            Log() << kINFO << "Training finished" << Endl;           
+            
+            if (fAnalysisType != Types::kRegression) {
+                
+                // variable ranking
+                Log() << Endl;
+                Log() << kINFO << "Ranking input variables (method specific)..." << Endl;
+                if (mva->Data()->GetNTrainingEvents() >= MinNoTrainingEvents) {
+                        
+                        // create and print ranking
+                    const Ranking* ranking = mva ->CreateRanking();
+                    if (ranking != 0) ranking->Print();
+                    else Log() << kINFO << "No variable ranking supplied by classifier: "
+                    << mva->GetMethodName() << Endl;
+                }
+            }
+            
+        }
+        
+        
+        
+    }
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void TMVA::Factory::TestAllMethods()
@@ -2166,3 +2246,4 @@ float TMVA::Factory::CrossValidate(DataLoader * loader, Types::EMVA theMethod, T
    return sumFOM/(double)NumFolds;
   
 }
+
