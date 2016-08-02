@@ -8,14 +8,14 @@
  * For the licensing terms see $ROOTSYS/LICENSE.                         *
  * For the list of contributors see $ROOTSYS/README/CREDITS.             *
  *************************************************************************/
-#ifndef ROOT_R_ParallelExecutor
-#define ROOT_R_ParallelExecutor
+#ifndef ROOT_TMVA_ParallelExecutor
+#define ROOT_TMVA_ParallelExecutor
 
-#ifndef ROOT_R_TNamed
+#ifndef ROOT_TNamed
 #include<TNamed.h>
 #endif
 
-#ifndef ROOT_R_ParallelExecutorBase
+#ifndef ROOT_TMVA_ParallelExecutorBase
 #include<TMVA/ParallelExecutorBase.h>
 #endif
 

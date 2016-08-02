@@ -8,8 +8,8 @@
  * For the licensing terms see $ROOTSYS/LICENSE.                         *
  * For the list of contributors see $ROOTSYS/README/CREDITS.             *
  *************************************************************************/
-#ifndef ROOT_R_ParallelExecutorBase
-#define ROOT_R_ParallelExecutorBase
+#ifndef ROOT_TMVA_ParallelExecutorBase
+#define ROOT_TMVA_ParallelExecutorBase
 
 #ifndef ROOT_R_TNamed
 #include<TNamed.h>
@@ -27,6 +27,10 @@
 
 #ifndef ROOT_TStopwatch
 #include<TStopwatch.h>
+#endif
+
+#ifndef ROOT_TMVA_OptionMap
+#include<TMVA/OptionMap.h>
 #endif
 
 namespace TMVA {
