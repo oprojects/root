@@ -27,6 +27,9 @@
 #include<TProcPool.h>
 #endif
 
+#ifndef ROOT_TROOT
+#include<TROOT.h>
+#endif
 namespace TMVA {
               
       /**
@@ -44,7 +47,7 @@ namespace TMVA {
           
           
       public:
-          ParallelExecutor():ParallelExecutorBase(){}
+          ParallelExecutor():ParallelExecutorBase(){ROOT::EnableThreadSafety();}
           
           virtual TMVA::ParallelExecutorResults Execute(TMVA::Factory*,UInt_t jobs,TMVA::OptionMap options=OptionMap("ParallelExecutor"));
           

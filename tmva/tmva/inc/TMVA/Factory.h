@@ -118,9 +118,14 @@ namespace TMVA {
       void TrainAllMethodsForRegression    ( void ) { TrainAllMethods(); }
       
       //training a single method      
-      void TrainMethod                 (const TString &dataset,const UInt_t method);//used in Parallel Executors
+      void TrainMethod(const TString &dataset,const UInt_t method);//used in Parallel Executors
       
-
+      //test a single method      
+      void TestMethod(const TString &dataset,const UInt_t method);//used in Parallel Executors
+      
+      //Evaluate a single method      
+      void EvaluateMethod(const TString &dataset,const UInt_t method);//used in Parallel Executors
+      
       // testing
       void TestAllMethods();
 
@@ -171,6 +176,7 @@ namespace TMVA {
       TCanvas* GetROCCurve(DataLoader *loader);
       TCanvas* GetROCCurve(TString datasetname);
 
+      Types::EAnalysisType GetAnalysisType(){ return fAnalysisType;}
    private:
 
       // the beautiful greeting message
