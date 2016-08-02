@@ -46,7 +46,7 @@ namespace TMVA {
       public:
           ParallelExecutor():ParallelExecutorBase(){}
           
-          virtual TMVA::ParallelExecutorResults* Execute(TMVA::Factory*,UInt_t jobs);
+          virtual TMVA::ParallelExecutorResults Execute(TMVA::Factory*,UInt_t jobs,TMVA::OptionMap options=OptionMap("ParallelExecutor"));
           
       };
 }

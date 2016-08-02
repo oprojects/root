@@ -31,7 +31,7 @@ namespace TMVA {
         *         \ingroup TMVA
         */
        
-       class OptionMapBase:public TNamed
+       class OptionMap:public TNamed
        {
        protected:
            std::map<const TString,TString> fOptMap;
@@ -73,8 +73,8 @@ namespace TMVA {
            };
            Binding fBinder;
        public:
-           OptionMapBase(const TString name):TNamed(name.Data(),"OptionMapBase"),fLogger(name.Data()),fBinder(fOptMap,""){}
-           ~OptionMapBase(){}
+           OptionMap(const TString name):TNamed(name.Data(),"OptionMap"),fLogger(name.Data()),fBinder(fOptMap,""){}
+           ~OptionMap(){}
            
            Binding& operator[](TString key)
            {

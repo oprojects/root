@@ -33,8 +33,8 @@
 #include<TMVA/OptionMap.h>
 #endif
 
-namespace TMVA {
-       
+namespace TMVA {    
+    
        /**
         *      \class ParallelExecutorResults
         *         Base class for all parallel executions results
@@ -47,8 +47,10 @@ namespace TMVA {
            UInt_t fNJobs;           //Number of Jobs
            Double_t fExecutionTime;   //CpuTime in seconds
            TMVA::MsgLogger fLogger; //
+           OptionMap fOptions;
        public:
-           ParallelExecutorResults(const TString name, UInt_t njobs,Double_t exetime):TNamed(name.Data(),"ParallelExecutorResults"),fNJobs(njobs),fExecutionTime(exetime),fLogger(name.Data()){}
+           ParallelExecutorResults(const TString name, UInt_t njobs,Double_t exetime,OptionMap options):
+           TNamed(name.Data(),"ParallelExecutorResults"),fNJobs(njobs),fExecutionTime(exetime),fLogger(name.Data()),fOptions(options){}
            
            using TNamed::Print;
            virtual void Print()
@@ -56,6 +58,7 @@ namespace TMVA {
                fLogger<<kINFO<<"Process:"<<GetName()<<Endl;
                fLogger<<kINFO<<"Number of Jobs:"<<fNJobs<<Endl;
                fLogger<<kINFO<<"ExecutionTime (Seconds):"<<Form("%f",fExecutionTime)<<Endl;
+               fOptions.Print();
            }
            
        };
@@ -78,10 +81,10 @@ namespace TMVA {
           {
               ROOT::EnableThreadSafety();
           }
-          virtual ParallelExecutorResults* Execute(TMVA::Factory */*factory*/,UInt_t /*jobs*/)//spacial case, the other algorithm must be from clas algorithm
+          virtual ParallelExecutorResults Execute(TMVA::Factory */*factory*/,UInt_t /*jobs*/,OptionMap map=OptionMap("ParallelExecutorBase"))//spacial case, the other algorithm must be from clas algorithm
           {
             std::cout<<"Factory parallization is not implemented yet."<<std::endl;
-            return nullptr;
+            return ParallelExecutorResults("",0,0,map);
           }
       };
 }
