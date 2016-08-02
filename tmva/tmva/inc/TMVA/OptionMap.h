@@ -73,8 +73,13 @@ namespace TMVA {
            };
            Binding fBinder;
        public:
-           OptionMap(const TString name):TNamed(name.Data(),"OptionMap"),fLogger(name.Data()),fBinder(fOptMap,""){}
+           OptionMap(const TString name="Option"):TNamed(name.Data(),"OptionMap"),fLogger(name.Data()),fBinder(fOptMap,""){}
            ~OptionMap(){}
+           
+           Bool_t HasKey(TString key)
+           {
+               return fOptMap.count( key )==1;
+           }
            
            Binding& operator[](TString key)
            {

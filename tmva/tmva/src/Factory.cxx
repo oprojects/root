@@ -976,7 +976,7 @@ void TMVA::Factory::TrainMethod(const TString &dataset,const UInt_t method)
                 return;
             }
             Event::SetIsTraining(kTRUE);
-            MethodBase* mva = dynamic_cast<MethodBase*>((*_dataset.second).at(method));
+            MethodBase* mva = dynamic_cast<MethodBase*>((*_dataset.second)[method]);
             if(mva==0) continue;
             
             if(mva->DataInfo().GetDataSetManager()->DataInput().GetEntries() <=1) { // 0 entries --> 0 events, 1 entry --> dynamical dataset (or one entry)
@@ -1021,11 +1021,53 @@ void TMVA::Factory::TrainMethod(const TString &dataset,const UInt_t method)
                     << mva->GetMethodName() << Endl;
                 }
             }
-            
+            // delete all methods and recreate them from weight file - this ensures that the application
+            // of the methods (in TMVAClassificationApplication) is consistent with the results obtained
+            // in the testing
+            Log() << Endl;
+            if (fModelPersistence) {
+                
+                Log() << kINFO << "=== Destroy and recreate all methods via weight files for testing ===" << Endl << Endl;
+                if(!IsSilentFile()) RootBaseDir()->cd();
+                
+                    
+                    
+                TMVA::Types::EMVA methodType = mva->GetMethodType();
+                TString           weightfile = mva->GetWeightFileName();
+                    
+                // decide if .txt or .xml file should be read:
+                if (READXML) weightfile.ReplaceAll(".txt",".xml");
+                
+                DataSetInfo& dataSetInfo = mva->DataInfo();
+                TString      testvarName = mva->GetTestvarName();
+                delete mva; //itrMethod[i];
+                
+                // recreate
+                MethodBase* m = dynamic_cast<MethodBase*>( ClassifierFactory::Instance()
+                .Create( std::string(Types::Instance().GetMethodName(methodType)), 
+                            dataSetInfo, weightfile ) );
+                if( m->GetMethodType() == Types::kCategory ){ 
+                    MethodCategory *methCat = (dynamic_cast<MethodCategory*>(m));
+                    if( !methCat ) Log() << kFATAL << "Method with type kCategory cannot be casted to MethodCategory. /Factory" << Endl; 
+                    else methCat->fDataSetManager = m->DataInfo().GetDataSetManager();
+                }
+                //ToDo, Do we need to fill the DataSetManager of MethodBoost here too?
+                
+                
+                TString fFileDir= m->DataInfo().GetName();
+                fFileDir+="/"+gConfig().GetIONames().fWeightFileDir;
+                m->SetWeightFileDir(fFileDir);
+                m->SetModelPersistence(fModelPersistence);
+                m->SetSilentFile(IsSilentFile());
+                m->SetAnalysisType(fAnalysisType);
+                m->SetupMethod();
+                m->ReadStateFromFile();
+                m->SetTestvarName(testvarName);
+                    
+                // replace trained method by newly created one (from weight file) in methods vector
+                fMethodsMap[dataset]->at(method) = m;
+            }
         }
-        
-        
-        
     }
 }
 
