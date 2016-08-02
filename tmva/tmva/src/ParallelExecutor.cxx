@@ -19,21 +19,19 @@ TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factory *fac
         auto TrainExecutor = [factory,methods](UInt_t workerID)->int{
             factory->TrainMethod(methods[workerID].first,methods[workerID].second);
             factory->TestMethod(methods[workerID].first,methods[workerID].second);
+            factory->EvaluateMethod(methods[workerID].first,methods[workerID].second);
             return 0;
         };
         fTimer.Reset();
         fTimer.Start();
-//         ThreadPool pool(jobs);
-//         auto fResults=pool.Map(TrainExecutor, ROOT::TSeqI(methods.size()));
         auto fResults=fWorkers.Map(TrainExecutor, ROOT::TSeqI(methods.size()));
         fTimer.Stop();
-        
+        return TMVA::ParallelExecutorResults("ParallelExecutor(Classification)",jobs,fTimer.RealTime(),options);
     }
     
     
     
-    TMVA::ParallelExecutorResults results("Factory Training",jobs,fTimer.RealTime(),options);
     
-    return results;
+    return TMVA::ParallelExecutorResults("Unknow",jobs,fTimer.RealTime(),options);
 }
 

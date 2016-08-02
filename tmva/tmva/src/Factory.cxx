@@ -1644,12 +1644,10 @@ void TMVA::Factory::EvaluateMethod(const TString &dataset,const UInt_t _method)
                     Log() << kINFO << "DataSet              MVA              Signal efficiency: from test sample (from training sample) "   << Endl;
                     Log() << kINFO << "Name:                Method:          @B=0.01             @B=0.10            @B=0.30   "   << Endl;
                     Log() << kINFO << hLine << Endl;
-//                     for (Int_t k=0; k<2; k++) {
                         if (k == 1 && nmeth_used[k] > 0) {
                             Log() << kINFO << hLine << Endl;
                             Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
                         }
-//                         for (Int_t i=0; i<nmeth_used[k]; i++) {
                             if (k == 1) mname[k][i].ReplaceAll( "Variable_", "" );
                             
                             Log() << kINFO << Form("%-20s %-15s: %#1.3f (%#1.3f)       %#1.3f (%#1.3f)      %#1.3f (%#1.3f)",
@@ -1658,8 +1656,6 @@ void TMVA::Factory::EvaluateMethod(const TString &dataset,const UInt_t _method)
                                                    eff01[k][i],trainEff01[k][i], 
                                                    eff10[k][i],trainEff10[k][i],
                                                    eff30[k][i],trainEff30[k][i]) << Endl;
-//                         }
-//                     }
                     Log() << kINFO << hLine << Endl;
                     Log() << kINFO << Endl; 
                     if (gTools().CheckForSilentOption( GetOptions() )) Log().InhibitOutput();

@@ -33,6 +33,10 @@
 #include<TMVA/OptionMap.h>
 #endif
 
+#ifndef ROOT_TMVA_Config
+#include "TMVA/Config.h"
+#endif
+
 namespace TMVA {    
     
        /**
@@ -55,7 +59,7 @@ namespace TMVA {
            using TNamed::Print;
            virtual void Print()
            {
-               fLogger<<kINFO<<"Process:"<<GetName()<<Endl;
+               fLogger<<kINFO<<GetName()<<Endl;
                fLogger<<kINFO<<"Number of Jobs:"<<fNJobs<<Endl;
                fLogger<<kINFO<<"ExecutionTime (Seconds):"<<Form("%f",fExecutionTime)<<Endl;
                fOptions.Print();
@@ -74,8 +78,6 @@ namespace TMVA {
       protected:
           UInt_t fNJobs;
           TStopwatch fTimer;
-//           ParallelExecutorResults fResuls;
-          //           std::vector<TParallelExecutorOptionBase> fOptions;//will be implemented later with std::ostream
       public:
           ParallelExecutorBase()
           {
