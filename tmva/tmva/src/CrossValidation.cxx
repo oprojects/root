@@ -13,22 +13,25 @@
 #include <memory>
 #include "TMVA/tmvaglob.h"
 
-TMVA::CrossValidationResult::CrossValidationResult():fROCCurves(new TMultiGraph())
+TMVA::CrossValidationResultItem::CrossValidationResultItem():fROCCurves(new TMultiGraph())
 {
 }
 
-TMVA::CrossValidationResult::~CrossValidationResult()
+TMVA::CrossValidationResultItem::CrossValidationResultItem(const CrossValidationResultItem &obj)
 {
-
+    fROCs=obj.fROCs;
+    fROCAVG=obj.fROCAVG;
+    fROCCurves = obj.fROCCurves;
 }
 
-TMultiGraph *TMVA::CrossValidationResult::GetROCCurves(Bool_t /*fLegend*/)
+
+TMultiGraph *TMVA::CrossValidationResultItem::GetROCCurves(Bool_t /*fLegend*/)
 {
     return fROCCurves.get();
 }
 
 
-void TMVA::CrossValidationResult::Print() const
+void TMVA::CrossValidationResultItem::Print() const
 {
     MsgLogger fLogger("CrossValidation");
     for(auto &item:fROCs)
@@ -38,7 +41,7 @@ void TMVA::CrossValidationResult::Print() const
 }
 
 
-TCanvas* TMVA::CrossValidationResult::Draw(const TString name) const
+TCanvas* TMVA::CrossValidationResultItem::Draw(const TString name) const
 {
     TMVA::TMVAGlob::Initialize();
     TCanvas *c=new TCanvas(name.Data());
@@ -65,71 +68,83 @@ TMVA::CrossValidation::~CrossValidation()
 
 
 
-const TMVA::CrossValidationResult* TMVA::CrossValidation::Evaluate( Types::EMVA theMethod, TString methodTitle, TString theOption, int numFolds)
+void TMVA::CrossValidation::BookMethod( Types::EMVA method, TString methodTitle, TString options, int numFolds)
 {
-    return Evaluate(Types::Instance().GetMethodName( theMethod ),methodTitle,theOption,numFolds);
+    return BookMethod(Types::Instance().GetMethodName( method ),methodTitle,options,numFolds);
 }
-const TMVA::CrossValidationResult* TMVA::CrossValidation::Evaluate( TString theMethodName, TString methodTitle, TString theOption, int NumFolds)
+
+void TMVA::CrossValidation::BookMethod( TString methodName, TString methodTitle, TString options, int numFolds)
 {
-  
-  CrossValidationResult * result = new CrossValidationResult();
-
-  fDataLoader->MakeKFoldDataSet(NumFolds);
-
-  const int nbits = fDataLoader->GetDefaultDataSetInfo().GetNVariables();
-  std::vector<TString> varName = fDataLoader->GetDefaultDataSetInfo().GetListOfVariables();
-  
-  for(Int_t i = 0; i < NumFolds; ++i){
+    OptionMap opt(methodName);
+    opt["MethodName"]    = methodName;
+    opt["MethodTitle"]   = methodTitle;
+    opt["MethodOptions"] = options;
+    opt["NumFolds"]      = numFolds;
     
-    TString foldTitle = methodTitle;
-    foldTitle += "_fold";
-    foldTitle += i+1;
+    fMethods.push_back(opt); 
+}
+void TMVA::CrossValidation::EvaluateAll()
+{
+  for(auto &item:fMethods)
+  {
+      item.Print();
+      TString methodName    = item.GetValue<TString>("MethodName");
+      TString methodTitle   = item.GetValue<TString>("MethodTitle");
+      TString methodOptions = item.GetValue<TString>("MethodOptions");
+      UInt_t  numFolds      = item.GetValue<UInt_t>("NumFolds");
+      
+      CrossValidationResultItem resultItem;
+
+      fDataLoader->MakeKFoldDataSet(numFolds);
+
+      const UInt_t nbits = fDataLoader->GetDefaultDataSetInfo().GetNVariables();
+      std::vector<TString> varName = fDataLoader->GetDefaultDataSetInfo().GetListOfVariables();
+  
+      for(UInt_t i = 0; i < numFolds; ++i){    
+        TString foldTitle = methodTitle;
+        foldTitle += "_fold";
+        foldTitle += i+1;
     
-    fDataLoader->PrepareTrainingAndTestTree(i, TMVA::Types::kTesting);
+        fDataLoader->PrepareTrainingAndTestTree(i, TMVA::Types::kTesting);
 
-    TMVA::DataLoader * foldloader = new TMVA::DataLoader(foldTitle);
+        TMVA::DataLoader * foldloader = new TMVA::DataLoader(foldTitle);
 
-    for(int index = 0; index < nbits; ++ index){
+        for(UInt_t index = 0; index < nbits; ++ index) foldloader->AddVariable(varName.at(index), 'F');
 
-        foldloader->AddVariable(varName.at(index), 'F');
+        DataLoaderCopy(foldloader,fDataLoader.get());
+    
+        fClassifier->BookMethod(foldloader, methodName, methodTitle, methodOptions);
 
+        fClassifier->TrainAllMethods();
+        fClassifier->TestAllMethods();
+        fClassifier->EvaluateAllMethods();
+
+        resultItem.fROCs[i]=fClassifier->GetROCIntegral(foldloader->GetName(),methodTitle);
+
+        auto  gr=fClassifier->GetROCCurve(foldloader->GetName(), methodTitle, true);
+    
+        gr->SetLineColor(i+1);
+        gr->SetLineWidth(2);
+        gr->SetTitle(foldloader->GetName());
+    
+        resultItem.fROCCurves->Add(gr);
+    
+        TMVA::MethodBase * smethod = dynamic_cast<TMVA::MethodBase*>(fClassifier->fMethodsMap[foldloader->GetName()]->at(0));
+        TMVA::ResultsClassification * sresults = (TMVA::ResultsClassification*)smethod->Data()->GetResults(smethod->GetMethodName(), Types::kTesting, Types::kClassification);
+        sresults->Delete();
+
+        delete foldloader;
+    
+        fClassifier->DeleteAllMethods();
+        fClassifier->fMethodsMap.clear();
+        }
+
+    for(UInt_t r = 0; r < numFolds; ++r){
+        resultItem.fROCAVG += resultItem.fROCs.at(r);
     }
-
-    DataLoaderCopy(foldloader,fDataLoader.get());
-    
-    fClassifier->BookMethod(foldloader, theMethodName, methodTitle, theOption);
-
-    fClassifier->TrainAllMethods();
-    fClassifier->TestAllMethods();
-    fClassifier->EvaluateAllMethods();
-
-    result->fROCs[i]=fClassifier->GetROCIntegral(foldloader->GetName(),methodTitle);
-
-    auto  gr=fClassifier->GetROCCurve(foldloader->GetName(), methodTitle, true);
-    
-    gr->SetLineColor(i+1);
-    gr->SetLineWidth(2);
-    gr->SetTitle(foldloader->GetName());
-    
-    result->fROCCurves->Add(gr);
-    
-    TMVA::MethodBase * smethod = dynamic_cast<TMVA::MethodBase*>(fClassifier->fMethodsMap[foldloader->GetName()]->at(0));
-    TMVA::ResultsClassification * sresults = (TMVA::ResultsClassification*)smethod->Data()->GetResults(smethod->GetMethodName(), Types::kTesting, Types::kClassification);
-    sresults->Delete();
-
-    delete foldloader;
-    
-    fClassifier->DeleteAllMethods();
-
-    fClassifier->fMethodsMap.clear();
+    resultItem.fROCAVG /= numFolds;
+    fResults.AppendMethod(resultItem);
   }
-
-  for(int r = 0; r < NumFolds; ++r){
-    result->fROCAVG += result->fROCs.at(r);
-  }
-  result->fROCAVG /= NumFolds;
-  
-  return result;
 }
 
 

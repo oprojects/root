@@ -66,7 +66,15 @@ namespace TMVA {
                {
                    T result;
                    std::stringstream oss;
-                   oss<<fInternalMap[fInternalKey].Data();
+                   oss<<fInternalMap[fInternalKey];
+                   oss>>result;
+                   return result;
+               }
+               template<class T> T GetValue()
+               {
+                   T result;
+                   std::stringstream oss;
+                   oss<<fInternalMap[fInternalKey];
                    oss>>result;
                    return result;
                }
@@ -94,6 +102,15 @@ namespace TMVA {
                    fLogger<<kINFO<<item.first.Data()<<": "<<item.second.Data()<<std::endl;
                }
                fLogger<<Endl;
+           }
+
+           template<class T> T GetValue(const TString key)
+           {
+               T result;
+               std::stringstream oss;
+               oss<<fOptMap[key];
+               oss>>result;
+               return result;
            }
            
        };
