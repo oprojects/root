@@ -7,18 +7,12 @@
 #include "TMVA/MethodBase.h"
 #include "TMVA/ResultsClassification.h"
 #include "TSystem.h"
+#include "TAxis.h"
+#include "TCanvas.h"
+#include "TGraph.h"
 #include <memory>
-//CrossValidationResult stuff
-// ClassImp(TMVA::CrossValidationResult)
 
-// TMVA::CrossValidationResult::CrossValidationResult(std::map<Float_t> rocs,Float_t rocavg,TMultiGraph   *rocurves):TObject(),
-// fROCs(rocs),
-// fROCAVG(rocavg),
-// fROCCurves(rocurves)
-// {   
-// }
-
-TMVA::CrossValidationResult::CrossValidationResult()
+TMVA::CrossValidationResult::CrossValidationResult():fROCCurves(new TMultiGraph())
 {
 }
 
@@ -29,14 +23,31 @@ TMVA::CrossValidationResult::~CrossValidationResult()
 
 TMultiGraph *TMVA::CrossValidationResult::GetROCCurves(Bool_t /*fLegend*/)
 {
-//TODO: summer student
-    return 0;
+    return fROCCurves.get();
 }
 
-//CrossValidation class stuff
-// ClassImp(TMVA::CrossValidation)//serialization is not support yet in so many class TMVA
+
+void TMVA::CrossValidationResult::Print() const
+{
+    MsgLogger fLogger("CrossValidation");
+    for(auto &item:fROCs)
+        fLogger<<kINFO<<Form("Fold  %i ROC-Int : %f",item.first,item.second)<<std::endl;
+    
+    fLogger<<kINFO<<Form("Average ROC-Int : %f",fROCAVG)<<Endl;
+}
 
 
+TCanvas* TMVA::CrossValidationResult::Draw(const TString name) const
+{
+    TCanvas *c=new TCanvas(name.Data());
+    fROCCurves->Draw("AL");
+    fROCCurves->GetXaxis()->SetTitle(" Signal Efficiency ");
+    fROCCurves->GetYaxis()->SetTitle(" Background Rejection ");
+    Float_t adjust=1+fROCs.size()*0.01;
+    c->BuildLegend(0.15,0.15,0.4*adjust,0.5*adjust,"ROC Curves");
+    c->Draw();
+    return c;
+}
 
 TMVA::CrossValidation::CrossValidation(TMVA::DataLoader *loader):Configurable(),
 fNFolds(5),fDataLoader(loader)
@@ -47,6 +58,8 @@ fNFolds(5),fDataLoader(loader)
 TMVA::CrossValidation::~CrossValidation()
 {
 }
+
+
 
 const TMVA::CrossValidationResult* TMVA::CrossValidation::Evaluate( Types::EMVA theMethod, TString methodTitle, TString theOption, int numFolds)
 {
@@ -88,6 +101,14 @@ const TMVA::CrossValidationResult* TMVA::CrossValidation::Evaluate( TString theM
 
     result->fROCs[i]=fClassifier->GetROCIntegral(foldloader->GetName(),methodTitle);
 
+    auto  gr=fClassifier->GetROCCurve(foldloader->GetName(), methodTitle, true);
+    
+    gr->SetLineColor(i+1);
+    gr->SetLineWidth(2);
+    gr->SetTitle(foldloader->GetName());
+    
+    result->fROCCurves->Add(gr);
+    
     TMVA::MethodBase * smethod = dynamic_cast<TMVA::MethodBase*>(fClassifier->fMethodsMap[foldloader->GetName()]->at(0));
     TMVA::ResultsClassification * sresults = (TMVA::ResultsClassification*)smethod->Data()->GetResults(smethod->GetMethodName(), Types::kTesting, Types::kClassification);
     sresults->Delete();
@@ -103,7 +124,6 @@ const TMVA::CrossValidationResult* TMVA::CrossValidation::Evaluate( TString theM
     result->fROCAVG += result->fROCs.at(r);
   }
   result->fROCAVG /= NumFolds;
-
   
   return result;
 }

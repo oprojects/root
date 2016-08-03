@@ -1,5 +1,5 @@
 // @(#)root/tmva $Id$
-// Author: Omar Zapata, Thomas James Stevenson.
+// Author: Omar Zapata, Thomas James Stevenson and Pourya Vakilipourtakalou. 2016
 
 
 #ifndef ROOT_TMVA_CrossValidation
@@ -52,27 +52,16 @@ namespace TMVA {
        Float_t                         fROCAVG;
        std::unique_ptr<TMultiGraph>    fROCCurves;
    public:
-//        CrossValidationResult(std::vector<Float_t> rocs,Float_t rocavg,TMultiGraph   *rocurves);
-       CrossValidationResult();
+        CrossValidationResult();
        ~CrossValidationResult();
        
        
        std::map<UInt_t,Float_t> GetROCValues(){return fROCs;}
        Float_t GetROCAverage(){return fROCAVG;}
        TMultiGraph *GetROCCurves(Bool_t fLegend=kTRUE);
-       void Print() const
-       {
-           MsgLogger                       fLogger("CrossValidation");
-           for(auto &item:fROCs)
-               fLogger<<kINFO<<Form("Fold %i ROC-Int : %f",item.first,item.second)<<std::endl;
-           
-           fLogger<<kINFO<<Form("Average ROC-Int: %f",fROCAVG)<<Endl;
-       }
+       void Print() const ;
        
-//        TCanvas* Draw(const TString name)//to be implemented (shows the ROC curves for every fold.)
-//        {
-//            return new TCanvas(name.Data());
-//        }
+       TCanvas* Draw(const TString name="CrossValidation") const;
        
    };
     
