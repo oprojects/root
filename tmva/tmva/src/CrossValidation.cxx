@@ -11,6 +11,7 @@
 #include "TCanvas.h"
 #include "TGraph.h"
 #include <memory>
+#include "TMVA/tmvaglob.h"
 
 TMVA::CrossValidationResult::CrossValidationResult():fROCCurves(new TMultiGraph())
 {
@@ -39,12 +40,15 @@ void TMVA::CrossValidationResult::Print() const
 
 TCanvas* TMVA::CrossValidationResult::Draw(const TString name) const
 {
+    TMVA::TMVAGlob::Initialize();
     TCanvas *c=new TCanvas(name.Data());
     fROCCurves->Draw("AL");
     fROCCurves->GetXaxis()->SetTitle(" Signal Efficiency ");
     fROCCurves->GetYaxis()->SetTitle(" Background Rejection ");
     Float_t adjust=1+fROCs.size()*0.01;
-    c->BuildLegend(0.15,0.15,0.4*adjust,0.5*adjust,"ROC Curves");
+    c->BuildLegend(0.15,0.15,0.4*adjust,0.5*adjust);
+    c->SetTitle("Cross Validation ROC Curves");
+    TMVA::TMVAGlob::plot_logo();
     c->Draw();
     return c;
 }

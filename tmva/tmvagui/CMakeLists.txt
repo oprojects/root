@@ -17,7 +17,7 @@ set(headers1 annconvergencetest.h  deviations.h mvaeffs.h PlotFoams.h  TMVAGui.h
 	 BDT_Reg.h  correlations.h   mvaweights.h rulevisCorr.h  TMVARegGui.h
 	 BoostControlPlots.h correlationsMultiClass.h network.h rulevis.h   variables.h
 	 CorrGui.h  paracoor.h  rulevisHists.h variablesMultiClass.h
-	 compareanapp.h  CorrGuiMultiClass.h   MovieMaker.h tmvaglob.h)
+	 compareanapp.h  CorrGuiMultiClass.h   MovieMaker.h)
 
 #---Need to suffix each header name by TMVA/  -----------------
 foreach(hs headers1)
