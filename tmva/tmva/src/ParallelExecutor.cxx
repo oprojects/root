@@ -3,7 +3,7 @@
 #include<TMVA/MethodBase.h>
 #include<ThreadPool.h>
 
-TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factory *factory,UInt_t jobs,TMVA::OptionMap options)
+const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factory *factory,UInt_t jobs,TMVA::OptionMap options)
 {
     fWorkers.SetNWorkers(jobs);
     

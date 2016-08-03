@@ -73,20 +73,22 @@ namespace TMVA {
          \ingroup TMVA
        */
       
-      class ParallelExecutorBase
+      class ParallelExecutorBase:public Configurable
       {
       protected:
           UInt_t fNJobs;
           TStopwatch fTimer;
+          MsgLogger fLogger;
       public:
-          ParallelExecutorBase()
+          ParallelExecutorBase(const TString &name=""):Configurable(name), fLogger(name.Data())
           {
               ROOT::EnableThreadSafety();
           }
-          virtual ParallelExecutorResults Execute(TMVA::Factory */*factory*/,UInt_t /*jobs*/,OptionMap map=OptionMap("ParallelExecutorBase"))//spacial case, the other algorithm must be from clas algorithm
+          
+          const ParallelExecutorResults Execute(Configurable *algorithm,UInt_t /*jobs*/,OptionMap map=OptionMap("ParallelExecutorBase"))
           {
-            std::cout<<"Factory parallization is not implemented yet."<<std::endl;
-            return ParallelExecutorResults("",0,0,map);
+              fLogger<<kINFO<<algorithm->GetName()<<" parallization is not implemented yet."<<Endl;
+              return ParallelExecutorResults("",0,0,map);
           }
       };
 }

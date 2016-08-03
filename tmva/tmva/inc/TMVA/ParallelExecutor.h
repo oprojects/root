@@ -48,10 +48,11 @@ namespace TMVA {
           
       public:
           ParallelExecutor():ParallelExecutorBase(){ROOT::EnableThreadSafety();}
-          
-          virtual TMVA::ParallelExecutorResults Execute(TMVA::Factory*,UInt_t jobs,TMVA::OptionMap options=OptionMap("ParallelExecutor"));
+          using ParallelExecutorBase::Execute;//Defualt method for not supported algorithms
+          const TMVA::ParallelExecutorResults Execute(TMVA::Factory*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutor") );
           
       };
+      
 }
 
 
