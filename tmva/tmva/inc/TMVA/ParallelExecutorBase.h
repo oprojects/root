@@ -11,7 +11,7 @@
 #ifndef ROOT_TMVA_ParallelExecutorBase
 #define ROOT_TMVA_ParallelExecutorBase
 
-#ifndef ROOT_R_TNamed
+#ifndef ROOT_TNamed
 #include<TNamed.h>
 #endif
 #include <sstream>
@@ -84,7 +84,7 @@ namespace TMVA {
           {
               ROOT::EnableThreadSafety();
           }
-          
+          using TObject::Execute;
           const ParallelExecutorResults Execute(Configurable *algorithm,UInt_t /*jobs*/,OptionMap map=OptionMap("ParallelExecutorBase"))
           {
               fLogger<<kINFO<<algorithm->GetName()<<" parallization is not implemented yet."<<Endl;

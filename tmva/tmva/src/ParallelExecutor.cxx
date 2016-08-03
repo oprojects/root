@@ -8,7 +8,7 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
     fWorkers.SetNWorkers(jobs);
     
     std::vector<std::pair<TString,UInt_t> > methods;//the pair that have the dataset name and the method positon in the vector 
-    for(auto& _methods : factory->GetMethosMap())
+    for(auto& _methods : factory->GetMethodsMap())
     {
         for(UInt_t i=0;i<_methods.second->size();i++)
         methods.push_back(std::pair<TString,UInt_t>(_methods.first,i));

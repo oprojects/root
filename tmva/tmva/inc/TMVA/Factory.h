@@ -84,7 +84,8 @@ namespace TMVA {
    class VariableTransformBase;
 
    class Factory : public Configurable {
-       friend class ParallelExecutorBase;
+       friend class ParallelExecutor;
+       friend class CrossValidation;
    public:
 
       // no default  constructor
@@ -202,7 +203,7 @@ namespace TMVA {
        std::map<TString,MVector*>  fMethodsMap;//all methods for every dataset with the same name
 
    public:       
-       const std::map<TString,MVector*> &GetMethosMap()const{return fMethodsMap;}
+       const std::map<TString,MVector*> &GetMethodsMap(){return fMethodsMap;}
        
    private:
 
