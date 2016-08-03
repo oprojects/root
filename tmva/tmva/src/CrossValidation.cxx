@@ -59,7 +59,7 @@ TCanvas* TMVA::CrossValidationResultItem::Draw(const TString name) const
 TMVA::CrossValidation::CrossValidation(TMVA::DataLoader *loader):Configurable(),
 fNFolds(5),fDataLoader(loader)
 {
-    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("CrossValidation","!V:!ROC:Silent:Color:DrawProgressBar:AnalysisType=Classification"));
+    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("CrossValidation","!V:ROC:Silent:Color:!DrawProgressBar:AnalysisType=Classification"));
 }
 
 TMVA::CrossValidation::~CrossValidation()
@@ -81,17 +81,18 @@ void TMVA::CrossValidation::BookMethod( TString methodName, TString methodTitle,
     opt["MethodOptions"] = options;
     opt["NumFolds"]      = numFolds;
     
-    fMethods.push_back(opt); 
+    fMethodsMap[fMethodsMap.size()]=opt; 
 }
+
+
 void TMVA::CrossValidation::EvaluateAll()
 {
-  for(auto &item:fMethods)
+  for(auto &item:fMethodsMap)
   {
-      item.Print();
-      TString methodName    = item.GetValue<TString>("MethodName");
-      TString methodTitle   = item.GetValue<TString>("MethodTitle");
-      TString methodOptions = item.GetValue<TString>("MethodOptions");
-      UInt_t  numFolds      = item.GetValue<UInt_t>("NumFolds");
+      TString methodName    = item.second.GetValue<TString>("MethodName");
+      TString methodTitle   = item.second.GetValue<TString>("MethodTitle");
+      TString methodOptions = item.second.GetValue<TString>("MethodOptions");
+      UInt_t  numFolds      = item.second.GetValue<UInt_t>("NumFolds");
       
       CrossValidationResultItem resultItem;
 
@@ -147,6 +148,58 @@ void TMVA::CrossValidation::EvaluateAll()
   }
 }
 
+void TMVA::CrossValidation::EvaluateMethod(UInt_t method,UInt_t fold)
+{
+    if(method>=fMethodsMap.size()) return;//we need a ERROR meesage here
+    TString methodName    = fMethodsMap[method].GetValue<TString>("MethodName");
+    TString methodTitle   = fMethodsMap[method].GetValue<TString>("MethodTitle");
+    TString methodOptions = fMethodsMap[method].GetValue<TString>("MethodOptions");
+    UInt_t  numFolds      = fMethodsMap[method].GetValue<UInt_t>("NumFolds");
+    
+    fDataLoader->MakeKFoldDataSet(numFolds);
+    CrossValidationResultItem resultItem;
+        
+    const UInt_t nbits = fDataLoader->GetDefaultDataSetInfo().GetNVariables();
+    std::vector<TString> varName = fDataLoader->GetDefaultDataSetInfo().GetListOfVariables();
 
-
+    UInt_t i=fold;
+    TString foldTitle = methodTitle;
+    foldTitle += "_fold";
+    foldTitle += i+1;
+        
+    fDataLoader->PrepareTrainingAndTestTree(i, TMVA::Types::kTesting);
+        
+    TMVA::DataLoader * foldloader = new TMVA::DataLoader(foldTitle);
+        
+    for(UInt_t index = 0; index < nbits; ++ index) foldloader->AddVariable(varName.at(index), 'F');
+        
+    DataLoaderCopy(foldloader,fDataLoader.get());
+        
+    fClassifier->BookMethod(foldloader, methodName, methodTitle, methodOptions);
+        
+    fClassifier->TrainAllMethods();
+    fClassifier->TestAllMethods();
+    fClassifier->EvaluateAllMethods();
+        
+    resultItem.fROCs[i]=fClassifier->GetROCIntegral(foldloader->GetName(),methodTitle);
+        
+    auto  gr=fClassifier->GetROCCurve(foldloader->GetName(), methodTitle, true);
+        
+    gr->SetLineColor(i+1);
+    gr->SetLineWidth(2);
+    gr->SetTitle(foldloader->GetName());
+        
+    resultItem.fROCCurves->Add(gr);
+        
+    TMVA::MethodBase * smethod = dynamic_cast<TMVA::MethodBase*>(fClassifier->fMethodsMap[foldloader->GetName()]->at(0));
+    TMVA::ResultsClassification * sresults = (TMVA::ResultsClassification*)smethod->Data()->GetResults(smethod->GetMethodName(), Types::kTesting, Types::kClassification);
+    sresults->Delete();
+        
+    delete foldloader;
+        
+    fClassifier->DeleteAllMethods();
+    fClassifier->fMethodsMap.clear();
+    
+    fResults.AppendMethod(resultItem);    
+}
 

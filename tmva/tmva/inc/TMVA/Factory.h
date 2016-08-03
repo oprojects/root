@@ -200,7 +200,7 @@ namespace TMVA {
        std::map<TString,MVector*>  fMethodsMap;//all methods for every dataset with the same name
 
    public:       
-       const std::map<TString,MVector*> &GetMethodsMap(){return fMethodsMap;}
+       const std::map<TString,MVector*> &GetMethodsMap()const {return fMethodsMap;}
        
    private:
 

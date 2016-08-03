@@ -87,8 +87,8 @@ namespace TMVA {
     
    class CrossValidation : public Configurable {
        UInt_t fNFolds;
-       std::vector<OptionMap>  fMethods;
-       CrossValidationResult   fResults;
+       std::map<UInt_t,OptionMap>  fMethodsMap;
+       CrossValidationResult        fResults;
    public:
 
         explicit CrossValidation(DataLoader *loader);
@@ -98,6 +98,7 @@ namespace TMVA {
        void BookMethod( Types::EMVA theMethod,  TString methodTitle, TString theOption = "", int NumFolds = 5 );
        
        void EvaluateAll();
+       void EvaluateMethod(UInt_t method,UInt_t fold);//used in ParallelExecution
        
        const CrossValidationResult& GetResults(){return fResults;}//I need to think about this which is the best way to get the results
        
@@ -105,6 +106,7 @@ namespace TMVA {
        inline void SetDataLoader(DataLoader *loader){fDataLoader=std::shared_ptr<DataLoader>(loader);}
        inline DataLoader *GetDataLoader(){return fDataLoader.get();}
        
+       const std::map<UInt_t,OptionMap>   &GetMethodsMap() const{ return fMethodsMap;}
    private:
        std::shared_ptr<DataLoader>  fDataLoader;
        std::unique_ptr<Factory>     fClassifier;

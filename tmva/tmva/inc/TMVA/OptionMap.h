@@ -113,6 +113,15 @@ namespace TMVA {
                return result;
            }
            
+           template<class T> T GetValue(const TString key) const
+           {
+               T result;
+               std::stringstream oss;
+               oss<<fOptMap.at(key);
+               oss>>result;
+               return result;
+           }
+           
        };
        
 }

@@ -23,6 +23,10 @@
 #include<TMVA/Factory.h>
 #endif
 
+#ifndef ROOT_TMVA_CrossValidation
+#include<TMVA/CrossValidation.h>
+#endif
+
 #ifndef ROOT_TProcPool
 #include<TProcPool.h>
 #endif
@@ -50,6 +54,7 @@ namespace TMVA {
           ParallelExecutor():ParallelExecutorBase(){ROOT::EnableThreadSafety();}
           using ParallelExecutorBase::Execute;//Defualt method for not supported algorithms
           const TMVA::ParallelExecutorResults Execute(TMVA::Factory*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutor") );
+          const TMVA::ParallelExecutorResults Execute(TMVA::CrossValidation*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutor") );
           
       };
       
