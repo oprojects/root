@@ -45,70 +45,49 @@
 #include<TMVA/OptionMap.h>
 #endif
 
+#ifndef ROOT_TMVA_Algorithm
+#include<TMVA/Algorithm.h>
+#endif
+
 namespace TMVA {
 
-   class CrossValidationResultItem
+   class CrossValidationResult
    {
      friend class CrossValidation;
    private:
        std::map<UInt_t,Float_t>        fROCs;
-       Float_t                         fROCAVG;
        std::shared_ptr<TMultiGraph>    fROCCurves;
    public:
-       CrossValidationResultItem();
-       CrossValidationResultItem(const CrossValidationResultItem &);
-       ~CrossValidationResultItem(){fROCCurves=nullptr;}
+       CrossValidationResult();
+       CrossValidationResult(const CrossValidationResult &);
+       ~CrossValidationResult(){fROCCurves=nullptr;}
        
        
        std::map<UInt_t,Float_t> GetROCValues(){return fROCs;}
-       Float_t GetROCAverage(){return fROCAVG;}
+       Float_t GetROCAverage() const;
        TMultiGraph *GetROCCurves(Bool_t fLegend=kTRUE);
        void Print() const ;
        
        TCanvas* Draw(const TString name="CrossValidation") const;
    };
    
-   class CrossValidationResult
-   {
-       std::vector<CrossValidationResultItem> fMethods;
-       public:
-           CrossValidationResult(){}
-           
-           void AppendMethod(CrossValidationResultItem &method){fMethods.push_back(method);}
-           const CrossValidationResultItem &GetMethod(const UInt_t i) const{return fMethods[i];}
-           
-           //number of methods
-           UInt_t GetSize(){return fMethods.size();}
-           
-           void Print() const{for(auto &item:fMethods) item.Print();}
-           void Draw(const TString name="CrossValidation") const{for(auto &item:fMethods) item.Draw(name);}
-   }; 
-   
     
-   class CrossValidation : public Configurable {
-       UInt_t fNFolds;
-       std::map<UInt_t,OptionMap>  fMethodsMap;
-       CrossValidationResult        fResults;
+   class CrossValidation : public Algorithm {
+       UInt_t                 fNumFolds;
+       CrossValidationResult  fResults;
    public:
-
         explicit CrossValidation(DataLoader *loader);
        ~CrossValidation();
        
-       void BookMethod( TString theMethodName, TString methodTitle, TString theOption = "", int NumFolds = 5);
-       void BookMethod( Types::EMVA theMethod,  TString methodTitle, TString theOption = "", int NumFolds = 5 );
+       void SetNumFolds(UInt_t i){fNumFolds=i;}
+       UInt_t GetNumFolds(){return fNumFolds;}
        
-       void EvaluateAll();
-       void EvaluateMethod(UInt_t method,UInt_t fold);//used in ParallelExecution
+       virtual void Evaluate();
+       void EvaluateFold(UInt_t fold);//used in ParallelExecution
        
-       const CrossValidationResult& GetResults(){return fResults;}//I need to think about this which is the best way to get the results
-       
-       
-       inline void SetDataLoader(DataLoader *loader){fDataLoader=std::shared_ptr<DataLoader>(loader);}
-       inline DataLoader *GetDataLoader(){return fDataLoader.get();}
-       
-       const std::map<UInt_t,OptionMap>   &GetMethodsMap() const{ return fMethodsMap;}
+       const CrossValidationResult& GetResults() const {return fResults;}//I need to think about this which is the best way to get the results
+                     
    private:
-       std::shared_ptr<DataLoader>  fDataLoader;
        std::unique_ptr<Factory>     fClassifier;
    };
 } 
