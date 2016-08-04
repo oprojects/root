@@ -70,11 +70,12 @@ namespace TMVA {
    protected:
        //evaluate the simple case that is removing 1 variable at time
        void EvaluateImportanceShort();
-       //evaluate all variables combinations
-// //        void EvaluateImportanceAll();
-//        //evaluate randomly given a number of seeds
+       //evaluate all variables combinations NOTE: use with care in huge datasets with a huge number of variables
+       void EvaluateImportanceAll();
+       //evaluate randomly given a number of seeds
        void EvaluateImportanceRandom(UInt_t nseeds);
        
+       //method to return a nice histogram with the results ;)
        TH1F* GetImportance(const UInt_t nbits,std::vector<Float_t> &importances,std::vector<TString> &varNames);
 
        //method to compute the range(number total of operations for every bit configuration)

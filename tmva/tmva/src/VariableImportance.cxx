@@ -41,7 +41,7 @@ TCanvas* TMVA::VariableImportanceResult::Draw(const TString name) const
     TCanvas *c=new TCanvas(name.Data());
     fImportanceHist->Draw("");
     fImportanceHist->GetXaxis()->SetTitle(" Variable Names ");
-    fImportanceHist->GetYaxis()->SetTitle(" fImportance (%) ");
+    fImportanceHist->GetYaxis()->SetTitle(" Importance (%) ");
     TMVA::TMVAGlob::plot_logo();
     c->Draw();
     return c;
@@ -65,7 +65,8 @@ void TMVA::VariableImportance::Evaluate()
     TString methodOptions = fMethod.GetValue<TString>("MethodOptions");
     
 //         EvaluateImportanceShort();
-        EvaluateImportanceRandom(fDataLoader->GetDefaultDataSetInfo().GetNVariables());
+//         EvaluateImportanceRandom(fDataLoader->GetDefaultDataSetInfo().GetNVariables());
+           EvaluateImportanceAll();
 }
 
 ULong_t TMVA::VariableImportance::Sum(ULong_t i)
@@ -99,8 +100,13 @@ TH1F* TMVA::VariableImportance::GetImportance(const UInt_t nbits,std::vector<Flo
     vihist->LabelsOption("v >", "X");
     vihist->SetBarWidth(0.97);
     vihist->SetFillColor(TColor::GetColor("#006600"));
+
+    vihist->GetXaxis()->SetTitle(" Variable Names ");
+    vihist->GetXaxis()->SetTitleSize(0.045);
+    vihist->GetXaxis()->CenterTitle();
+    vihist->GetXaxis()->SetTitleOffset(1.24);
     
-    vihist->GetYaxis()->SetTitle("Importance (%)");
+    vihist->GetYaxis()->SetTitle(" Importance (%)");
     vihist->GetYaxis()->SetTitleSize(0.045);
     vihist->GetYaxis()->CenterTitle();
     vihist->GetYaxis()->SetTitleOffset(1.24);
@@ -313,7 +319,8 @@ void TMVA::VariableImportance::EvaluateImportanceRandom(UInt_t seeds)
             }
         }
     }
-        Float_t normalization = 0.0;
+    
+    Float_t normalization = 0.0;
     for (UInt_t i = 0; i < nbits; i++) normalization += importances[i];
     
     for(UInt_t i=0;i<nbits;i++){
@@ -323,7 +330,102 @@ void TMVA::VariableImportance::EvaluateImportanceRandom(UInt_t seeds)
         fResults.fImportanceValues[varNames[i]]=fResults.fImportanceValues.GetValue<TString>(varNames[i])+" % ";
     }
     fResults.fImportanceHist = std::shared_ptr<TH1F>(GetImportance(nbits,importances,varNames));
+    delete rangen;
 
-//     std::cout<<"--- Variable Importance Results (Random)"<<std::endl;
-//     return GetImportance(nbits,importances,varNames);      
 }
+
+
+void TMVA::VariableImportance::EvaluateImportanceAll()
+{
+
+    TString methodName    = fMethod.GetValue<TString>("MethodName");
+    TString methodTitle   = fMethod.GetValue<TString>("MethodTitle");
+    TString methodOptions = fMethod.GetValue<TString>("MethodOptions");
+    
+    uint32_t x = 0;
+    uint32_t y = 0;
+    
+    //getting number of variables and variable names from loader
+    const UInt_t nbits = fDataLoader->GetDefaultDataSetInfo().GetNVariables();
+    std::vector<TString> varNames = fDataLoader->GetDefaultDataSetInfo().GetListOfVariables();
+    
+    ULong_t range = pow(2, nbits);
+    
+    //vector to save importances
+    std::vector<Float_t> importances(nbits);
+    
+    //vector to save ROC-Integral values
+    std::vector<Float_t> ROC(range);
+    ROC[0]=0.5;
+    for (UInt_t i = 0; i < nbits; i++) importances[i] = 0;
+    
+    Float_t SROC, SSROC; //computed ROC value
+    for ( x = 1; x <range ; x++) {
+        
+        std::bitset<NBITS>  xbitset(x);
+        if (x == 0) continue; //dataloader need at least one variable
+        
+        //creating loader for seed
+        TMVA::DataLoader *seeddl = new TMVA::DataLoader(xbitset.to_string());
+        
+        //adding variables from seed
+        for (UInt_t index = 0; index < nbits; index++) {
+            if (xbitset[index]) seeddl->AddVariable(varNames[index], 'F');
+        }
+        
+        DataLoaderCopy(seeddl,fDataLoader.get());
+        
+        seeddl->PrepareTrainingAndTestTree(fDataLoader->GetDefaultDataSetInfo().GetCut("Signal"), fDataLoader->GetDefaultDataSetInfo().GetCut("Background"), fDataLoader->GetDefaultDataSetInfo().GetSplitOptions());
+        
+        //Booking Seed
+        fClassifier->BookMethod(seeddl, methodName, methodTitle, methodOptions);
+        
+        //Train/Test/Evaluation
+        fClassifier->TrainAllMethods();
+        fClassifier->TestAllMethods();
+        fClassifier->EvaluateAllMethods();
+        
+        //getting ROC
+        ROC[x] = fClassifier->GetROCIntegral(xbitset.to_string(), methodTitle);
+        
+        delete seeddl;    
+        fClassifier->DeleteAllMethods();
+    }
+    
+    
+    for ( x = 0; x <range ; x++) 
+    {
+        SROC=ROC[x];
+        for (uint32_t i = 0; i < NBITS; ++i) {
+            if (x & (1 << i)) {
+                y = x & ~(1 << i);
+                std::bitset<NBITS>  ybitset(y);
+                
+                Float_t ny = log(x - y) / 0.693147;
+                if (y == 0) {
+                    importances[ny] = SROC - 0.5;
+                    continue;
+                }
+                
+                //getting ROC
+                SSROC = ROC[y];
+                importances[ny] += SROC - SSROC;
+            }
+            
+        }
+    }
+    Float_t normalization = 0.0;
+    for (UInt_t i = 0; i < nbits; i++) normalization += importances[i];
+    
+    for(UInt_t i=0;i<nbits;i++){
+        //adding values
+        fResults.fImportanceValues[varNames[i]]=(100.0 * importances[i] / normalization);
+        //adding sufix
+        fResults.fImportanceValues[varNames[i]]=fResults.fImportanceValues.GetValue<TString>(varNames[i])+" % ";
+    }
+    fResults.fImportanceHist = std::shared_ptr<TH1F>(GetImportance(nbits,importances,varNames));
+}
+
+
+
+
