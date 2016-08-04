@@ -1,0 +1,92 @@
+// @(#)root/tmva $Id$
+// Author: Omar Zapata and Sergei Gleyzer. 2016
+
+
+#ifndef ROOT_TMVA_VariableImportance
+#define ROOT_TMVA_VariableImportance
+
+
+#ifndef ROOT_TString
+#include "TString.h"
+#endif
+
+
+#ifndef ROOT_TMVA_Configurable
+#include "TMVA/Configurable.h"
+#endif
+#ifndef ROOT_TMVA_Types
+#include "TMVA/Types.h"
+#endif
+
+#ifndef ROOT_TMVA_Factory
+#include<TMVA/Factory.h>
+#endif
+
+#ifndef ROOT_TMVA_DataLoader
+#include<TMVA/DataLoader.h>
+#endif
+
+#ifndef ROOT_TMVA_OptionMap
+#include<TMVA/OptionMap.h>
+#endif
+
+#ifndef ROOT_TMVA_Algorithm
+#include<TMVA/Algorithm.h>
+#endif
+
+namespace TMVA {
+
+   class VariableImportanceResult
+   {
+     friend class VariableImportance;
+   private:
+       OptionMap              fImportanceValues;
+       std::shared_ptr<TH1F>  fImportanceHist;
+   public:
+       VariableImportanceResult();
+       VariableImportanceResult(const VariableImportanceResult &);
+       ~VariableImportanceResult(){fImportanceHist=nullptr;}
+       
+       OptionMap &GetImportanceValues(){return fImportanceValues;}
+       TH1F *GetImportanceHist(){return fImportanceHist.get();}
+       void Print() const ;
+       
+       TCanvas* Draw(const TString name="VariableImportance") const;
+   };
+   
+    
+   class VariableImportance : public Algorithm {
+   private:
+       UInt_t                    fNumFolds;
+       VariableImportanceResult  fResults;
+   public:
+       explicit VariableImportance(DataLoader *loader);
+       ~VariableImportance();
+       
+       
+       virtual void Evaluate();
+       
+       const VariableImportanceResult& GetResults() const {return fResults;}//I need to think about this, which is the best way to get the results?
+   protected:
+       //evaluate the simple case that is removing 1 variable at time
+       void EvaluateImportanceShort();
+//        //evaluate all variables combinations
+//        TH1F* EvaluateImportanceAll( DataLoader *loader,Types::EMVA theMethod,  TString methodTitle, const char *theOption = "" );
+//        //evaluate randomly given a number of seeds
+//        TH1F* EvaluateImportanceRandom( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, const char *theOption = "" );
+       
+       TH1F* GetImportance(const UInt_t nbits,std::vector<Double_t> &importances,std::vector<TString> &varNames);
+
+       //method to compute the range(number total of operations for every bit configuration)
+       ULong_t Sum(ULong_t i);
+       
+   private:
+       std::unique_ptr<Factory>     fClassifier;
+   };
+} 
+
+
+#endif
+
+
+

@@ -70,6 +70,7 @@ fNumFolds(5)
 
 TMVA::CrossValidation::~CrossValidation()
 {
+    fClassifier=nullptr;
 }
 
 
@@ -114,14 +115,9 @@ void TMVA::CrossValidation::Evaluate()
     
         fResults.fROCCurves->Add(gr);
     
-        TMVA::MethodBase * smethod = dynamic_cast<TMVA::MethodBase*>(fClassifier->fMethodsMap[foldloader->GetName()]->at(0));
-        TMVA::ResultsClassification * sresults = (TMVA::ResultsClassification*)smethod->Data()->GetResults(smethod->GetMethodName(), Types::kTesting, Types::kClassification);
-        sresults->Delete();
-
         delete foldloader;
     
         fClassifier->DeleteAllMethods();
-        fClassifier->fMethodsMap.clear();
         }
 
 }

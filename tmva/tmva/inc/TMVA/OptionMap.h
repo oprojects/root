@@ -31,12 +31,12 @@ namespace TMVA {
         *         \ingroup TMVA
         */
        
-       class OptionMap:public TNamed
+       class OptionMap
        {
        protected:
+           TString fName;
            std::map<const TString,TString> fOptMap;
            TMVA::MsgLogger fLogger; //
-           
            class Binding
            {
            private:
@@ -81,7 +81,7 @@ namespace TMVA {
            };
            Binding fBinder;
        public:
-           OptionMap(const TString name="Option"):TNamed(name.Data(),"OptionMap"),fLogger(name.Data()),fBinder(fOptMap,""){}
+           OptionMap(const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,""){}
            ~OptionMap(){}
            
            Bool_t HasKey(TString key)
@@ -94,14 +94,14 @@ namespace TMVA {
                fBinder.SetKey(key);
                return fBinder;
            }
-           using TNamed::Print;
-           virtual void Print()
+           
+           void Print() const
            {
+               MsgLogger Log(fLogger);
                for(auto &item:fOptMap)
                {
-                   fLogger<<kINFO<<item.first.Data()<<": "<<item.second.Data()<<std::endl;
+                   Log<<kINFO<<item.first.Data()<<": "<<item.second.Data()<<Endl;
                }
-               fLogger<<Endl;
            }
 
            template<class T> T GetValue(const TString key)

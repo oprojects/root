@@ -324,6 +324,7 @@ void TMVA::Factory::DeleteAllMethods( void )
       methods->clear();
       delete methods;
    }
+   fMethodsMap.clear();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
