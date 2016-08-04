@@ -70,12 +70,12 @@ namespace TMVA {
    protected:
        //evaluate the simple case that is removing 1 variable at time
        void EvaluateImportanceShort();
-//        //evaluate all variables combinations
-//        TH1F* EvaluateImportanceAll( DataLoader *loader,Types::EMVA theMethod,  TString methodTitle, const char *theOption = "" );
+       //evaluate all variables combinations
+// //        void EvaluateImportanceAll();
 //        //evaluate randomly given a number of seeds
-//        TH1F* EvaluateImportanceRandom( DataLoader *loader,UInt_t nseeds, Types::EMVA theMethod,  TString methodTitle, const char *theOption = "" );
+       void EvaluateImportanceRandom(UInt_t nseeds);
        
-       TH1F* GetImportance(const UInt_t nbits,std::vector<Double_t> &importances,std::vector<TString> &varNames);
+       TH1F* GetImportance(const UInt_t nbits,std::vector<Float_t> &importances,std::vector<TString> &varNames);
 
        //method to compute the range(number total of operations for every bit configuration)
        ULong_t Sum(ULong_t i);
