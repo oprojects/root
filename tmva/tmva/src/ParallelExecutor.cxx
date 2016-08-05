@@ -54,13 +54,16 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::CrossV
     auto fResults=fWorkers.Map(executor, ROOT::TSeqI(cv->GetNumFolds()));
     fTimer.Stop();
     
-    Double_t fROCAvg=0;
-    for(Double_t &item:fResults)
+    Log().SetName("ParallelExecutor(CV)");
+    TMVA::MsgLogger::EnableOutput();
+    TMVA::gConfig().SetSilent(kFALSE);  
+    Float_t fROCAvg=0;
+    for(UInt_t i=0;i<fResults.size();i++)
     {
-        std::cout<<"ROC  : "<<item<<std::endl;
-        fROCAvg+=item;
+        Log()<<kINFO<<Form("Fold  %i ROC-Int : %f",i,fResults[i])<<Endl;
+        fROCAvg+=fResults[i];
     }
-    std::cout<<"ROCAvg :"<<fROCAvg/fResults.size()<<std::endl;
-    return TMVA::ParallelExecutorResults("ParallelExecutor(CrossValidation)",jobs,fTimer.RealTime(),options);
+    Log()<<kINFO<<"Average ROC-Int : "<<fROCAvg/fResults.size()<<Endl;
+    return TMVA::ParallelExecutorResults("ParallelExecutor(CV)",jobs,fTimer.RealTime(),options);
 }
 

@@ -42,6 +42,7 @@ namespace TMVA {
    private:
        OptionMap              fImportanceValues;
        std::shared_ptr<TH1F>  fImportanceHist;
+       VIType                 fType;
    public:
        VariableImportanceResult();
        VariableImportanceResult(const VariableImportanceResult &);
@@ -59,12 +60,15 @@ namespace TMVA {
    private:
        UInt_t                    fNumFolds;
        VariableImportanceResult  fResults;
+       VIType                    fType;
    public:
        explicit VariableImportance(DataLoader *loader);
        ~VariableImportance();
        
-       
        virtual void Evaluate();
+       
+       void SetType(VIType type){fType=type;}
+       VIType GetType(){return fType;}
        
        const VariableImportanceResult& GetResults() const {return fResults;}//I need to think about this, which is the best way to get the results?
    protected:

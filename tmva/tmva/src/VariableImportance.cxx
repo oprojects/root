@@ -17,7 +17,8 @@
 //number of bits for bitset
 #define NBITS          32
 
-TMVA::VariableImportanceResult::VariableImportanceResult():fImportanceValues("VariableImportance"),fImportanceHist(nullptr)
+TMVA::VariableImportanceResult::VariableImportanceResult():fImportanceValues("VariableImportance"),
+                                                           fImportanceHist(nullptr)
 {
     
 }
@@ -31,6 +32,17 @@ TMVA::VariableImportanceResult::VariableImportanceResult(const VariableImportanc
 
 void TMVA::VariableImportanceResult::Print() const
 {
+    MsgLogger fLogger("VariableImportance");
+    if(fType==VIType::kShort)
+    {
+        fLogger<<kINFO<<"Variable Importance Results (Short)"<<Endl;
+    }else if(fType==VIType::kAll)
+    {
+        fLogger<<kINFO<<"Variable Importance Results (All)"<<Endl;        
+    }else{
+        fLogger<<kINFO<<"Variable Importance Results (Random)"<<Endl;                
+    }
+    
     fImportanceValues.Print();    
 }
 
@@ -47,9 +59,9 @@ TCanvas* TMVA::VariableImportanceResult::Draw(const TString name) const
     return c;
 }
 
-TMVA::VariableImportance::VariableImportance(TMVA::DataLoader *dataloader):TMVA::Algorithm(dataloader,"CrossValidation")
+TMVA::VariableImportance::VariableImportance(TMVA::DataLoader *dataloader):TMVA::Algorithm(dataloader,"CrossValidation"),fType(VIType::kShort)
 {
-    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("VariableImportance","!V:ROC:Silent:Color:!DrawProgressBar:AnalysisType=Classification"));
+    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("VariableImportance","!V:ROC:!ModelPersistence:Silent:Color:!DrawProgressBar:AnalysisType=Classification"));
 }
 
 TMVA::VariableImportance::~VariableImportance()
@@ -64,9 +76,21 @@ void TMVA::VariableImportance::Evaluate()
     TString methodTitle   = fMethod.GetValue<TString>("MethodTitle");
     TString methodOptions = fMethod.GetValue<TString>("MethodOptions");
     
-//         EvaluateImportanceShort();
-//         EvaluateImportanceRandom(fDataLoader->GetDefaultDataSetInfo().GetNVariables());
-           EvaluateImportanceAll();
+    //NOTE: Put the type of VI Algorithm in the results Print
+    if(fType==VIType::kShort)
+    {
+        EvaluateImportanceShort();        
+    }else if(fType==VIType::kAll)
+    {
+        EvaluateImportanceAll();        
+    }else{
+        UInt_t nbits=fDataLoader->GetDefaultDataSetInfo().GetNVariables();
+        if(nbits<10)
+            Log()<<kERROR<<"Running variable importance with less that 10 varibales in Random mode "<<
+                           "can to produce inconsisten results"<<Endl;
+        EvaluateImportanceRandom(pow(2,nbits)); 
+    }
+    fResults.fType = fType;
 }
 
 ULong_t TMVA::VariableImportance::Sum(ULong_t i)

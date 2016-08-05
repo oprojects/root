@@ -65,7 +65,7 @@ TCanvas* TMVA::CrossValidationResult::Draw(const TString name) const
 TMVA::CrossValidation::CrossValidation(TMVA::DataLoader *dataloader):TMVA::Algorithm(dataloader,"CrossValidation"),
 fNumFolds(5)
 {
-    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("CrossValidation","!V:ROC:Silent:Color:!DrawProgressBar:AnalysisType=Classification"));
+    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("CrossValidation","!V:ROC:Silent:!ModelPersistence:Color:!DrawProgressBar:AnalysisType=Classification"));
 }
 
 TMVA::CrossValidation::~CrossValidation()
