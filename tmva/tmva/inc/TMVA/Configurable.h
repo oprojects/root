@@ -53,7 +53,7 @@ namespace TMVA {
    public:
 
       // constructur
-      Configurable( const TString& theOption = "" );
+      Configurable( const TString& theOption = "" ,const TString &name="Configurable");
       
       // default destructur
       virtual ~Configurable();
@@ -96,6 +96,7 @@ namespace TMVA {
       void AddOptionsXMLTo( void* parent ) const;
       void ReadOptionsFromXML( void* node );
 
+      using TObject::Print;
    protected:
       
       Bool_t LooseOptionCheckingEnabled() const { return fLooseOptionCheckingEnabled; }

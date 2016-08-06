@@ -191,7 +191,8 @@ namespace TMVA {
 
       DataSetManager*    fDataSetManager;     // DSMTEST
       friend class Factory;                   // DSMTEST
-      friend class Reader;                    // DSMTEST      
+      friend class Reader;                    // DSMTEST
+      friend class Classification;
 
       TString fHistoricOption;    //historic variable, only needed for "CompatibilityOptions" 
       Bool_t fHistoricBoolOption; //historic variable, only needed for "CompatibilityOptions" 

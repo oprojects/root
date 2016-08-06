@@ -91,12 +91,15 @@ namespace TMVA {
    class MethodCuts;
    class MethodBoost;
    class DataSetInfo;
-
+   class MethodBoost;
+   class Factory;
+   class Classification;
    class MethodBase : virtual public IMethod, public Configurable {
 
       friend class Factory;
       friend class RootFinder;
       friend class MethodBoost;
+      friend class Classification;
    public:
 
       enum EWeightFileType { kROOT=0, kTEXT };

@@ -114,7 +114,7 @@ ClassImp(TMVA::Factory)
 ///   theOption     : option string; currently: "V" for verbose
 
 TMVA::Factory::Factory( TString jobName, TFile* theTargetFile, TString theOption )
-: Configurable          ( theOption ),
+: Configurable          ( theOption ,"Factory"),
    fTransformations      ( "I" ),
    fVerbose              ( kFALSE ),
    fCorrelations         ( kFALSE ),

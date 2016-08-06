@@ -67,8 +67,8 @@ ClassImp(TMVA::Configurable)
 ////////////////////////////////////////////////////////////////////////////////
 /// constructor
 
-TMVA::Configurable::Configurable( const TString& theOption)
-: TNamed("Configurable","Configurable"),
+TMVA::Configurable::Configurable( const TString& theOption,const TString &name)
+: TNamed(name.Data(),name.Data()),
    fOptions                    ( theOption ),
    fLooseOptionCheckingEnabled ( kTRUE ),
    fLastDeclaredOption         ( 0 ),

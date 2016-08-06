@@ -58,9 +58,11 @@ namespace TMVA {
    class DataSetInfo;
    class DataSetManager;
    class VariableTransformBase;
-
+   class Algorithm;
+   
    class DataLoader : public Configurable {
       friend class Factory;
+      friend Algorithm;
    public:
 
        DataLoader( TString thedlName="default");
@@ -169,7 +171,7 @@ namespace TMVA {
 
       const DataSetInfo& GetDefaultDataSetInfo(){ return DefaultDataSetInfo(); }
  
-      //Copy method use in VI and CV DEPRECATED: you can just call Clone  DataLoader *dl2=(DataLoader *)dl1->Clone("dl2")
+      //Copy method use in VI and CV 
       DataLoader* MakeCopy(TString name);
       friend void DataLoaderCopy(TMVA::DataLoader* des, TMVA::DataLoader* src);      
  

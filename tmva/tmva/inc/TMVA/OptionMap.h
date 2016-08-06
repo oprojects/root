@@ -84,6 +84,8 @@ namespace TMVA {
            OptionMap(const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,""){}
            ~OptionMap(){}
            
+           Bool_t IsEmpty(){return fOptMap.empty();}
+           
            Bool_t HasKey(TString key)
            {
                return fOptMap.count( key )==1;

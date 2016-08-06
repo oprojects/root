@@ -133,7 +133,8 @@ namespace TMVA {
       friend class Factory; // DSMTEST
       friend class Reader;  // DSMTEST
       friend class MethodBoost;  // DSMTEST
-
+      friend class Classification;  // DSMTEST
+      
       ClassDef(MethodCategory,0);
    };
 }

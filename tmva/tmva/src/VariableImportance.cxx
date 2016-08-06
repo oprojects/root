@@ -59,7 +59,7 @@ TCanvas* TMVA::VariableImportanceResult::Draw(const TString name) const
     return c;
 }
 
-TMVA::VariableImportance::VariableImportance(TMVA::DataLoader *dataloader):TMVA::Algorithm(dataloader,"CrossValidation"),fType(VIType::kShort)
+TMVA::VariableImportance::VariableImportance(TMVA::DataLoader *dataloader):TMVA::Algorithm("CrossValidation",dataloader,nullptr),fType(VIType::kShort)
 {
     fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("VariableImportance","!V:ROC:!ModelPersistence:Silent:Color:!DrawProgressBar:AnalysisType=Classification"));
 }
