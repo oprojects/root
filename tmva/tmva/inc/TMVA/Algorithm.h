@@ -39,6 +39,11 @@
 #include "TMVA/DataLoader.h"
 #endif
 
+#ifndef ROOT_TMVA_ROCCurve
+#include "TMVA/DataLoader.h"
+#endif
+
+
 namespace TMVA {    
     
        /**

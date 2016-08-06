@@ -34,17 +34,25 @@
 #include<TMVA/Algorithm.h>
 #endif
 
+#ifndef ROOT_TMVA_ResultsClassification
+#include "TMVA/ResultsClassification.h"
+#endif
+
 namespace TMVA {
 
    class ClassificationResult
    {
-       friend class Classifier;
+       friend class Classification;
    private:
-//        ResultsClassification  fClassifierResults;
+       std::shared_ptr<ResultsClassification>   fClassifierResults;
+       std::unique_ptr<ROCCurve>                fROCCurve;
+       Float_t                                  fROCIntegral;
+       OptionMap                                fMethod;
+       
    public:
        ClassificationResult();
-       ClassificationResult(const ClassificationResult&);
        ~ClassificationResult(){}
+              
        
        void Print() const ;
        
@@ -58,15 +66,12 @@ namespace TMVA {
        TString              fTransformations;
        std::unique_ptr<MethodBase> fMethodBase;
    public:
-       Classification(TString name,TString options,DataLoader *dataloader=nullptr,TFile *file=nullptr);
-//        Classification(TString name,TString options);
+       Classification(DataLoader *dataloader,TString options="",TFile *file=nullptr);
        ~Classification();
        
        void Train();
        void Test();
-       
-       MethodBase *GetMethod(){return fMethodBase.get();}
-       
+              
        virtual void Evaluate();//call Train/Test
               
        const ClassificationResult& GetResults() const {return fResults;}

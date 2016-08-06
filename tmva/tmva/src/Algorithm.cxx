@@ -24,6 +24,7 @@ Algorithm::~Algorithm()
 Bool_t  Algorithm::IsSilentFile(){return fFile==nullptr;}
 
 TFile* Algorithm::GetFile(){return fFile.get();}
+// TFile* Algorithm::GetFile(){return fFile==nullptr?0:fFile.get();}
 
 void   Algorithm::SetFile(TFile *file){fFile=std::shared_ptr<TFile>(file);}
 

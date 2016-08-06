@@ -31,7 +31,6 @@
 #include "TMVA/MsgLogger.h"
 
 #include "TMVA/Classification.h"
-#include "TMVA/ResultsClassification.h"
 
 #include "TMVA/tmvaglob.h"
 
@@ -41,10 +40,6 @@ const Int_t  MinNoTrainingEvents = 10;
 
 
 TMVA::ClassificationResult::ClassificationResult()
-{
-}
-
-TMVA::ClassificationResult::ClassificationResult(const ClassificationResult &/*obj*/)
 {
 }
 
@@ -59,19 +54,19 @@ TCanvas* TMVA::ClassificationResult::Draw(const TString name) const
 {
     TMVA::TMVAGlob::Initialize();
     TCanvas *c=new TCanvas(name.Data());
-//     fROCCurves->Draw("AL");
-//     fROCCurves->GetXaxis()->SetTitle(" Signal Efficiency ");
-//     fROCCurves->GetYaxis()->SetTitle(" Background Rejection ");
-//     Float_t adjust=1+fROCs.size()*0.01;
-//     c->BuildLegend(0.15,0.15,0.4*adjust,0.5*adjust);
-//     c->SetTitle("Cross Validation ROC Curves");
+    TGraph *roc=fROCCurve->GetROCCurve();
+    roc->Draw("AL");
+    roc->GetXaxis()->SetTitle(" Signal Efficiency ");
+    roc->GetYaxis()->SetTitle(" Background Rejection ");
+    c->BuildLegend(0.15,0.15,0.3,0.3);
+    c->SetTitle("ROC-Integral Curve");
     TMVA::TMVAGlob::plot_logo();
-//     c->Draw();
+    c->Draw();
     return c;
 }
 
-TMVA::Classification::Classification(TString name,TString options,DataLoader *dataloader,TFile *file):
-Algorithm(Form("Classification(%s)",name.Data()),dataloader,file,options),
+TMVA::Classification::Classification(DataLoader *dataloader,TString options,TFile *file):
+Algorithm("Classification",dataloader,file,options),
 fTransformations      ( "I" )
 {
     fLogger->SetSource(GetName());
@@ -86,7 +81,7 @@ fTransformations      ( "I" )
     
     // histograms are not automatically associated with the current
     // directory and hence don't go out of scope when closing the file
-    // TH1::AddDirectory(kFALSE);
+//     if(IsSilentFile())TH1::AddDirectory(kFALSE);
     Bool_t silent          = kFALSE;
     #ifdef WIN32
     // under Windows, switch progress bar and color off by default, as the typical windows shell doesn't handle these (would need different sequences..)
@@ -132,10 +127,12 @@ void TMVA::Classification::Train()
         Log() << kINFO << "...nothing found to train" << Endl;
         return;
     }
+    fResults.fMethod=fMethod;
     
     TString methodName    = fMethod.GetValue<TString>("MethodName");
     TString methodTitle   = fMethod.GetValue<TString>("MethodTitle");
     TString methodOptions = fMethod.GetValue<TString>("MethodOptions");
+    
     
     if(IsModelPersistence()) gSystem->MakeDirectory(fDataLoader->GetName());//creating directory for DataLoader output
     
@@ -281,7 +278,10 @@ void TMVA::Classification::Test()
         return;
     }
     Event::SetIsTraining(kFALSE);
-
+    fMethodBase->SetFile(fFile.get());
+    fMethodBase->SetSilentFile(IsSilentFile());
+    
+    
     Log() << kINFO << "Test method: " << fMethodBase->GetMethodName() << " for Classification performance" << Endl;
     fMethodBase->AddOutput( Types::kTesting, Types::kClassification );
     Int_t isel;                  // will be 0 for a Method; 1 for a Variable
@@ -392,42 +392,46 @@ void TMVA::Classification::Test()
             Log() << kINFO << hLine << Endl;
             Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
         }
-        Int_t i=0;
         
-        if (k == 1) mname[k][i].ReplaceAll( "Variable_", "" );
+        if (k == 1) mname[k][0].ReplaceAll( "Variable_", "" );
         
-        TMVA::Results *results=fMethodBase->Data()->GetResults(mname[k][i],Types::kTesting,Types::kClassification);
-        std::vector<Float_t> *mvaRes = dynamic_cast<ResultsClassification *>(results)->GetValueVector();
-        std::vector<Bool_t>  *mvaResType = dynamic_cast<ResultsClassification *>(results)->GetValueVectorTypes();
-        Double_t fROCalcValue = 0;
-        TMVA::ROCCurve *fROCCurve = nullptr;
+        TMVA::ResultsClassification *results=dynamic_cast<ResultsClassification *>(fMethodBase->Data()->GetResults(mname[k][0],Types::kTesting,Types::kClassification));
+        
+        
+        std::vector<Float_t> *mvaRes = results->GetValueVector();
+        std::vector<Bool_t>  *mvaResType = results->GetValueVectorTypes();
+        
         if (mvaResType->size() != 0) { 
-            fROCCurve = new TMVA::ROCCurve(*mvaRes, *mvaResType);
-            fROCalcValue = fROCCurve->GetROCIntegral();
+            fResults.fROCCurve =std::unique_ptr<ROCCurve>( new TMVA::ROCCurve(*mvaRes, *mvaResType));
+            fResults.fROCIntegral = fResults.fROCCurve->GetROCIntegral();
+            fResults.fROCCurve->GetROCCurve()->SetTitle(Form("%s : %.3f",fMethod.GetValue<TString>("MethodTitle").Data(),fResults.fROCIntegral));
+            fResults.fROCCurve->GetROCCurve()->SetName(fMethod.GetValue<TString>("MethodName"));
+            
         }
         
-        if (sep[k][i] < 0 || sig[k][i] < 0) {
+        fResults.fClassifierResults=std::shared_ptr<TMVA::ResultsClassification>(results);
+        if (sep[k][0] < 0 || sig[k][0] < 0) {
             // cannot compute separation/significance -> no MVA (usually for Cuts)
             
             Log() << kINFO << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  %#1.3f(%02i)    %#1.3f       %#1.3f | --       --",
                                    fDataLoader->GetName(), 
-                                   (const char*)mname[k][i], 
-                                   eff01[k][i], Int_t(1000*eff01err[k][i]), 
-                                   eff10[k][i], Int_t(1000*eff10err[k][i]), 
-                                   eff30[k][i], Int_t(1000*eff30err[k][i]), 
-                                   effArea[k][i],fROCalcValue) << Endl;
+                                   (const char*)mname[k][0], 
+                                   eff01[k][0], Int_t(1000*eff01err[k][0]), 
+                                   eff10[k][0], Int_t(1000*eff10err[k][0]), 
+                                   eff30[k][0], Int_t(1000*eff30err[k][0]), 
+                                   effArea[k][0],fResults.fROCIntegral) << Endl;
         }
         else {
             Log() << kINFO << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  %#1.3f(%02i)    %#1.3f       %#1.3f | %#1.3f    %#1.3f",
                                    fDataLoader->GetName(), 
-                                   (const char*)mname[k][i], 
-                                   eff01[k][i], Int_t(1000*eff01err[k][i]), 
-                                   eff10[k][i], Int_t(1000*eff10err[k][i]), 
-                                   eff30[k][i], Int_t(1000*eff30err[k][i]), 
-                                   effArea[k][i],fROCalcValue, 
-                                   sep[k][i], sig[k][i]) << Endl;
+                                   (const char*)mname[k][0], 
+                                   eff01[k][0], Int_t(1000*eff01err[k][0]), 
+                                   eff10[k][0], Int_t(1000*eff10err[k][0]), 
+                                   eff30[k][0], Int_t(1000*eff30err[k][0]), 
+                                   effArea[k][0],fResults.fROCIntegral, 
+                                   sep[k][0], sig[k][0]) << Endl;
         }
-        if (fROCCurve) delete fROCCurve;
+        
         Log() << kINFO << hLine << Endl;
         Log() << kINFO << Endl;
         Log() << kINFO << "Testing efficiency compared to training efficiency (overtraining check)" << Endl;
@@ -439,14 +443,14 @@ void TMVA::Classification::Test()
             Log() << kINFO << hLine << Endl;
             Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
         }
-        if (k == 1) mname[k][i].ReplaceAll( "Variable_", "" );
+        if (k == 1) mname[k][0].ReplaceAll( "Variable_", "" );
         
         Log() << kINFO << Form("%-20s %-15s: %#1.3f (%#1.3f)       %#1.3f (%#1.3f)      %#1.3f (%#1.3f)",
                                fDataLoader->GetName(), 
-                               (const char*)mname[k][i], 
-                               eff01[k][i],trainEff01[k][i], 
-                               eff10[k][i],trainEff10[k][i],
-                               eff30[k][i],trainEff30[k][i]) << Endl;
+                               (const char*)mname[k][0], 
+                               eff01[k][0],trainEff01[k][0], 
+                               eff10[k][0],trainEff10[k][0],
+                               eff30[k][0],trainEff30[k][0]) << Endl;
                                Log() << kINFO << hLine << Endl;
                                Log() << kINFO << Endl; 
         if (gTools().CheckForSilentOption( GetOptions() )) Log().InhibitOutput();
@@ -465,7 +469,7 @@ void TMVA::Classification::Test()
             }
         }
     }
-    
+        
 }
 
 
