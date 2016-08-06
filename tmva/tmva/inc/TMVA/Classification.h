@@ -63,7 +63,7 @@ namespace TMVA {
        ~Classification();
        
        void Train();
-       void Test(){};
+       void Test();
        
        MethodBase *GetMethod(){return fMethodBase.get();}
        

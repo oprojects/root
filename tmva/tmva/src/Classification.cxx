@@ -8,6 +8,9 @@
 #include "TAxis.h"
 #include "TCanvas.h"
 #include "TGraph.h"
+#include "TMatrixD.h"
+#include "TPrincipal.h"
+#include "TMath.h"
 
 #include "TMVA/ClassifierFactory.h"
 #include "TMVA/Config.h"
@@ -269,12 +272,205 @@ void TMVA::Classification::Train()
     }
 }
 
+void TMVA::Classification::Test()
+{
+    UInt_t fROC=1;
+    
+    if (fMethodBase==nullptr) {
+        Log() << kINFO << "...nothing found to test" << Endl;
+        return;
+    }
+    Event::SetIsTraining(kFALSE);
+
+    Log() << kINFO << "Test method: " << fMethodBase->GetMethodName() << " for Classification performance" << Endl;
+    fMethodBase->AddOutput( Types::kTesting, Types::kClassification );
+    Int_t isel;                  // will be 0 for a Method; 1 for a Variable
+    Int_t nmeth_used[2] = {0,0}; // 0 Method; 1 Variable
+    
+    std::vector<std::vector<TString> >  mname(2);
+    std::vector<std::vector<Double_t> > sig(2), sep(2), roc(2);
+    std::vector<std::vector<Double_t> > eff01(2), eff10(2), eff30(2), effArea(2);
+    std::vector<std::vector<Double_t> > eff01err(2), eff10err(2), eff30err(2);
+    std::vector<std::vector<Double_t> > trainEff01(2), trainEff10(2), trainEff30(2);
+    
+    std::vector<std::vector<Float_t> > multiclass_testEff;
+    std::vector<std::vector<Float_t> > multiclass_trainEff;
+    std::vector<std::vector<Float_t> > multiclass_testPur;
+    std::vector<std::vector<Float_t> > multiclass_trainPur;
+    
+    // same as above but for 'truncated' quantities (computed for events within 2sigma of RMS)
+    std::vector<std::vector<Double_t> > biastrainT(1);
+    std::vector<std::vector<Double_t> > biastestT(1);
+    std::vector<std::vector<Double_t> > devtrainT(1);
+    std::vector<std::vector<Double_t> > devtestT(1);
+    std::vector<std::vector<Double_t> > rmstrainT(1);
+    std::vector<std::vector<Double_t> > rmstestT(1);
+    std::vector<std::vector<Double_t> > minftrainT(1);
+    std::vector<std::vector<Double_t> > minftestT(1);
+
+    Log() << kINFO << "Evaluate classifier: " << fMethodBase->GetMethodName() << Endl;
+    isel = (fMethodBase->GetMethodTypeName().Contains("Variable")) ? 1 : 0;
+    
+    // perform the evaluation
+    fMethodBase->TestClassification();
+    
+    
+    // evaluate the classifier
+    mname[isel].push_back( fMethodBase->GetMethodName() );
+    sig[isel].push_back  ( fMethodBase->GetSignificance() );
+    sep[isel].push_back  ( fMethodBase->GetSeparation() );
+    roc[isel].push_back  ( fMethodBase->GetROCIntegral() );
+    
+    Double_t err;
+    eff01[isel].push_back( fMethodBase->GetEfficiency("Efficiency:0.01", Types::kTesting, err) );
+    eff01err[isel].push_back( err );
+    eff10[isel].push_back( fMethodBase->GetEfficiency("Efficiency:0.10", Types::kTesting, err) );
+    eff10err[isel].push_back( err );
+    eff30[isel].push_back( fMethodBase->GetEfficiency("Efficiency:0.30", Types::kTesting, err) );
+    eff30err[isel].push_back( err );
+    effArea[isel].push_back( fMethodBase->GetEfficiency("",              Types::kTesting, err)  ); // computes the area (average)
+    
+    trainEff01[isel].push_back( fMethodBase->GetTrainingEfficiency("Efficiency:0.01") ); // the first pass takes longer
+    trainEff10[isel].push_back( fMethodBase->GetTrainingEfficiency("Efficiency:0.10") );
+    trainEff30[isel].push_back( fMethodBase->GetTrainingEfficiency("Efficiency:0.30") );
+    
+    nmeth_used[isel]++;
+    
+    if(!IsSilentFile()) 
+    {
+        Log() << kINFO << "Write evaluation histograms to file" << Endl;
+        fMethodBase->WriteEvaluationHistosToFile(Types::kTesting);
+        fMethodBase->WriteEvaluationHistosToFile(Types::kTraining);
+    }
+    // now sort the variables according to the best 'eff at Beff=0.10'
+    for (Int_t k=0; k<2; k++) {
+        std::vector< std::vector<Double_t> > vtemp;
+        vtemp.push_back( effArea[k] );  // this is the vector that is ranked
+        vtemp.push_back( eff10[k] );
+        vtemp.push_back( eff01[k] );
+        vtemp.push_back( eff30[k] );
+        vtemp.push_back( eff10err[k] ); 
+        vtemp.push_back( eff01err[k] );
+        vtemp.push_back( eff30err[k] );
+        vtemp.push_back( trainEff10[k] );
+        vtemp.push_back( trainEff01[k] );
+        vtemp.push_back( trainEff30[k] );
+        vtemp.push_back( sig[k] );
+        vtemp.push_back( sep[k] );
+        vtemp.push_back( roc[k] );
+        std::vector<TString> vtemps = mname[k];
+        gTools().UsefulSortDescending( vtemp, &vtemps );
+        effArea[k]    = vtemp[0];
+        eff10[k]      = vtemp[1];
+        eff01[k]      = vtemp[2];
+        eff30[k]      = vtemp[3];
+        eff10err[k]   = vtemp[4];
+        eff01err[k]   = vtemp[5];
+        eff30err[k]   = vtemp[6];
+        trainEff10[k] = vtemp[7];
+        trainEff01[k] = vtemp[8];
+        trainEff30[k] = vtemp[9];
+        sig[k]        = vtemp[10];
+        sep[k]        = vtemp[11];
+        roc[k]        = vtemp[12];
+        mname[k]      = vtemps;
+    }
+        
+    if(fROC)
+    {
+        Log().EnableOutput();
+        gConfig().SetSilent(kFALSE);
+        Log() << Endl;
+        TString hLine = "-------------------------------------------------------------------------------------------------------------------";
+        Log() << kINFO << "Evaluation results ranked by best signal efficiency and purity (area)" << Endl;
+        Log() << kINFO << hLine << Endl;
+        Log() << kINFO << "DataSet              MVA              Signal efficiency at bkg eff.(error):                | Sepa-    Signifi- "   << Endl;
+        Log() << kINFO << "Name:                Method:          @B=0.01    @B=0.10    @B=0.30    ROC-integ    ROCCurve| ration:  cance:   "   << Endl;
+        Log() << kINFO << hLine << Endl;
+        Int_t k=0;
+        if (k == 1 && nmeth_used[k] > 0) {
+            Log() << kINFO << hLine << Endl;
+            Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
+        }
+        Int_t i=0;
+        
+        if (k == 1) mname[k][i].ReplaceAll( "Variable_", "" );
+        
+        TMVA::Results *results=fMethodBase->Data()->GetResults(mname[k][i],Types::kTesting,Types::kClassification);
+        std::vector<Float_t> *mvaRes = dynamic_cast<ResultsClassification *>(results)->GetValueVector();
+        std::vector<Bool_t>  *mvaResType = dynamic_cast<ResultsClassification *>(results)->GetValueVectorTypes();
+        Double_t fROCalcValue = 0;
+        TMVA::ROCCurve *fROCCurve = nullptr;
+        if (mvaResType->size() != 0) { 
+            fROCCurve = new TMVA::ROCCurve(*mvaRes, *mvaResType);
+            fROCalcValue = fROCCurve->GetROCIntegral();
+        }
+        
+        if (sep[k][i] < 0 || sig[k][i] < 0) {
+            // cannot compute separation/significance -> no MVA (usually for Cuts)
+            
+            Log() << kINFO << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  %#1.3f(%02i)    %#1.3f       %#1.3f | --       --",
+                                   fDataLoader->GetName(), 
+                                   (const char*)mname[k][i], 
+                                   eff01[k][i], Int_t(1000*eff01err[k][i]), 
+                                   eff10[k][i], Int_t(1000*eff10err[k][i]), 
+                                   eff30[k][i], Int_t(1000*eff30err[k][i]), 
+                                   effArea[k][i],fROCalcValue) << Endl;
+        }
+        else {
+            Log() << kINFO << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  %#1.3f(%02i)    %#1.3f       %#1.3f | %#1.3f    %#1.3f",
+                                   fDataLoader->GetName(), 
+                                   (const char*)mname[k][i], 
+                                   eff01[k][i], Int_t(1000*eff01err[k][i]), 
+                                   eff10[k][i], Int_t(1000*eff10err[k][i]), 
+                                   eff30[k][i], Int_t(1000*eff30err[k][i]), 
+                                   effArea[k][i],fROCalcValue, 
+                                   sep[k][i], sig[k][i]) << Endl;
+        }
+        if (fROCCurve) delete fROCCurve;
+        Log() << kINFO << hLine << Endl;
+        Log() << kINFO << Endl;
+        Log() << kINFO << "Testing efficiency compared to training efficiency (overtraining check)" << Endl;
+        Log() << kINFO << hLine << Endl;
+        Log() << kINFO << "DataSet              MVA              Signal efficiency: from test sample (from training sample) "   << Endl;
+        Log() << kINFO << "Name:                Method:          @B=0.01             @B=0.10            @B=0.30   "   << Endl;
+        Log() << kINFO << hLine << Endl;
+        if (k == 1 && nmeth_used[k] > 0) {
+            Log() << kINFO << hLine << Endl;
+            Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
+        }
+        if (k == 1) mname[k][i].ReplaceAll( "Variable_", "" );
+        
+        Log() << kINFO << Form("%-20s %-15s: %#1.3f (%#1.3f)       %#1.3f (%#1.3f)      %#1.3f (%#1.3f)",
+                               fDataLoader->GetName(), 
+                               (const char*)mname[k][i], 
+                               eff01[k][i],trainEff01[k][i], 
+                               eff10[k][i],trainEff10[k][i],
+                               eff30[k][i],trainEff30[k][i]) << Endl;
+                               Log() << kINFO << hLine << Endl;
+                               Log() << kINFO << Endl; 
+        if (gTools().CheckForSilentOption( GetOptions() )) Log().InhibitOutput();
+    }//end fROC
+    
+
+    if(!IsSilentFile())
+    {
+        for (Int_t k=0; k<2; k++) {
+            for (Int_t i=0; i<nmeth_used[k]; i++) {
+                
+                // write test/training trees
+                fFile->cd(fMethodBase->fDataSetInfo.GetName());
+                fMethodBase->fDataSetInfo.GetDataSet()->GetTree(Types::kTesting)->Write( "", TObject::kOverwrite );
+                fMethodBase->fDataSetInfo.GetDataSet()->GetTree(Types::kTraining)->Write( "", TObject::kOverwrite );
+            }
+        }
+    }
+    
+}
 
 
 void TMVA::Classification::Evaluate()
 {
-    TString methodName    = fMethod.GetValue<TString>("MethodName");
-    TString methodTitle   = fMethod.GetValue<TString>("MethodTitle");
-    TString methodOptions = fMethod.GetValue<TString>("MethodOptions");
-      
+Train();
+Test();
 }
