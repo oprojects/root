@@ -39,11 +39,17 @@ Float_t TMVA::CrossValidationResult::GetROCAverage() const
 
 void TMVA::CrossValidationResult::Print() const
 {
+    TMVA::MsgLogger::EnableOutput();
+    TMVA::gConfig().SetSilent(kFALSE);   
+    
     MsgLogger fLogger("CrossValidation");
     for(auto &item:fROCs)
         fLogger<<kINFO<<Form("Fold  %i ROC-Int : %f",item.first,item.second)<<std::endl;
     
     fLogger<<kINFO<<Form("Average ROC-Int : %f",GetROCAverage())<<Endl;
+
+    TMVA::gConfig().SetSilent(kTRUE);   
+    
 }
 
 
@@ -65,7 +71,7 @@ TCanvas* TMVA::CrossValidationResult::Draw(const TString name) const
 TMVA::CrossValidation::CrossValidation(TMVA::DataLoader *dataloader):TMVA::Algorithm("CrossValidation",dataloader),
 fNumFolds(5)
 {
-    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("CrossValidation","!V:ROC:Silent:!ModelPersistence:Color:!DrawProgressBar:AnalysisType=Classification"));
+    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("CrossValidation","!V:!ROC:Silent:!ModelPersistence:Color:!DrawProgressBar:AnalysisType=Classification"));
 }
 
 TMVA::CrossValidation::~CrossValidation()
@@ -119,6 +125,12 @@ void TMVA::CrossValidation::Evaluate()
     
         fClassifier->DeleteAllMethods();
         }
+        TMVA::MsgLogger::EnableOutput();
+        TMVA::gConfig().SetSilent(kFALSE);   
+        Log()<<kINFO<<"Evaluation done."<<Endl;
+        
+        TMVA::gConfig().SetSilent(kTRUE);   
+        
 
 }
 

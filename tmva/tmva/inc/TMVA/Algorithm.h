@@ -55,11 +55,11 @@ namespace TMVA {
       class Algorithm:public Configurable
       {
       protected:
-          OptionMap                    fMethod;//Booked method information
-          std::shared_ptr<DataLoader>  fDataLoader;
-          std::shared_ptr<TFile>       fFile;
-          Bool_t                       fModelPersistence;
-          Bool_t                       fVerbose;
+          OptionMap                    fMethod;           //!Booked method information
+          std::shared_ptr<DataLoader>  fDataLoader;       //!
+          std::shared_ptr<TFile>       fFile;             //!
+          Bool_t                       fModelPersistence; //!
+          Bool_t                       fVerbose;          //!
           Algorithm(const TString &name,DataLoader *dalaloader=nullptr,TFile *file=nullptr,const TString options="");
           
       public:
@@ -94,6 +94,7 @@ namespace TMVA {
           DataInputHandler&        GetDataLoaderDataInput() { return *fDataLoader->fDataInputHandler; }
           DataSetInfo&             GetDataLoaderDataSetInfo(){return fDataLoader->DefaultDataSetInfo();}
           DataSetManager*          GetDataLoaderDataSetManager(){return fDataLoader->fDataSetManager;}
+          ClassDef(Algorithm,0);
           
       };
 }

@@ -13,6 +13,9 @@
 #pragma link C++ class TMVA::kNN::Event+;
 #pragma link C++ class TMVA::Factory+;
 
+#pragma link C++ class TMVA::Algorithm;
+#pragma link C++ class TMVA::CrossValidation;
+
 //required to enable serialization on DataLoader for paralellism.
 #pragma link C++ class TMVA::OptionBase+;
 #pragma link C++ class TMVA::Results+;

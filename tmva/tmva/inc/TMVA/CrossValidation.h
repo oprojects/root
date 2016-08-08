@@ -73,8 +73,8 @@ namespace TMVA {
    
     
    class CrossValidation : public Algorithm {
-       UInt_t                 fNumFolds;
-       CrossValidationResult  fResults;
+       UInt_t                 fNumFolds;     //!
+       CrossValidationResult  fResults;      //!
    public:
         explicit CrossValidation(DataLoader *loader);
        ~CrossValidation();
@@ -88,7 +88,8 @@ namespace TMVA {
        const CrossValidationResult& GetResults() const {return fResults;}//I need to think about this which is the best way to get the results
                      
    private:
-       std::unique_ptr<Factory>     fClassifier;
+       std::unique_ptr<Factory>     fClassifier; //!
+       ClassDef(CrossValidation,0);
    };
 } 
 
