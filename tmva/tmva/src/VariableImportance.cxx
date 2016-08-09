@@ -32,6 +32,9 @@ TMVA::VariableImportanceResult::VariableImportanceResult(const VariableImportanc
 
 void TMVA::VariableImportanceResult::Print() const
 {
+    TMVA::MsgLogger::EnableOutput();
+    TMVA::gConfig().SetSilent(kFALSE);   
+    
     MsgLogger fLogger("VariableImportance");
     if(fType==VIType::kShort)
     {
@@ -43,7 +46,8 @@ void TMVA::VariableImportanceResult::Print() const
         fLogger<<kINFO<<"Variable Importance Results (Random)"<<Endl;                
     }
     
-    fImportanceValues.Print();    
+    fImportanceValues.Print();
+    TMVA::gConfig().SetSilent(kTRUE);   
 }
 
 
@@ -59,9 +63,9 @@ TCanvas* TMVA::VariableImportanceResult::Draw(const TString name) const
     return c;
 }
 
-TMVA::VariableImportance::VariableImportance(TMVA::DataLoader *dataloader):TMVA::Algorithm("CrossValidation",dataloader,nullptr),fType(VIType::kShort)
+TMVA::VariableImportance::VariableImportance(TMVA::DataLoader *dataloader):TMVA::Algorithm("VariableImportance",dataloader,nullptr),fType(VIType::kShort)
 {
-    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("VariableImportance","!V:ROC:!ModelPersistence:Silent:Color:!DrawProgressBar:AnalysisType=Classification"));
+    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("VariableImportance","!V:!ROC:!ModelPersistence:Silent:Color:!DrawProgressBar:AnalysisType=Classification"));
 }
 
 TMVA::VariableImportance::~VariableImportance()
@@ -91,6 +95,10 @@ void TMVA::VariableImportance::Evaluate()
         EvaluateImportanceRandom(pow(2,nbits)); 
     }
     fResults.fType = fType;
+    TMVA::MsgLogger::EnableOutput();
+    TMVA::gConfig().SetSilent(kFALSE);   
+    Log()<<kINFO<<"Evaluation done."<<Endl;
+    TMVA::gConfig().SetSilent(kTRUE);   
 }
 
 ULong_t TMVA::VariableImportance::Sum(ULong_t i)

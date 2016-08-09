@@ -2,6 +2,7 @@
 #include<TMVA/ResultsClassification.h>
 #include<TMVA/MethodBase.h>
 #include<ThreadPool.h>
+#include<TMVA/MsgLogger.h>
 
 const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factory *factory,UInt_t jobs,TMVA::OptionMap options)
 {
@@ -37,9 +38,11 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
 
 const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::CrossValidation *cv,UInt_t jobs,TMVA::OptionMap options)
 {
+    TMVA::MsgLogger::InhibitOutput();
+    TMVA::gConfig().SetSilent(kTRUE);  
     fWorkers.SetNWorkers(jobs);
-    auto dataloader = cv->GetDataLoader();
-    dataloader->MakeKFoldDataSet(cv->GetNumFolds());
+//     auto dataloader = cv->GetDataLoader();
+//     dataloader->MakeKFoldDataSet(cv->GetNumFolds());
     
     
     auto executor = [cv](UInt_t workerID)->Double_t{
@@ -56,7 +59,8 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::CrossV
     
     Log().SetName("ParallelExecutor(CV)");
     TMVA::MsgLogger::EnableOutput();
-    TMVA::gConfig().SetSilent(kFALSE);  
+    TMVA::gConfig().SetSilent(kFALSE);
+    
     Float_t fROCAvg=0;
     for(UInt_t i=0;i<fResults.size();i++)
     {
@@ -64,6 +68,8 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::CrossV
         fROCAvg+=fResults[i];
     }
     Log()<<kINFO<<"Average ROC-Int : "<<fROCAvg/fResults.size()<<Endl;
+//     TMVA::MsgLogger::InhibitOutput();
+    TMVA::gConfig().SetSilent(kTRUE);  
     return TMVA::ParallelExecutorResults("ParallelExecutor(CV)",jobs,fTimer.RealTime(),options);
 }
 

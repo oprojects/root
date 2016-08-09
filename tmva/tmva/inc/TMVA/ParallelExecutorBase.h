@@ -59,10 +59,14 @@ namespace TMVA {
            using TNamed::Print;
            virtual void Print()
            {
+               TMVA::MsgLogger::EnableOutput();
+               TMVA::gConfig().SetSilent(kFALSE);
                fLogger<<kINFO<<GetName()<<Endl;
                fLogger<<kINFO<<"Number of Jobs:"<<fNJobs<<Endl;
                fLogger<<kINFO<<"ExecutionTime (Seconds):"<<Form("%f",fExecutionTime)<<Endl;
                fOptions.Print();
+//                TMVA::MsgLogger::InhibitOutput();
+               TMVA::gConfig().SetSilent(kTRUE);
            }
            
        };
@@ -90,6 +94,7 @@ namespace TMVA {
               fLogger<<kINFO<<algorithm->GetName()<<" parallization is not implemented yet."<<Endl;
               return ParallelExecutorResults("",0,0,map);
           }
+          ClassDef(ParallelExecutorBase,0);
       };
 }
 

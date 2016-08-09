@@ -71,12 +71,19 @@ TCanvas* TMVA::CrossValidationResult::Draw(const TString name) const
 TMVA::CrossValidation::CrossValidation(TMVA::DataLoader *dataloader):TMVA::Algorithm("CrossValidation",dataloader),
 fNumFolds(5)
 {
-    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("CrossValidation","!V:!ROC:Silent:!ModelPersistence:Color:!DrawProgressBar:AnalysisType=Classification"));
+    fClassifier=std::unique_ptr<Factory>(new TMVA::Factory("CrossValidation","!V:!ROC:Silent:!ModelPersistence:!Color:!DrawProgressBar:AnalysisType=Classification"));
+    fDataLoader->MakeKFoldDataSet(fNumFolds);
 }
 
 TMVA::CrossValidation::~CrossValidation()
 {
     fClassifier=nullptr;
+}
+
+void TMVA::CrossValidation::SetNumFolds(UInt_t i)
+{
+    fNumFolds=i;
+    fDataLoader->MakeKFoldDataSet(fNumFolds);
 }
 
 
@@ -85,10 +92,7 @@ void TMVA::CrossValidation::Evaluate()
     TString methodName    = fMethod.GetValue<TString>("MethodName");
     TString methodTitle   = fMethod.GetValue<TString>("MethodTitle");
     TString methodOptions = fMethod.GetValue<TString>("MethodOptions");
-      
-
-    fDataLoader->MakeKFoldDataSet(fNumFolds);
-
+//     fDataLoader->MakeKFoldDataSet(fNumFolds);
       const UInt_t nbits = fDataLoader->GetDefaultDataSetInfo().GetNVariables();
       std::vector<TString> varName = fDataLoader->GetDefaultDataSetInfo().GetListOfVariables();
   
@@ -128,7 +132,6 @@ void TMVA::CrossValidation::Evaluate()
         TMVA::MsgLogger::EnableOutput();
         TMVA::gConfig().SetSilent(kFALSE);   
         Log()<<kINFO<<"Evaluation done."<<Endl;
-        
         TMVA::gConfig().SetSilent(kTRUE);   
         
 

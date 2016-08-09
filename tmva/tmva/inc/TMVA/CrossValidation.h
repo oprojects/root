@@ -79,7 +79,7 @@ namespace TMVA {
         explicit CrossValidation(DataLoader *loader);
        ~CrossValidation();
        
-       void SetNumFolds(UInt_t i){fNumFolds=i;}
+       void SetNumFolds(UInt_t i);//{fNumFolds=i;}
        UInt_t GetNumFolds(){return fNumFolds;}
        
        virtual void Evaluate();

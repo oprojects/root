@@ -55,7 +55,7 @@ namespace TMVA {
           using ParallelExecutorBase::Execute;//Defualt method for not supported algorithms
           const TMVA::ParallelExecutorResults Execute(TMVA::Factory*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutor") );
           const TMVA::ParallelExecutorResults Execute(TMVA::CrossValidation*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutor") );
-          
+          ClassDef(ParallelExecutor,0);    
       };
       
 }

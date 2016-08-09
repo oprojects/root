@@ -87,6 +87,7 @@ namespace TMVA {
        
    private:
        std::unique_ptr<Factory>     fClassifier;
+       ClassDef(VariableImportance,0);
    };
 } 
 

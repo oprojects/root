@@ -15,6 +15,9 @@
 
 #pragma link C++ class TMVA::Algorithm;
 #pragma link C++ class TMVA::CrossValidation;
+#pragma link C++ class TMVA::VariableImportance;
+#pragma link C++ class TMVA::ParallelExecutorBase;
+#pragma link C++ class TMVA::ParallelExecutor;
 
 //required to enable serialization on DataLoader for paralellism.
 #pragma link C++ class TMVA::OptionBase+;
