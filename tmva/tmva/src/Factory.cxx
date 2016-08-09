@@ -951,6 +951,31 @@ void TMVA::Factory::TrainAllMethods()
    }
 }
 
+TString TMVA::Factory::GetMethodName(const TString &dataset,const UInt_t method)
+{
+    TString methodName="";
+    // don't do anything if no method booked
+    if (fMethodsMap.empty()) {
+        Log() << kINFO << "...nothing found to train" << Endl;
+        return methodName;
+    }
+    
+    for(auto &_dataset:fMethodsMap)
+    {
+        if(_dataset.first==dataset)
+        {
+            if(method>=_dataset.second->size())
+            {
+                //Error here
+                return methodName;
+            }
+            MethodBase* mva = dynamic_cast<MethodBase*>((*_dataset.second)[method]);
+            methodName = mva->GetMethodName();
+            break;
+        }
+    }
+    return methodName;
+}
 
 
 void TMVA::Factory::TrainMethod(const TString &dataset,const UInt_t method)

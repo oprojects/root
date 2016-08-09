@@ -127,6 +127,8 @@ namespace TMVA {
       //Evaluate a single method      
       void EvaluateMethod(const TString &dataset,const UInt_t method);//used in Parallel Executors
       
+      TString GetMethodName(const TString &dataset,const UInt_t method);
+      
       // testing
       void TestAllMethods();
 

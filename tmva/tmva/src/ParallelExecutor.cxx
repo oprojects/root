@@ -17,17 +17,37 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
 
     if(factory->GetAnalysisType()==TMVA::Types::EAnalysisType::kClassification)
     {
-        auto executor = [factory,methods](UInt_t workerID)->int{
+        
+        auto executor = [factory,methods](UInt_t workerID)->OptionMap{
+            OptionMap r;
+            r["dataset"] = methods[workerID].first;
+            r["rocint"]  = 0;
+            r["method"]  = factory->GetMethodName(methods[workerID].first,methods[workerID].second);
             factory->TrainMethod(methods[workerID].first,methods[workerID].second);
             factory->TestMethod(methods[workerID].first,methods[workerID].second);
             factory->EvaluateMethod(methods[workerID].first,methods[workerID].second);
-            return 0;
+            r["rocint"] = factory->GetROCIntegral(methods[workerID].first,r.GetValue<TString>("method"));
+            return r;
         };
+
         fTimer.Reset();
         fTimer.Start();
         auto fResults=fWorkers.Map(executor, ROOT::TSeqI(methods.size()));
         fTimer.Stop();
-        return TMVA::ParallelExecutorResults("ParallelExecutor(Classification)",jobs,fTimer.RealTime(),options);
+        TMVA::MsgLogger::EnableOutput();
+        TMVA::gConfig().SetSilent(kFALSE);
+        Log().SetName("ParallelExecutor(Factory)");
+        Log()<<kINFO<<"-----------------------------------------------------"<<Endl;
+        Log()<<kINFO<<Form("%-20s %-15s %-15s","Dataset","Method","ROC-Integral")<<Endl;
+        Log()<<kINFO<<"-----------------------------------------------------"<<Endl;
+        for(auto &item:fResults)
+        {
+            Log()<<kINFO<<Form("%-20s %-15s %#1.3f",
+                               item.GetValue<TString>("dataset").Data(),item.GetValue<TString>("method").Data(),item.GetValue<Float_t>("rocint"))<<Endl;
+        }
+        Log()<<kINFO<<"-----------------------------------------------------"<<Endl;
+        TMVA::gConfig().SetSilent(kTRUE);
+        return TMVA::ParallelExecutorResults("ParallelExecutor(Factory)",jobs,fTimer.RealTime(),options);
     }
     
     

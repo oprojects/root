@@ -35,8 +35,8 @@ namespace TMVA {
        {
        protected:
            TString fName;
-           std::map<const TString,TString> fOptMap;
-           TMVA::MsgLogger fLogger; //
+           std::map<const TString,TString> fOptMap;//
+           TMVA::MsgLogger fLogger; //!
            class Binding
            {
            private:
@@ -79,10 +79,10 @@ namespace TMVA {
                    return result;
                }
            };
-           Binding fBinder;
+           Binding fBinder;     //!
        public:
            OptionMap(const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,""){}
-           ~OptionMap(){}
+           virtual ~OptionMap(){}
            
            Bool_t IsEmpty(){return fOptMap.empty();}
            
@@ -123,7 +123,7 @@ namespace TMVA {
                oss>>result;
                return result;
            }
-           
+           ClassDef(OptionMap,1);
        };
        
 }
