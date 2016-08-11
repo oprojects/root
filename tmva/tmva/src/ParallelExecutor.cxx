@@ -58,14 +58,16 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
 
 const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::CrossValidation *cv,UInt_t jobs,TMVA::OptionMap options)
 {
-    TMVA::MsgLogger::InhibitOutput();
-    TMVA::gConfig().SetSilent(kTRUE);  
     fWorkers.SetNWorkers(jobs);
 //     auto dataloader = cv->GetDataLoader();
 //     dataloader->MakeKFoldDataSet(cv->GetNumFolds());
-    
+//     TH1::AddDirectory(kFALSE);
     
     auto executor = [cv](UInt_t workerID)->Double_t{
+            TMVA::MsgLogger::InhibitOutput();
+            TMVA::gConfig().SetSilent(kTRUE);  
+            TMVA::gConfig().SetUseColor( kFALSE);
+            TMVA::gConfig().SetDrawProgressBar( kFALSE);
             cv->EvaluateFold(workerID);
             auto result=cv->GetResults();
             auto roc=result.GetROCValues()[workerID];
@@ -88,7 +90,7 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::CrossV
         fROCAvg+=fResults[i];
     }
     Log()<<kINFO<<"Average ROC-Int : "<<fROCAvg/fResults.size()<<Endl;
-//     TMVA::MsgLogger::InhibitOutput();
+    TMVA::MsgLogger::InhibitOutput();
     TMVA::gConfig().SetSilent(kTRUE);  
     return TMVA::ParallelExecutorResults("ParallelExecutor(CV)",jobs,fTimer.RealTime(),options);
 }

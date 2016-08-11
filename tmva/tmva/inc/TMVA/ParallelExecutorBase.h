@@ -56,6 +56,8 @@ namespace TMVA {
            ParallelExecutorResults(const TString name, UInt_t njobs,Double_t exetime,OptionMap options):
            TNamed(name.Data(),"ParallelExecutorResults"),fNJobs(njobs),fExecutionTime(exetime),fLogger(name.Data()),fOptions(options){}
            
+           Double_t GetExecutionTime(){return fExecutionTime;}
+           
            using TNamed::Print;
            virtual void Print()
            {

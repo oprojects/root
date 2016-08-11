@@ -189,7 +189,7 @@ TMVA::Factory::Factory( TString jobName, TFile* theTargetFile, TString theOption
 
 
 TMVA::Factory::Factory( TString jobName, TString theOption )
-: Configurable          ( theOption ),
+: Configurable          ( theOption ,jobName),
    fTransformations      ( "I" ),
    fVerbose              ( kFALSE ),
    fCorrelations         ( kFALSE ),
@@ -213,7 +213,7 @@ TMVA::Factory::Factory( TString jobName, TString theOption )
 
    // histograms are not automatically associated with the current
    // directory and hence don't go out of scope when closing the file
-   TH1::AddDirectory(kFALSE);
+//    TH1::AddDirectory(kFALSE);
    Bool_t silent          = kFALSE;
 #ifdef WIN32
    // under Windows, switch progress bar and color off by default, as the typical windows shell doesn't handle these (would need different sequences..)

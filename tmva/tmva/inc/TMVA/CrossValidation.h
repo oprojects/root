@@ -75,6 +75,7 @@ namespace TMVA {
    class CrossValidation : public Algorithm {
        UInt_t                 fNumFolds;     //!
        CrossValidationResult  fResults;      //!
+       Bool_t                 fFoldStatus;   //
    public:
         explicit CrossValidation(DataLoader *loader);
        ~CrossValidation();
