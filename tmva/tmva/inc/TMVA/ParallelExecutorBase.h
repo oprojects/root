@@ -62,10 +62,9 @@ namespace TMVA {
                TMVA::MsgLogger::EnableOutput();
                TMVA::gConfig().SetSilent(kFALSE);
                fLogger<<kINFO<<GetName()<<Endl;
-               fLogger<<kINFO<<"Number of Jobs:"<<fNJobs<<Endl;
-               fLogger<<kINFO<<"ExecutionTime (Seconds):"<<Form("%f",fExecutionTime)<<Endl;
+               fLogger<<kINFO<<"Number of Jobs : "<<fNJobs<<Endl;
+               fLogger<<kINFO<<"ExecutionTime (Seconds) : "<<Form("%f",fExecutionTime)<<Endl;
                fOptions.Print();
-//                TMVA::MsgLogger::InhibitOutput();
                TMVA::gConfig().SetSilent(kTRUE);
            }
            

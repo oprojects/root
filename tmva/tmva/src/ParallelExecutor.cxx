@@ -46,7 +46,7 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
                                item.GetValue<TString>("dataset").Data(),item.GetValue<TString>("method").Data(),item.GetValue<Float_t>("rocint"))<<Endl;
         }
         Log()<<kINFO<<"-----------------------------------------------------"<<Endl;
-        TMVA::gConfig().SetSilent(kTRUE);
+//         TMVA::gConfig().SetSilent(kTRUE);
         return TMVA::ParallelExecutorResults("ParallelExecutor(Factory)",jobs,fTimer.RealTime(),options);
     }
     
