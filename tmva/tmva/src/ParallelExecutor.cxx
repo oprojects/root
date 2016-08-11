@@ -19,6 +19,10 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
     {
         
         auto executor = [factory,methods](UInt_t workerID)->OptionMap{
+            TMVA::MsgLogger::InhibitOutput();
+            TMVA::gConfig().SetSilent(kTRUE);  
+            TMVA::gConfig().SetUseColor( kFALSE);
+            TMVA::gConfig().SetDrawProgressBar( kFALSE);
             OptionMap r;
             r["dataset"] = methods[workerID].first;
             r["rocint"]  = 0;
@@ -46,7 +50,7 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
                                item.GetValue<TString>("dataset").Data(),item.GetValue<TString>("method").Data(),item.GetValue<Float_t>("rocint"))<<Endl;
         }
         Log()<<kINFO<<"-----------------------------------------------------"<<Endl;
-//         TMVA::gConfig().SetSilent(kTRUE);
+        TMVA::gConfig().SetSilent(kTRUE);
         return TMVA::ParallelExecutorResults("ParallelExecutor(Factory)",jobs,fTimer.RealTime(),options);
     }
     
@@ -59,9 +63,6 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
 const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::CrossValidation *cv,UInt_t jobs,TMVA::OptionMap options)
 {
     fWorkers.SetNWorkers(jobs);
-//     auto dataloader = cv->GetDataLoader();
-//     dataloader->MakeKFoldDataSet(cv->GetNumFolds());
-//     TH1::AddDirectory(kFALSE);
     
     auto executor = [cv](UInt_t workerID)->Double_t{
             TMVA::MsgLogger::InhibitOutput();
