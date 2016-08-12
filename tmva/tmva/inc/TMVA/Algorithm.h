@@ -55,11 +55,11 @@ namespace TMVA {
       class Algorithm:public Configurable
       {
       protected:
-          OptionMap                    fMethod;           //!Booked method information
-          std::shared_ptr<DataLoader>  fDataLoader;       //!
+          OptionMap                    fMethod;           //Booked method information
+          std::shared_ptr<DataLoader>  fDataLoader;       //
           std::shared_ptr<TFile>       fFile;             //!
-          Bool_t                       fModelPersistence; //!
-          Bool_t                       fVerbose;          //!
+          Bool_t                       fModelPersistence; //
+          Bool_t                       fVerbose;          //
           Algorithm(const TString &name,DataLoader *dalaloader=nullptr,TFile *file=nullptr,const TString options="");
           
       public:

@@ -9,7 +9,12 @@ if(NOT CMAKE_PROJECT_NAME STREQUAL ROOT)
   cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
   project(TMVA)
   include(${ROOTSYS}/cmake/modules/StandaloneBuild.cmake)
+
 endif()
+
+find_package(MPI REQUIRED)
+
+include_directories(${MPI_INCLUDE_PATH})
 
 set(headers1 Configurable.h Factory.h  MethodBase.h MethodCompositeBase.h
 	     MethodANNBase.h MethodTMlpANN.h MethodRuleFit.h MethodCuts.h MethodFisher.h
@@ -51,8 +56,19 @@ endforeach()
 ROOT_GENERATE_DICTIONARY(G__TMVA ${theaders1} ${theaders2} ${theaders3} ${theaders4} ${theaders5}  MODULE TMVA LINKDEF LinkDef.h OPTIONS "-writeEmptyRootPCM")
 
 ROOT_LINKER_LIBRARY(TMVA *.cxx G__TMVA.cxx LIBRARIES Core ${TBB_LIBRARIES}
-                    DEPENDENCIES MultiProc RIO Hist Tree TreePlayer MLP Minuit XMLIO)
+                    DEPENDENCIES MultiProc RIO Hist Tree TreePlayer MLP Minuit XMLIO ${MPI_LIBRARIES})
 
+if(MPI_COMPILE_FLAGS)
+set_target_properties(TMVA PROPERTIES
+    COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
+endif()
+
+if(MPI_LINK_FLAGS)
+set_target_properties(TMVA PROPERTIES
+    LINK_FLAGS "${MPI_LINK_FLAGS}")
+endif()
+                    
+                    
 install(DIRECTORY inc/TMVA/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/TMVA
                             COMPONENT headers
                             PATTERN ".svn" EXCLUDE
