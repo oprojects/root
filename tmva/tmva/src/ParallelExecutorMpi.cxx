@@ -3,8 +3,8 @@
 #include<TMVA/MethodBase.h>
 #include<ThreadPool.h>
 #include<TMVA/MsgLogger.h>
-#include<TMVA/TMpiMessage.h>
 #include<mpi/mpi.h>
+#include<TMessage.h>
 
 TMVA::ParallelExecutorMpi::ParallelExecutorMpi():ParallelExecutorBase(){
         ROOT::EnableThreadSafety();
@@ -94,7 +94,7 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutorMpi::Execute(TMVA::Cro
     fTimeStart = MPI::Wtime();
     UInt_t rproc=cv->GetNumFolds()%GetSize();//remaining process
     UInt_t proc=cv->GetNumFolds()/GetSize();
-    TMVA::ParallelExecutorResults Results("ParallelExecutorMpi(CV)",GetSize(),fTimer.RealTime(),options);
+    TMVA::ParallelExecutorResults Results("ParallelExecutorMpi(CV)",GetSize(),0,options);
 //     std::cout<<"proc "<<proc<<" rank "<<GetRank()<<" size "<<GetSize()<<" folds "<<cv->GetNumFolds()<<std::endl;
     if(GetSize()<=cv->GetNumFolds())
     {
