@@ -48,7 +48,7 @@ namespace TMVA {
        std::unique_ptr<ROCCurve>                fROCCurve;
        Float_t                                  fROCIntegral;
        OptionMap                                fMethod;
-       
+       TString                                  fDataLoaderName;
    public:
        ClassificationResult();
        ~ClassificationResult(){}
@@ -66,7 +66,7 @@ namespace TMVA {
        TString              fTransformations;
        std::unique_ptr<MethodBase> fMethodBase;
    public:
-       Classification(DataLoader *dataloader,TString options="",TFile *file=nullptr);
+       Classification(DataLoader *dataloader,TString options="Silent:!DrawProgressBar",TFile *file=nullptr);
        ~Classification();
        
        void Train();
@@ -75,7 +75,7 @@ namespace TMVA {
        virtual void Evaluate();//call Train/Test
               
        const ClassificationResult& GetResults() const {return fResults;}
-       
+       ClassDef(Classification,0);
    };
 } 
 

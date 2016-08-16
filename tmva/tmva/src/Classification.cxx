@@ -46,7 +46,21 @@ TMVA::ClassificationResult::ClassificationResult()
 
 void TMVA::ClassificationResult::Print() const
 {
+    TMVA::MsgLogger::EnableOutput();
+    TMVA::gConfig().SetSilent(kFALSE);   
+    TString hLine = "--------------------------------------------------- :";
+
     MsgLogger fLogger("Classification");
+    
+    fLogger<< kINFO << hLine << Endl;
+    fLogger<< kINFO << "DataSet              MVA                            :"<< Endl;
+    fLogger<< kINFO << "Name:                Method:          ROC-integ     :"   << Endl;
+    fLogger<< kINFO << hLine << Endl;
+    fLogger<< kINFO << Form("%-20s %-15s  %#1.3f         :",fDataLoaderName.Data(),fMethod.GetValue<TString>("MethodName").Data(),fROCIntegral)<<Endl;
+    fLogger<< kINFO << hLine << Endl;
+  
+    
+    TMVA::gConfig().SetSilent(kTRUE);      
 }
 
 
@@ -133,6 +147,7 @@ void TMVA::Classification::Train()
     TString methodTitle   = fMethod.GetValue<TString>("MethodTitle");
     TString methodOptions = fMethod.GetValue<TString>("MethodOptions");
     
+    fResults.fDataLoaderName=fDataLoader->GetName();
     
     if(IsModelPersistence()) gSystem->MakeDirectory(fDataLoader->GetName());//creating directory for DataLoader output
     
@@ -378,20 +393,20 @@ void TMVA::Classification::Test()
         
     if(fROC)
     {
-        Log().EnableOutput();
-        gConfig().SetSilent(kFALSE);
-        Log() << Endl;
-        TString hLine = "-------------------------------------------------------------------------------------------------------------------";
-        Log() << kINFO << "Evaluation results ranked by best signal efficiency and purity (area)" << Endl;
-        Log() << kINFO << hLine << Endl;
-        Log() << kINFO << "DataSet              MVA              Signal efficiency at bkg eff.(error):                | Sepa-    Signifi- "   << Endl;
-        Log() << kINFO << "Name:                Method:          @B=0.01    @B=0.10    @B=0.30    ROC-integ    ROCCurve| ration:  cance:   "   << Endl;
-        Log() << kINFO << hLine << Endl;
+//         Log().EnableOutput();
+//         gConfig().SetSilent(kFALSE);
+//         Log() << Endl;
+//         TString hLine = "-------------------------------------------------------------------------------------------------------------------";
+//         Log() << kINFO << "Evaluation results ranked by best signal efficiency and purity (area)" << Endl;
+//         Log() << kINFO << hLine << Endl;
+//         Log() << kINFO << "DataSet              MVA              Signal efficiency at bkg eff.(error):                | Sepa-    Signifi- "   << Endl;
+//         Log() << kINFO << "Name:                Method:          @B=0.01    @B=0.10    @B=0.30    ROC-integ    ROCCurve| ration:  cance:   "   << Endl;
+//         Log() << kINFO << hLine << Endl;
         Int_t k=0;
-        if (k == 1 && nmeth_used[k] > 0) {
-            Log() << kINFO << hLine << Endl;
-            Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
-        }
+//         if (k == 1 && nmeth_used[k] > 0) {
+//             Log() << kINFO << hLine << Endl;
+//             Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
+//         }
         
         if (k == 1) mname[k][0].ReplaceAll( "Variable_", "" );
         
@@ -404,55 +419,54 @@ void TMVA::Classification::Test()
         if (mvaResType->size() != 0) { 
             fResults.fROCCurve =std::unique_ptr<ROCCurve>( new TMVA::ROCCurve(*mvaRes, *mvaResType));
             fResults.fROCIntegral = fResults.fROCCurve->GetROCIntegral();
-            fResults.fROCCurve->GetROCCurve()->SetTitle(Form("%s : %.3f",fMethod.GetValue<TString>("MethodTitle").Data(),fResults.fROCIntegral));
+            fResults.fROCCurve->GetROCCurve()->SetTitle(Form("%s : ROC-Int %.3f",fMethod.GetValue<TString>("MethodTitle").Data(),fResults.fROCIntegral));
             fResults.fROCCurve->GetROCCurve()->SetName(fMethod.GetValue<TString>("MethodName"));
-            
         }
         
         fResults.fClassifierResults=std::shared_ptr<TMVA::ResultsClassification>(results);
-        if (sep[k][0] < 0 || sig[k][0] < 0) {
-            // cannot compute separation/significance -> no MVA (usually for Cuts)
-            
-            Log() << kINFO << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  %#1.3f(%02i)    %#1.3f       %#1.3f | --       --",
-                                   fDataLoader->GetName(), 
-                                   (const char*)mname[k][0], 
-                                   eff01[k][0], Int_t(1000*eff01err[k][0]), 
-                                   eff10[k][0], Int_t(1000*eff10err[k][0]), 
-                                   eff30[k][0], Int_t(1000*eff30err[k][0]), 
-                                   effArea[k][0],fResults.fROCIntegral) << Endl;
-        }
-        else {
-            Log() << kINFO << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  %#1.3f(%02i)    %#1.3f       %#1.3f | %#1.3f    %#1.3f",
-                                   fDataLoader->GetName(), 
-                                   (const char*)mname[k][0], 
-                                   eff01[k][0], Int_t(1000*eff01err[k][0]), 
-                                   eff10[k][0], Int_t(1000*eff10err[k][0]), 
-                                   eff30[k][0], Int_t(1000*eff30err[k][0]), 
-                                   effArea[k][0],fResults.fROCIntegral, 
-                                   sep[k][0], sig[k][0]) << Endl;
-        }
+//         if (sep[k][0] < 0 || sig[k][0] < 0) {
+//             // cannot compute separation/significance -> no MVA (usually for Cuts)
+//             
+//             Log() << kINFO << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  %#1.3f(%02i)    %#1.3f       %#1.3f | --       --",
+//                                    fDataLoader->GetName(), 
+//                                    (const char*)mname[k][0], 
+//                                    eff01[k][0], Int_t(1000*eff01err[k][0]), 
+//                                    eff10[k][0], Int_t(1000*eff10err[k][0]), 
+//                                    eff30[k][0], Int_t(1000*eff30err[k][0]), 
+//                                    effArea[k][0],fResults.fROCIntegral) << Endl;
+//         }
+//         else {
+//             Log() << kINFO << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  %#1.3f(%02i)    %#1.3f       %#1.3f | %#1.3f    %#1.3f",
+//                                    fDataLoader->GetName(), 
+//                                    (const char*)mname[k][0], 
+//                                    eff01[k][0], Int_t(1000*eff01err[k][0]), 
+//                                    eff10[k][0], Int_t(1000*eff10err[k][0]), 
+//                                    eff30[k][0], Int_t(1000*eff30err[k][0]), 
+//                                    effArea[k][0],fResults.fROCIntegral, 
+//                                    sep[k][0], sig[k][0]) << Endl;
+//         }
         
-        Log() << kINFO << hLine << Endl;
-        Log() << kINFO << Endl;
-        Log() << kINFO << "Testing efficiency compared to training efficiency (overtraining check)" << Endl;
-        Log() << kINFO << hLine << Endl;
-        Log() << kINFO << "DataSet              MVA              Signal efficiency: from test sample (from training sample) "   << Endl;
-        Log() << kINFO << "Name:                Method:          @B=0.01             @B=0.10            @B=0.30   "   << Endl;
-        Log() << kINFO << hLine << Endl;
-        if (k == 1 && nmeth_used[k] > 0) {
-            Log() << kINFO << hLine << Endl;
-            Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
-        }
+//         Log() << kINFO << hLine << Endl;
+//         Log() << kINFO << Endl;
+//         Log() << kINFO << "Testing efficiency compared to training efficiency (overtraining check)" << Endl;
+//         Log() << kINFO << hLine << Endl;
+//         Log() << kINFO << "DataSet              MVA              Signal efficiency: from test sample (from training sample) "   << Endl;
+//         Log() << kINFO << "Name:                Method:          @B=0.01             @B=0.10            @B=0.30   "   << Endl;
+//         Log() << kINFO << hLine << Endl;
+//         if (k == 1 && nmeth_used[k] > 0) {
+//             Log() << kINFO << hLine << Endl;
+//             Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
+//         }
         if (k == 1) mname[k][0].ReplaceAll( "Variable_", "" );
         
-        Log() << kINFO << Form("%-20s %-15s: %#1.3f (%#1.3f)       %#1.3f (%#1.3f)      %#1.3f (%#1.3f)",
-                               fDataLoader->GetName(), 
-                               (const char*)mname[k][0], 
-                               eff01[k][0],trainEff01[k][0], 
-                               eff10[k][0],trainEff10[k][0],
-                               eff30[k][0],trainEff30[k][0]) << Endl;
-                               Log() << kINFO << hLine << Endl;
-                               Log() << kINFO << Endl; 
+//         Log() << kINFO << Form("%-20s %-15s: %#1.3f (%#1.3f)       %#1.3f (%#1.3f)      %#1.3f (%#1.3f)",
+//                                fDataLoader->GetName(), 
+//                                (const char*)mname[k][0], 
+//                                eff01[k][0],trainEff01[k][0], 
+//                                eff10[k][0],trainEff10[k][0],
+//                                eff30[k][0],trainEff30[k][0]) << Endl;
+//                                Log() << kINFO << hLine << Endl;
+//                                Log() << kINFO << Endl; 
         if (gTools().CheckForSilentOption( GetOptions() )) Log().InhibitOutput();
     }//end fROC
     

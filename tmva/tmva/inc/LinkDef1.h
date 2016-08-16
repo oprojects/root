@@ -17,6 +17,7 @@
 #pragma link C++ class TMVA::OptionMap+;
 #pragma link C++ class TMVA::Algorithm;
 #pragma link C++ class TMVA::CrossValidation;
+#pragma link C++ class TMVA::Classification;
 #pragma link C++ class TMVA::VariableImportance;
 #pragma link C++ class TMVA::ParallelExecutorBase;
 #pragma link C++ class TMVA::ParallelExecutor;
