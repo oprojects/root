@@ -2038,11 +2038,14 @@ TH1F* TMVA::Factory::GetImportance(const int nbits,std::vector<Double_t> importa
   return vih1;
 }
 
-float TMVA::Factory::CrossValidate(DataLoader * loader, Types::EMVA theMethod, TString methodTitle, const char *theOption, bool optParams, int NumFolds, bool remakeDataSet, float * rocIntegrals)
+TMVA::CrossValidationResult TMVA::Factory::CrossValidate(DataLoader * loader, Types::EMVA theMethod, TString methodTitle, const char *theOption, bool optParams, int NumFolds, bool remakeDataSet, float * rocIntegrals)
 {
-
-   //bool optParams = true;
-
+   Bool_t mstatus=fModelPersistence;
+   Bool_t sstatus=fSilentFile;
+   fModelPersistence=kTRUE;
+   fSilentFile=kTRUE;
+   
+   TMVA::CrossValidationResult fResults;
    if(remakeDataSet){
       //loader->ValidationKFoldSet();
       loader->MakeKFoldDataSet(NumFolds);
@@ -2096,20 +2099,20 @@ float TMVA::Factory::CrossValidate(DataLoader * loader, Types::EMVA theMethod, T
             optionsString += it->second;
             if(it!=--foldParameters.at(t).end()){ optionsString += ":"; }
          }
-         parameterPerformance.push_back(CrossValidate(loader, theMethod, methodTitle, optionsString, false, false));
+         auto result=CrossValidate(loader, theMethod, methodTitle, optionsString, false, false);
+         parameterPerformance.push_back(result.GetROCAverage());
       }
    }
 
-   std::vector<float> ROCs;
 
    if(!optParams){
     
-      for(Int_t j=0; j<NumFolds; ++j){
+      for(Int_t fold=0; fold<NumFolds; ++fold){
          TString foldTitle = methodTitle;
          foldTitle += "_fold";
-         foldTitle += j+1;
+         foldTitle += fold+1;
       
-         loader->PrepareTrainingAndTestTree(j, TMVA::Types::kTesting);
+         loader->PrepareTrainingAndTestTree(fold, TMVA::Types::kTesting);
       
          TMVA::DataLoader * seedloader = new TMVA::DataLoader(foldTitle);
       
@@ -2124,31 +2127,27 @@ float TMVA::Factory::CrossValidate(DataLoader * loader, Types::EMVA theMethod, T
          TrainAllMethods();
          TestAllMethods();
          EvaluateAllMethods();
-      
-         ROCs.push_back(GetROCIntegral(seedloader->GetName(), methodTitle));
-      
+         fResults.SetROCValue(fold,GetROCIntegral(seedloader->GetName(), methodTitle));
+         auto  gr=GetROCCurve(seedloader->GetName(), methodTitle, true);
+         
+         gr->SetLineColor(fold+1);
+         gr->SetLineWidth(2);
+         gr->SetTitle(seedloader->GetName());
+        
+         fResults.GetROCCurves()->Add(gr);
+         
          TMVA::MethodBase * smethod = dynamic_cast<TMVA::MethodBase*>(fMethodsMap[seedloader->GetName()][0][0]);
          TMVA::ResultsClassification * sresults = (TMVA::ResultsClassification*)smethod->Data()->GetResults(smethod->GetMethodName(), Types::kTesting, Types::kClassification);
          sresults->Clear("");
          sresults->Delete();
-         delete sresults;
-         fgTargetFile->cd();
-         fgTargetFile->Delete(seedloader->GetName());
-         fgTargetFile->Delete(Form("%s;1",seedloader->GetName()));
-         fgTargetFile->Flush();
-         gSystem->Exec(Form("rm -rf %s", seedloader->GetName()));
-      
+         delete sresults;      
          this->DeleteAllMethods();
       
          fMethodsMap.clear();
       }
    }
   
-   float sumFOM = 0.0;
-
-   for(UInt_t k=0; k<ROCs.size(); ++k){
-      sumFOM += ROCs.at(k);
-   }
+   auto rocvalues=fResults.GetROCValues();
 
    if(optParams){
       for(UInt_t t=0; t<parameterPerformance.size(); ++t){
@@ -2156,13 +2155,14 @@ float TMVA::Factory::CrossValidate(DataLoader * loader, Types::EMVA theMethod, T
       }
    }
    else{
-      for(UInt_t l=0; l<ROCs.size(); ++l){
-         if (rocIntegrals) rocIntegrals[l] = ROCs.at(l);
-         std::cout << "Fold " << l+1 << " ROCIntegral: " << ROCs.at(l) << std::endl;
+      for(UInt_t l=0; l<rocvalues.size(); ++l){
+         if (rocIntegrals) rocIntegrals[l] = rocvalues[l];
+         std::cout << "Fold " << l+1 << " ROCIntegral: " << rocvalues[l] << std::endl;
       }
-      std::cout << "Average ROCIntegral: " << sumFOM/(double)NumFolds << std::endl;
+      std::cout << "Average ROCIntegral: " << fResults.GetROCAverage() << std::endl;
    }
+   fModelPersistence=mstatus;
+   fSilentFile=sstatus;
 
-   return sumFOM/(double)NumFolds;
-  
+  return fResults;
 }
