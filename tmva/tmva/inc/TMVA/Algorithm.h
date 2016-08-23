@@ -49,20 +49,34 @@ namespace TMVA {
        /**
         *      \class Algorithm
         *         Base class for all machine learning algorithms
-        *         \ingroup TMVA
+        *      \ingroup TMVA
         */
       
       class Algorithm:public Configurable
       {
       protected:
           OptionMap                    fMethod;           //Booked method information
-          std::shared_ptr<DataLoader>  fDataLoader;       //
-          std::shared_ptr<TFile>       fFile;             //!
-          Bool_t                       fModelPersistence; //
-          Bool_t                       fVerbose;          //
-          Algorithm(const TString &name,DataLoader *dalaloader=nullptr,TFile *file=nullptr,const TString options="");
+          std::shared_ptr<DataLoader>  fDataLoader;       //data 
+          std::shared_ptr<TFile>       fFile;             //!file to save the results
+          Bool_t                       fModelPersistence; //flag to save the trained model
+          Bool_t                       fVerbose;          //flag for extra information
+          
+          /**
+           Constructor for the initialization of Algorithms,
+           differents Algorithms may needs differents constructors then
+           this is a generic one protected.
+           \param name the name algorithm.
+           \param dataloader TMVA::DataLoader object with the data.
+           \param file optional file to save the results.
+           \param options extra options for the algorithm.
+          */
+
+          Algorithm(const TString &name,DataLoader *dataloader=nullptr,TFile *file=nullptr,const TString options="");
           
       public:
+          /**
+           Constructor for the initialization of Algorithms,
+           */
           ~Algorithm();
           
           virtual void BookMethod( TString methodName, TString methodTitle, TString theOption = "");

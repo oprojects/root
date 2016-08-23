@@ -49,9 +49,10 @@ namespace TMVA {
           
       public:
           /*
-            
+            Default constructor.
            */
-          ParallelExecutor():ParallelExecutorBase(){ROOT::EnableThreadSafety();}
+          ParallelExecutor():ParallelExecutorBase(){}
+          
           using ParallelExecutorBase::Execute;//Defualt method for not supported algorithms
           
           /**

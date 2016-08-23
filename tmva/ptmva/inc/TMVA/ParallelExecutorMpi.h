@@ -67,7 +67,7 @@ namespace TMVA {
           
       public:
           /**
-           Contructor to start the MPI communication system. 
+           Constructor to start the MPI communication system. 
           */
           ParallelExecutorMpi();
           /**
@@ -102,6 +102,7 @@ namespace TMVA {
           using ParallelExecutorBase::Execute;//Defualt method for not supported algorithms
           /**
            Method execute cross validation in parallel.
+           the number of the jobs is given with mpirun command.
            \return the number of the rank.
           */
           const TMVA::ParallelExecutorResults Execute(TMVA::CrossValidation*,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutorMpi") );

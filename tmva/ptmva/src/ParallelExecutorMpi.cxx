@@ -6,16 +6,24 @@
 #include<mpi/mpi.h>
 #include<TMessage.h>
 
+//______________________________________________________________________________
 TMVA::ParallelExecutorMpi::ParallelExecutorMpi():ParallelExecutorBase(){
         ROOT::EnableThreadSafety();
         MPI::Init();
 }
+
+//______________________________________________________________________________
 TMVA::ParallelExecutorMpi::~ParallelExecutorMpi(){
         MPI::Finalize();
     }
 
+//______________________________________________________________________________
 UInt_t TMVA::ParallelExecutorMpi::IsMainProcess(){return MPI::COMM_WORLD.Get_rank()==0;}    
+
+//______________________________________________________________________________
 UInt_t TMVA::ParallelExecutorMpi::GetRank(){return MPI::COMM_WORLD.Get_rank();}
+
+//______________________________________________________________________________
 UInt_t TMVA::ParallelExecutorMpi::GetSize(){return MPI::COMM_WORLD.Get_size();}
 
 class MpiMessage:public TMessage
@@ -24,6 +32,7 @@ public:
     MpiMessage(char *buffer, int size):TMessage(buffer, size){}
 };
 
+//______________________________________________________________________________
 void TMVA::ParallelExecutorMpi::SharedDataLoader(DataLoader *dl)
 {
     Int_t size;
@@ -49,6 +58,7 @@ void TMVA::ParallelExecutorMpi::SharedDataLoader(DataLoader *dl)
     }
 }
 
+//______________________________________________________________________________
 const TMVA::ParallelExecutorResults TMVA::ParallelExecutorMpi::Execute(TMVA::CrossValidation *cv,UInt_t jobs,TMVA::OptionMap options)
 {
     UInt_t endProc;
@@ -86,14 +96,14 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutorMpi::Execute(TMVA::Cro
     return TMVA::ParallelExecutorResults("ParallelExecutorMpi(CV)",GetSize(),fTimer.RealTime(),options);
 }
 
+//______________________________________________________________________________
 const TMVA::ParallelExecutorResults TMVA::ParallelExecutorMpi::Execute(TMVA::CrossValidation *cv,TMVA::OptionMap options)
 {
     MPI::COMM_WORLD.Barrier();
     fTimeStart = MPI::Wtime();
     UInt_t rproc=cv->GetNumFolds()%GetSize();//remaining process
-    UInt_t proc=cv->GetNumFolds()/GetSize();
+    UInt_t proc=cv->GetNumFolds()/GetSize();//number of process
     TMVA::ParallelExecutorResults Results("ParallelExecutorMpi(CV)",GetSize(),0,options);
-//     std::cout<<"proc "<<proc<<" rank "<<GetRank()<<" size "<<GetSize()<<" folds "<<cv->GetNumFolds()<<std::endl;
     if(GetSize()<=cv->GetNumFolds())
     {
         if(rproc==0) Results=Execute(cv,proc,options);
