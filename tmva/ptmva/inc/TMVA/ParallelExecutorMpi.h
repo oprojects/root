@@ -49,8 +49,6 @@ namespace TMVA {
       class ParallelExecutorMpi:public ParallelExecutorBase
       {
       private:
-          Int_t   fArgc;
-          Char_t  **fArgs;
           Double_t fTimeStart;
           Double_t fTimeEnd;
           const TMVA::ParallelExecutorResults Execute(TMVA::CrossValidation*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutorMpi") );
@@ -68,7 +66,7 @@ namespace TMVA {
         
           using ParallelExecutorBase::Execute;//Defualt method for not supported algorithms
           const TMVA::ParallelExecutorResults Execute(TMVA::CrossValidation*,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutorMpi") );
-//           ClassDef(ParallelExecutorMpi,0);    
+          ClassDef(ParallelExecutorMpi,0);    
       };
       
 }

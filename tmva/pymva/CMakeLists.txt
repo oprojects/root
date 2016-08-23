@@ -17,7 +17,6 @@ set(PY_HEADERS ${CMAKE_SOURCE_DIR}/tmva/pymva/inc/TMVA/PyMethodBase.h
                ${CMAKE_SOURCE_DIR}/tmva/pymva/inc/TMVA/MethodPyGTB.h)
               
 ROOT_GENERATE_DICTIONARY(G__PyMVA ${PY_HEADERS} MODULE ${libname} LINKDEF LinkDef.h)
-# ROOT_GENERATE_ROOTMAP(RInterface LINKDEF LinkDef.h)
 
 
 ROOT_LINKER_LIBRARY(PyMVA *.cxx G__PyMVA.cxx LIBRARIES ${PYTHON_LIBRARIES}  DEPENDENCIES Core Matrix Thread RIO TMVA)

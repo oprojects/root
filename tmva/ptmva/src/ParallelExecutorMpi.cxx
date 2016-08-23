@@ -8,9 +8,7 @@
 
 TMVA::ParallelExecutorMpi::ParallelExecutorMpi():ParallelExecutorBase(){
         ROOT::EnableThreadSafety();
-        fArgc=0;
-        fArgs=NULL;
-        MPI::Init(fArgc, fArgs);
+        MPI::Init();
 }
 TMVA::ParallelExecutorMpi::~ParallelExecutorMpi(){
         MPI::Finalize();

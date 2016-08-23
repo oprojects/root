@@ -43,8 +43,7 @@ set(headers4 TNeuron.h TSynapse.h TActivationChooser.h TActivation.h TActivation
 
 set(headers5 Event.h Results.h ResultsClassification.h ResultsRegression.h ResultsMulticlass.h VariableInfo.h ClassInfo.h
              DataLoader.h DataSet.h DataSetInfo.h DataInputHandler.h DataSetManager.h DataSetFactory.h Algorithm.h Classification.h CrossValidation.h VariableImportance.h
-             ParallelExecutorBase.h ParallelExecutor.h OptionMap.h)
-             
+             OptionMap.h)
 
 #---Need to suffix each header name by TMVA/  -----------------
 foreach(hs headers1 headers2 headers3 headers4 headers5  )
