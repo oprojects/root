@@ -38,23 +38,41 @@ namespace TMVA {
               
       /**
       \class ParallelExecutor
-         class for parallel executions using threads.
-         if you want to add support for your class here, you just 
-         need to overload the template method Execute
-         \ingroup TMVA
+         class for parallel executions using MultiProc.
+      \ingroup TMVA
        */
       
       class ParallelExecutor:public ParallelExecutorBase
       {
       private:
-          TProcPool fWorkers;
-          
+          TProcPool fWorkers;  //!procpool object
           
       public:
+          /*
+            
+           */
           ParallelExecutor():ParallelExecutorBase(){ROOT::EnableThreadSafety();}
           using ParallelExecutorBase::Execute;//Defualt method for not supported algorithms
-          const TMVA::ParallelExecutorResults Execute(TMVA::Factory*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutor") );
+          
+          /**
+            Method Train/Test in parallel for every booked method in TMVA::Factory.
+            \param factory TMVA::Factory object with the booked methods to execute
+            \param jobs number of jobs
+            \param options extra options, not needed in this case
+            \return returning an object with TMVA::ParallelExecutorResults
+          */
+          const TMVA::ParallelExecutorResults Execute(TMVA::Factory*,UInt_t jobs,TMVA::OptionMap map=OptionMap("ParallelExecutor"));
+          
+          /**
+            Method to execute Cross Validation in parallel, the algorithm is splitted by folds.
+            \param cv TMVA::CrossValidation object.
+            \param jobs number of jobs
+            \param options extra options, not needed in this case
+            \return returning an object with TMVA::ParallelExecutorResults
+          */
           const TMVA::ParallelExecutorResults Execute(TMVA::CrossValidation*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutor") );
+          
+          
           ClassDef(ParallelExecutor,0);    
       };
       

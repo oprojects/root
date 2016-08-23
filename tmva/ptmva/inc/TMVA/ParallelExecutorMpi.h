@@ -44,6 +44,12 @@ namespace TMVA {
          if you want to add support for your class here, you just 
          need to overload the template method Execute
          \ingroup TMVA
+         
+         This is an example code to compute CrossValidation in parallel.
+         \code{.cpp}
+         \endcode
+
+         
        */
       
       class ParallelExecutorMpi:public ParallelExecutorBase
@@ -51,21 +57,56 @@ namespace TMVA {
       private:
           Double_t fTimeStart;
           Double_t fTimeEnd;
-          const TMVA::ParallelExecutorResults Execute(TMVA::CrossValidation*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutorMpi") );
-          const TMVA::ParallelExecutorResults Execute(TMVA::Factory*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutorMpi") );
+          /**
+           Private to eval a group of folds
+           \param cv CrossValidation object
+           \param jobs number of folds to run
+           \return ParallelExecutorResults for MPI
+         */
+                  const TMVA::ParallelExecutorResults Execute(TMVA::CrossValidation*,UInt_t jobs,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutorMpi") );
           
       public:
+          /**
+           Contructor to start the MPI communication system. 
+          */
           ParallelExecutorMpi();
-        ~ParallelExecutorMpi();
+          /**
+           Destructor to finalize the MPI communication system. 
+          */
+          ~ParallelExecutorMpi();
         
-        void SharedDataLoader(DataLoader *dl);
-        UInt_t IsMainProcess();
+          /**
+           Method to share a dataloader object using MPI broadcast to the other processes using serialization.
+           \param dl TMVA::DataLoader object.
+          */
+           void SharedDataLoader(DataLoader *dl);
+    
+          /**
+           Method to see if I am in the main process.
+           \return True if the number of the rank is the main process.
+          */
+           UInt_t IsMainProcess();
         
-        UInt_t GetRank();
-        UInt_t GetSize();
+          /**
+           Method to get the current rank from MPI
+           \return the number of the rank.
+          */
+           UInt_t GetRank();
+           
+          /**
+           Method to get the current rank from MPI
+           \return the number of the rank.
+          */
+           UInt_t GetSize();
         
           using ParallelExecutorBase::Execute;//Defualt method for not supported algorithms
+          /**
+           Method execute cross validation in parallel.
+           \return the number of the rank.
+          */
           const TMVA::ParallelExecutorResults Execute(TMVA::CrossValidation*,TMVA::OptionMap options=TMVA::OptionMap("ParallelExecutorMpi") );
+          
+          
           ClassDef(ParallelExecutorMpi,0);    
       };
       
