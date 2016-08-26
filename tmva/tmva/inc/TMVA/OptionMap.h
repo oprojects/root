@@ -23,6 +23,15 @@
 #include "TMVA/MsgLogger.h"
 #endif
 
+#ifndef ROOT_TObjString
+#include "TObjString.h"
+#endif
+
+#ifndef ROOT_TObjArray
+#include "TObjArray.h"
+#endif
+
+
 namespace TMVA {
        
        /**
@@ -82,6 +91,16 @@ namespace TMVA {
            Binding fBinder;     //!
        public:
            OptionMap(const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,""){}
+           OptionMap(const OptionMap &obj):fBinder(obj.fBinder)
+           {
+               fName   = obj.fName;
+               fLogger = obj.fLogger;
+           }
+           OptionMap(const Char_t *options,const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,"")
+           {
+             ParseOption(options);  
+           }
+           
            virtual ~OptionMap(){}
            
            Bool_t IsEmpty(){return fOptMap.empty();}
@@ -95,6 +114,12 @@ namespace TMVA {
            {
                fBinder.SetKey(key);
                return fBinder;
+           }
+           
+           OptionMap& operator=(TString options)
+           {
+               ParseOption(options);
+               return *this;
            }
            
            void Print() const
@@ -122,6 +147,33 @@ namespace TMVA {
                oss<<fOptMap.at(key);
                oss>>result;
                return result;
+           }
+           void ParseOption(TString options)
+           {
+               options.ReplaceAll(" ","");
+               auto opts=options.Tokenize(":");
+               for(auto opt:*opts)
+               {
+                   TObjString *objstr=(TObjString*)opt;
+                   
+                   if(objstr->GetString().Contains("="))
+                   {
+                      auto pair=objstr->String().Tokenize("=");
+                      TObjString *key   = (TObjString *)pair->At(0);
+                      TObjString *value = (TObjString *)pair->At(1);
+                      
+                      fOptMap[key->GetString()] = value->GetString();
+                   }else{
+                      if(objstr->GetString().BeginsWith("!"))
+                      {
+                          objstr->GetString().ReplaceAll("!","");
+                          fOptMap[objstr->GetString()]=TString("0");    
+                      }else{
+                          fOptMap[objstr->GetString()]=TString("1");                              
+                      }
+                   }
+               }
+
            }
            ClassDef(OptionMap,1);
        };
