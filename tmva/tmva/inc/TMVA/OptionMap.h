@@ -44,47 +44,51 @@ namespace TMVA {
        {
        protected:
            TString fName;
-           std::map<const TString,TString> fOptMap;//
-           TMVA::MsgLogger fLogger; //!
+           std::map<const TString,TString> fOptMap; //
+           TMVA::MsgLogger fLogger;                 //!
            class Binding
            {
            private:
                std::map<const TString,TString> &fInternalMap;
                TString fInternalKey;
+               std::stringstream fStringStream;          //!
            public:
-               Binding(std::map<const TString,TString>  &fmap,TString key):fInternalMap(fmap),fInternalKey(key){}
+               Binding(std::map<const TString,TString>  &fmap,TString key):fInternalMap(fmap),fInternalKey(key),fStringStream(){}
+               Binding(const Binding &obj):fInternalMap(obj.fInternalMap)  
+               {
+                   fInternalKey  = obj.fInternalKey;
+                   fStringStream.str(obj.fStringStream.str());                   
+               }
                ~Binding(){}
                void SetKey(TString key){fInternalKey=key;}
                TString GetKey(){return fInternalKey;}
                Binding &operator=(const Binding &obj)
                {
-                   fInternalMap = obj.fInternalMap;    
-                   fInternalKey = obj.fInternalKey;
+                   fInternalMap  = obj.fInternalMap;    
+                   fInternalKey  = obj.fInternalKey;
+                   fStringStream.clear();
+                   fStringStream.str(obj.fStringStream.str());
                    return *this;
                }
                
                template<class T> Binding& operator=(const T &value)
                {
-                   std::stringstream oss;
-                   oss<<value;
-                   fInternalMap[fInternalKey]=oss.str();
+                   fStringStream<<value;
+                   fInternalMap[fInternalKey]=fStringStream.str();
+                   fStringStream.clear();
                    return *this;
                }
                
                template<class T> operator T()
                {
-                   T result;
-                   std::stringstream oss;
-                   oss<<fInternalMap[fInternalKey];
-                   oss>>result;
-                   return result;
+                   return GetValue<T>();
                }
                template<class T> T GetValue()
                {
                    T result;
-                   std::stringstream oss;
-                   oss<<fInternalMap[fInternalKey];
-                   oss>>result;
+                   fStringStream<<fInternalMap[fInternalKey];
+                   fStringStream>>result;
+                   fStringStream.clear();
                    return result;
                }
            };
