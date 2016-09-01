@@ -35,7 +35,7 @@
 namespace TMVA {
        
        /**
-        *      \class OptionMapBase
+        *      \class OptionMap
         *         class to storage options for the differents methods
         *         \ingroup TMVA
         */
@@ -51,13 +51,11 @@ namespace TMVA {
            private:
                std::map<const TString,TString> &fInternalMap;
                TString fInternalKey;
-               std::stringstream fStringStream;          //!
            public:
-               Binding(std::map<const TString,TString>  &fmap,TString key):fInternalMap(fmap),fInternalKey(key),fStringStream(){}
+               Binding(std::map<const TString,TString>  &fmap,TString key):fInternalMap(fmap),fInternalKey(key){}
                Binding(const Binding &obj):fInternalMap(obj.fInternalMap)  
                {
                    fInternalKey  = obj.fInternalKey;
-                   fStringStream.str(obj.fStringStream.str());                   
                }
                ~Binding(){}
                void SetKey(TString key){fInternalKey=key;}
@@ -66,16 +64,12 @@ namespace TMVA {
                {
                    fInternalMap  = obj.fInternalMap;    
                    fInternalKey  = obj.fInternalKey;
-                   fStringStream.clear();
-                   fStringStream.str(obj.fStringStream.str());
                    return *this;
                }
                
                template<class T> Binding& operator=(const T &value)
                {
-                   fStringStream<<value;
-                   fInternalMap[fInternalKey]=fStringStream.str();
-                   fStringStream.clear();
+                   ParseValue(fInternalMap[fInternalKey],*const_cast<T*>(&value));
                    return *this;
                }
                
@@ -86,24 +80,44 @@ namespace TMVA {
                template<class T> T GetValue()
                {
                    T result;
-                   fStringStream<<fInternalMap[fInternalKey];
-                   fStringStream>>result;
-                   fStringStream.clear();
+                   ParseValue(fInternalMap[fInternalKey],result,kFALSE);
                    return result;
                }
+            
+               template<class T> void  ParseValue(TString &str,T &value,Bool_t input=kTRUE)
+               {
+                   std::stringstream fStringStream;
+                   if(input)
+                   {
+                       fStringStream<<value;
+                       str=fStringStream.str();
+                   }else{
+                       fStringStream<<str.Data();
+                       fStringStream>>value;
+                   }
+                   
+               }
+
+               
            };
            Binding fBinder;     //!
        public:
-           OptionMap(const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,""){}
+           OptionMap(const TString options="",const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,""){
+               ParseOption(options); 
+           }
+           
+           OptionMap(const Char_t *options,const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,""){
+               ParseOption(options); 
+           }
            OptionMap(const OptionMap &obj):fBinder(obj.fBinder)
            {
                fName   = obj.fName;
                fLogger = obj.fLogger;
            }
-           OptionMap(const Char_t *options,const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,"")
-           {
-             ParseOption(options);  
-           }
+//            OptionMap(const Char_t *options,const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,"")
+//            {
+//              ParseOption(options);  
+//            }
            
            virtual ~OptionMap(){}
            
@@ -138,11 +152,10 @@ namespace TMVA {
            template<class T> T GetValue(const TString key)
            {
                T result;
-               std::stringstream oss;
-               oss<<fOptMap[key];
-               oss>>result;
+               fBinder.ParseValue(fOptMap[key],result,kFALSE);
                return result;
            }
+           
            
            template<class T> T GetValue(const TString key) const
            {
