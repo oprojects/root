@@ -1,0 +1,13 @@
+% Option Array Default PredefinedValues Description
+\begin{optiontableAuto}
+              NEstimators  &  \mc{1}{c}{--}  &              10  &  \mc{1}{l}{--}  &  integer, optional (default=10) . The number of trees in the forest. \\
+              Criterion    &  \mc{1}{c}{--}  &          'gini'  &  \mc{1}{l}{--}  &  string, optional (default="gini"). The function to measure the quality of a split. Supported criteria are "gini" for the Gini impurity and "entropy" for the information gain. \\  
+              MaxDepth     &  \mc{1}{c}{--}  &             None &  \mc{1}{l}{--}  &  integer or None, optional (default=None).The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min\_samples\_split samples. Ignored if "max\_leaf\_nodes" is not None. \\
+          MinSamplesSplit  &  \mc{1}{c}{--}  &               2  &  \mc{1}{l}{--}  &  The minimum number of samples required to split an internal node. \\
+            MinSamplesLeaf &  \mc{1}{c}{--}  &               1  &  \mc{1}{l}{--}  &  integer, optional (default=1). The minimum number of samples in newly created leaves. A split is discarded if after the split, one of the leaves would contain less then ``min\_samples\_leaf`` samples. \\
+     MinWeightFractionLeaf &  \mc{1}{c}{--}  &               0  &  \mc{1}{l}{--}  &  float, optional (default=0.). The minimum weighted fraction of the input samples required to be at a leaf node. \\
+               MaxFeatures &  \mc{1}{c}{--}  &           'auto' &  \mc{1}{l}{--}  &  int, float, string or None, optional (default="auto").\newline The number of features to consider when looking for the best split:\newline - If int, then consider `max\_features` features at each split. \newline -If float, then `max\_features` is a percentage and `int(max\_features * n\_features)` features are considered at each split. \newline-If "auto", then `max\_features=sqrt(n\_features)`. \newline-If "sqrt", then `max\_features=sqrt(n\_features)`. \newline-If "log2", then `max\_features=log2(n\_features)`. \newline-If None, then `max\_features=n\_features`. \newline Note: the search for a split does not stop until at least one valid partition of the node samples is found, even if it requires to effectively inspect more than ``max\_features`` features.
+\end{optiontableAuto}
+%                 &  \mc{1}{c}{--}  &                &  \mc{1}{l}{--}  &   \\
+%                 &  \mc{1}{c}{--}  &                &  \mc{1}{l}{--}  &   \\
+

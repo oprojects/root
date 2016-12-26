@@ -1,0 +1,82 @@
+\subsection{Scikit Learn Random Forest (PyRandomForest)}\index{PyRandomForest}
+\label{sec:PyRandomForest}
+
+This TMVA method was implemented using RandomForest Classifier 
+
+\href{http://scikit-learn.org/stable/modules/ensemble.html#forests-of-randomized-trees}{Scikit Learn Random Forest}
+
+
+\subsubsection{Booking options}
+
+PyRandomForest is booked via the command:
+\begin{codeexample}
+\begin{tmvacode}
+factory->BookMethod(dataloader,TMVA::Types::kPyRandomForest, "PyRandomForest","<options>" );
+\end{tmvacode}
+\caption[.]{\codeexampleCaptionSize Booking of the PyRandomForest classifier: the first argument is 
+		   a predefined enumerator, the second argument is a user-defined 
+		   string identifier, and the third argument is the configuration options string.
+         Individual options are separated by a ':'. 
+         See Sec.~\ref{sec:usingtmva:booking} for more information on the booking.}
+\end{codeexample}
+
+The configuration options for the PyRandomForest classifier are listed in Option Table~\ref{opt:mva::prf_1}
+(see also Sec.~\ref{sec:fitting}).
+
+% ======= input option table ==========================================
+\begin{option}[p]
+\input optiontables/pymva/MVA__PyRandomForest_1.tex
+\caption[.]{\optionCaptionSize 
+     Configuration options reference for MVA method: {\em PyRandomForest}.
+     Values given are defaults. If predefined categories exist, the default category 
+     is marked by a '$\star$'. The options in Option Table~\ref{opt:mva::methodbase} on 
+     page~\pageref{opt:mva::methodbase} can also be configured.The table
+      is continued in Option Table~\ref{opt:mva::prf_2}.  
+}
+\label{opt:mva::prf_1}
+\end{option}
+
+\begin{option}[p]
+\input optiontables/pymva/MVA__PyRandomForest_2.tex
+\caption[.]{\optionCaptionSize 
+     Continuation of Option Table~\ref{opt:mva::prf_1}.     
+}
+\label{opt:mva::prf_2}
+\end{option}
+
+\begin{option}[p]
+\input optiontables/pymva/MVA__PyRandomForest_3.tex
+\caption[.]{\optionCaptionSize 
+     Continuation of Option Table~\ref{opt:mva::prf_2}.     
+}
+\label{opt:mva::prf_3}
+\end{option}
+
+
+% =====================================================================
+
+A typical option string could look as follows:
+\begin{codeexample}
+\begin{tmvacode}
+factory->BookMethod(dataloader,TMVA::Types::kPyRandomForest, "PyRandomForest",\newline "!V:NEstimators=200:Criterion=gini:MaxFeatures=auto:MaxDepth=6:MinSamplesLeaf=3:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
+\end{tmvacode}
+\label{ce:PyRandomForestexample}
+\end{codeexample}
+
+\subsubsection{Description and implementation}
+This is an implementation based in Scikit Learn,
+read more at \href{http://scikit-learn.org/stable/modules/ensemble.html#forests-of-randomized-trees}{Scikit Learn Random Forest}
+
+\subsubsection{Variable ranking}
+
+The present implementation of PyRandomForest does not provide a ranking 
+of the input variables.
+
+% \subsubsection{Performance}
+% 
+% ....
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TMVAUsersGuide"
+%%% End: 

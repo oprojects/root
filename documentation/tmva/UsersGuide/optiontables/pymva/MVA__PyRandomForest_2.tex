@@ -1,0 +1,15 @@
+% Option Array Default PredefinedValues Description
+
+% \begin{optiontableLong}
+\begin{optiontableAuto}
+              MaxLeafNodes &  \mc{1}{c}{--}  &             None &  \mc{1}{l}{--}  &  int or None, optional (default=None) \newline Grow trees with ``max\_leaf\_nodes`` in best-first fashion. \newline Best nodes are defined as relative reduction in impurity.\newline If None then unlimited number of leaf nodes.\newline If not None then ``max\_depth`` will be ignored. \\
+               Bootstrap   &  \mc{1}{c}{--}  &            kTRUE &  \mc{1}{l}{--}  &  boolean, optional (default=True). Whether bootstrap samples are used when building trees. \\
+               OoBScore    &  \mc{1}{c}{--}  &           kFALSE &  \mc{1}{l}{--}  &  bool. Whether to use out-of-bag samples to estimate the generalization error. \\
+              NJobs        &  \mc{1}{c}{--}  &                1 &  \mc{1}{l}{--}  &  integer, optional (default=1). The number of jobs to run in parallel for both `fit` and `predict`. If -1, then the number of jobs is set to the number of cores.\\
+               RandomState &  \mc{1}{c}{--}  &             None &  \mc{1}{l}{--}  &  int, RandomState instance or None, optional (default=None). If int, random\_state is the seed used by the random number generator; If RandomState instance, random\_state is the random number generator;If None, the random number generator is the RandomState instance usedby `np.random`.\\
+               Verbose     &  \mc{1}{c}{--}  &               0  &  \mc{1}{l}{--}  &  int, optional (default=0). Controls the verbosity of the tree building process. \\
+               WarmStart   &  \mc{1}{c}{--}  &           kFALSE &  \mc{1}{l}{--}  &  bool, optional (default=False). When set to ``True``, reuse the solution of the previous call to fit and add more estimators to the ensemble, otherwise, just fit a whole new forest.
+\end{optiontableAuto}
+%                 &  \mc{1}{c}{--}  &                &  \mc{1}{l}{--}  &   \\
+%                 &  \mc{1}{c}{--}  &                &  \mc{1}{l}{--}  &   \\
+
