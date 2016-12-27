@@ -11,7 +11,8 @@ This TMVA method was implemented using RandomForest Classifier
 PyRandomForest is booked via the command:
 \begin{codeexample}
 \begin{tmvacode}
-factory->BookMethod(dataloader,TMVA::Types::kPyRandomForest, "PyRandomForest","<options>" );
+factory->BookMethod(dataloader,TMVA::Types::kPyRandomForest, "PyRandomForest"
+,"<options>" );
 \end{tmvacode}
 \caption[.]{\codeexampleCaptionSize Booking of the PyRandomForest classifier: the first argument is 
 		   a predefined enumerator, the second argument is a user-defined 
@@ -39,7 +40,8 @@ The configuration options for the PyRandomForest classifier are listed in Option
 \begin{option}[p]
 \input optiontables/pymva/MVA__PyRandomForest_2.tex
 \caption[.]{\optionCaptionSize 
-     Continuation of Option Table~\ref{opt:mva::prf_1}.     
+     Continuation of Option Table~\ref{opt:mva::prf_1}.\newline
+     The table is continued in Option Table~\ref{opt:mva::prf_3}.  
 }
 \label{opt:mva::prf_2}
 \end{option}
@@ -58,7 +60,9 @@ The configuration options for the PyRandomForest classifier are listed in Option
 A typical option string could look as follows:
 \begin{codeexample}
 \begin{tmvacode}
-factory->BookMethod(dataloader,TMVA::Types::kPyRandomForest, "PyRandomForest",\newline "!V:NEstimators=200:Criterion=gini:MaxFeatures=auto:MaxDepth=6:MinSamplesLeaf=3:MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
+factory->BookMethod(dataloader,TMVA::Types::kPyRandomForest, "PyRandomForest",
+"!V:NEstimators=200:Criterion=gini:MaxFeatures=auto:MaxDepth=6:MinSamplesLeaf=3:
+MinWeightFractionLeaf=0:Bootstrap=kTRUE" );
 \end{tmvacode}
 \label{ce:PyRandomForestexample}
 \end{codeexample}
