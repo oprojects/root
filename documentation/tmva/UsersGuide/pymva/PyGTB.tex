@@ -11,7 +11,7 @@ This TMVA method was implemented using Gradient Trees Boosted Classifier
 PyGTB is booked via the command:
 \begin{codeexample}
 \begin{tmvacode}
-factory->BookMethod(dataloader,TMVA::Types::kPyGTB
+factory->BookMethod(dataloader,TMVA::Types::kPyGTB, "PyGTB"
 ,"<options>" );
 \end{tmvacode}
 \caption[.]{\codeexampleCaptionSize Booking of the PyGTB classifier: the first argument is 
@@ -62,10 +62,10 @@ Subsample=1:MaxDepth=3:MaxFeatures='auto'" );
 This is an implementation based in Scikit Learn,
 read more at \href{http://scikit-learn.org/stable/modules/ensemble.html#gradient-boosting}{Scikit Learn Gradient Trees Boosted}
 
-\subsubsection{Variable ranking}
-
-The present implementation of PyGTB does not provide a ranking 
-of the input variables.
+% \subsubsection{Variable ranking}
+% 
+% The present implementation of PyGTB does not provide a ranking 
+% of the input variables.
 
 % \subsubsection{Performance}
 % 

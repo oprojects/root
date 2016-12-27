@@ -1,0 +1,9 @@
+% Option Array Default PredefinedValues Description
+\begin{optiontableAuto}
+             BaseEstimator &  \mc{1}{c}{--}  &             None &  \mc{1}{l}{--}    & object, optional (default=DecisionTreeClassifier).\newline The base estimator from which the boosted ensemble is built.\newline Support for sample weighting is required, as well as proper `classes\_` and `n\_classes\_` attributes.\\
+              NEstimators  &  \mc{1}{c}{--}  &                50  &  \mc{1}{l}{--}  & integer, optional (default=50) . The number of trees in the forest. \\
+              LearningRate &  \mc{1}{c}{--}  &               0.1  &  \mc{1}{l}{--}  & float, optional (default=0.1) learning rate shrinks the contribution of each tree by `learning\_rate`.\newline There is a trade-off between learning\_rate and n\_estimators. \\
+              Algorithm    &  \mc{1}{c}{--}  &          'SAMME.R' &  \mc{1}{l}{--}  & {'SAMME', 'SAMME.R'}, optional (default='SAMME.R'). \newline If 'SAMME.R' then use the SAMME.R real boosting algorithm.\newline ``base\_estimator`` must support calculation of class probabilities.\newline If 'SAMME' then use the SAMME discrete boosting algorithm.\newline The SAMME.R algorithm typically converges faster than SAMME, achieving a lower test error with fewer boosting iterations. \\
+              RandomState  &  \mc{1}{c}{--}  &             None &  \mc{1}{l}{--}    & int, RandomState instance or None, optional (default=None).\newline If int, random\_state is the seed used by the random number generator;\newline If RandomState instance, random\_state is the random number generator;If None, the random number generator is the RandomState instance usedby `np.random`.
+\end{optiontableAuto}
+

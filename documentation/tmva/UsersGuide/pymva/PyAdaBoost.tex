@@ -1,0 +1,66 @@
+\subsection{Scikit Learn Adaptive Boosting (PyAdaBoost)}\index{PyAdaBoost}
+\label{sec:PyAdaBoost}
+
+This TMVA method was implemented using Adaptive Boosting Classifier 
+ 
+\href{http://scikit-learn.org/stable/modules/ensemble.html#adaboost}{Scikit Learn Adaptive Boosting}
+
+
+\subsubsection{Booking options}
+
+PyAdaBoost is booked via the command:
+\begin{codeexample}
+\begin{tmvacode}
+factory->BookMethod(dataloader,TMVA::Types::kPyAdaBoost, "PyAdaBoost",
+,"<options>" );
+\end{tmvacode}
+\caption[.]{\codeexampleCaptionSize Booking of the PyAdaBoost classifier: the first argument is 
+		   a predefined enumerator, the second argument is a user-defined 
+		   string identifier, and the third argument is the configuration options string.
+         Individual options are separated by a ':'. 
+         See Sec.~\ref{sec:usingtmva:booking} for more information on the booking.}
+\end{codeexample}
+
+The configuration options for the PyAdaBoost classifier are listed in Option Table~\ref{opt:mva::pab_1}
+(see also Sec.~\ref{sec:fitting}).
+
+% ======= input option table ==========================================
+\begin{option}[p]
+\input optiontables/pymva/MVA__PyAdaBoost.tex
+\caption[.]{\optionCaptionSize 
+     Configuration options reference for MVA method: {\em PyAdaBoost}.
+     Values given are defaults. If predefined categories exist, the default category 
+     is marked by a '$\star$'. The options in Option Table~\ref{opt:mva::methodbase} on 
+     page~\pageref{opt:mva::methodbase} can also be configured.
+}
+\label{opt:mva::pab_1}
+\end{option}
+
+
+% =====================================================================
+
+A typical option string could look as follows:
+\begin{codeexample}
+\begin{tmvacode}
+ factory->BookMethod(TMVA::Types::kPyAdaBoost, "PyAdaBoost","!V:NEstimators=1000" );
+\end{tmvacode}
+\label{ce:PyAdaBoostexample}
+\end{codeexample}
+
+\subsubsection{Description and implementation}
+This is an implementation based in Scikit Learn,
+read more at \href{http://scikit-learn.org/stable/modules/ensemble.html#adaboost}{Scikit Learn Adaptive Boosting}
+
+% \subsubsection{Variable ranking}
+% 
+% The present implementation of PyAdaBoost does not provide a ranking 
+% of the input variables.
+
+% \subsubsection{Performance}
+% 
+% ....
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TMVAUsersGuide"
+%%% End: 
