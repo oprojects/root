@@ -389,10 +389,12 @@ void MethodPyGTB::Train()
    }
 
    fClassifier = PyObject_CallMethod(fClassifier, (char *)"fit", (char *)"(OOO)", fTrainData, fTrainDataClasses, fTrainDataWeights);
-//     PyObject_Print(fClassifier, stdout, 0);
-//     std::cout<<std::endl;
-   //     pValue =PyObject_CallObject(fClassifier, PyUnicode_FromString("classes_"));
-   //     PyObject_Print(pValue, stdout, 0);
+   if(!fClassifier)
+   {
+      Log() << kFATAL << "Can't create classifier object from GradientBoostingClassifier"<<Endl;
+      Log() << Endl;  
+   }
+
    if (IsModelPersistence())
    {
         TString path = GetWeightFileDir() + "/PyGTBModel.PyData";

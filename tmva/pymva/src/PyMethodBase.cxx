@@ -88,6 +88,8 @@ PyMethodBase::PyMethodBase(Types::EMVA methodType,
       TMVA::MsgLogger Log;
       Log << kFATAL << "Can't init local namespace" << Endl;
    }
+   
+   
 }
 
 //_______________________________________________________________________

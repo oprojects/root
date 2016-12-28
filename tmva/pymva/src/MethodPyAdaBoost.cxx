@@ -184,7 +184,7 @@ void  MethodPyAdaBoost::Init()
       Log() << kFATAL << "Can't import sklearn.ensemble" << Endl;
       Log() << Endl;
    }
-
+   distutils.version
 
    //Training data
    UInt_t fNvars = Data()->GetNVariables();
@@ -242,7 +242,13 @@ void MethodPyAdaBoost::Train()
    }
 
    fClassifier = PyObject_CallMethod(fClassifier, (char *)"fit", (char *)"(OOO)", fTrainData, fTrainDataClasses, fTrainDataWeights);
-
+   
+   if(!fClassifier)
+   {
+      Log() << kFATAL << "Can't create classifier object from AdaBoostClassifier"<<Endl;
+      Log() << Endl;  
+   }
+   
    if (IsModelPersistence())
    {
         TString path = GetWeightFileDir() + "/PyAdaBoostModel.PyData";
