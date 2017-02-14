@@ -1,7 +1,9 @@
-language: ruby
+
+dist: xenial
+
+sudo: required
+
 before_install:
-  - echo "deb http://ftp.us.debian.org/debian stretch main contrib non-free" >> /etc/apt/sources.list.d/debian.list
-  - echo "deb-src http://ftp.us.debian.org/debian stretch main contrib non-free" >> /etc/apt/sources.list.d/debian.list
   - sudo apt-get -qq update
   - sudo apt-get install -y cmake libopenmpi-dev openmpi-bin 
 
@@ -14,5 +16,3 @@ branches:
 
 env:
   global:
-
-sudo: false
