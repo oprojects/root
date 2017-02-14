@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -e # halt script on error
+mkdir compile
+cd compile
+cmake -Dmpi=ON -Dtesting=ON ..
+source bin/thisroot.sh
+make
+ctest
+
+

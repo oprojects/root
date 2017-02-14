@@ -1,0 +1,18 @@
+language: ruby
+before_install:
+  - echo "deb http://ftp.us.debian.org/debian stretch main contrib non-free" >> /etc/apt/sources.list.d/debian.list
+  - echo "deb-src http://ftp.us.debian.org/debian stretch main contrib non-free" >> /etc/apt/sources.list.d/debian.list
+  - sudo apt-get -qq update
+  - sudo apt-get install -y cmake libopenmpi-dev openmpi-bin 
+
+script: ./travis-build
+
+# branch whitelist, only for GitHub Pages
+branches:
+  only:
+  - master-rmpi-ci
+
+env:
+  global:
+
+sudo: false
