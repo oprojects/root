@@ -167,6 +167,19 @@ namespace TMVA {
       TCanvas* GetROCCurve(DataLoader *loader, UInt_t iClass=0);
       TCanvas* GetROCCurve(TString datasetname, UInt_t iClass=0);
 
+      Types::EAnalysisType GetAnalysisType() { return fAnalysisType;}
+      const std::map<TString,MVector*> &GetMethodsMap()const {return fMethodsMap;}
+      const TString GetMethodName(const TString &dataset,const UInt_t method) const;
+      //training a single method      
+      void TrainMethod(const TString &dataset,const UInt_t method);
+      
+      //test a single method      
+      void TestMethod(const TString &dataset,const UInt_t method);
+      
+      //Evaluate a single method      
+      void EvaluateMethod(const TString &dataset,const UInt_t method);
+      
+      
    private:
 
       // the beautiful greeting message

@@ -84,7 +84,7 @@ namespace TMVA {
       UInt_t GetNumFolds() {return fNumFolds;}
 
       virtual void Evaluate();
-//    void EvaluateFold(UInt_t fold);//used in ParallelExecution
+      void EvaluateFold(UInt_t fold);//used in ParallelExecution
 
       const CrossValidationResult& GetResults() const;
 

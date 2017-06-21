@@ -104,8 +104,6 @@ TMVA::CrossValidation::~CrossValidation()
 void TMVA::CrossValidation::SetNumFolds(UInt_t i)
 {
    fNumFolds=i;
-   fDataLoader->MakeKFoldDataSet(fNumFolds);
-   fFoldStatus=kTRUE;
 }
 
 void TMVA::CrossValidation::Evaluate()
@@ -183,3 +181,57 @@ const TMVA::CrossValidationResult& TMVA::CrossValidation::GetResults() const {
    if(fResults.fROCs.size()==0) Log() << kFATAL << "No cross-validation results available" << Endl;
    return fResults;
 }
+
+void TMVA::CrossValidation::EvaluateFold(UInt_t fold)//you need to create the folds in dataloader first
+{
+    TString methodName    = fMethod.GetValue<TString>("MethodName");
+    TString methodTitle   = fMethod.GetValue<TString>("MethodTitle");
+    TString methodOptions = fMethod.GetValue<TString>("MethodOptions");
+            
+    const UInt_t nbits = fDataLoader->GetDefaultDataSetInfo().GetNVariables();
+    std::vector<TString> varName = fDataLoader->GetDefaultDataSetInfo().GetListOfVariables();
+
+    TString foldTitle = methodTitle;
+    foldTitle += "_fold";
+    foldTitle += fold+1;
+        
+    TMVA::DataLoader * foldloader = new TMVA::DataLoader(foldTitle);
+        
+    for(UInt_t index = 0; index < nbits; ++ index) foldloader->AddVariable(varName.at(index), 'F');
+        
+    DataLoaderCopy(foldloader,fDataLoader.get());
+    
+    foldloader->MakeKFoldDataSet(fNumFolds);
+    fFoldStatus=kTRUE;
+    foldloader->PrepareFoldDataSet(fold, TMVA::Types::kTesting);
+    
+        
+    TMVA::MethodBase *smethod=fClassifier->BookMethod(foldloader, methodName, methodTitle, methodOptions);
+        
+    fClassifier->TrainAllMethods();
+    fClassifier->TestAllMethods();
+    fClassifier->EvaluateAllMethods();
+        
+    fResults.fROCs[fold]=fClassifier->GetROCIntegral(foldloader->GetName(),methodTitle);
+        
+    auto  gr=fClassifier->GetROCCurve(foldloader->GetName(), methodTitle, true);
+        
+    gr->SetLineColor(fold+1);
+    gr->SetLineWidth(2);
+    gr->SetTitle(foldloader->GetName());
+        
+    fResults.fROCCurves->Add(gr);
+        
+    TMVA::ResultsClassification * sresults = (TMVA::ResultsClassification*)smethod->Data()->GetResults(smethod->GetMethodName(), Types::kTesting, Types::kClassification);
+    if(sresults)
+    {
+        sresults->Delete();
+        delete sresults;
+    }
+    delete foldloader;
+        
+    fClassifier->DeleteAllMethods();
+    fClassifier->fMethodsMap.clear();
+    
+}
+

@@ -105,11 +105,8 @@ namespace TMVA {
            {
                fName   = obj.fName;
                fLogger = obj.fLogger;
+               fOptMap = obj.fOptMap;
            }
-//            OptionMap(const Char_t *options,const TString name="Option"):fName(name),fLogger(name.Data()),fBinder(fOptMap,"")
-//            {
-//              ParseOption(options);
-//            }
 
            virtual ~OptionMap(){}
 

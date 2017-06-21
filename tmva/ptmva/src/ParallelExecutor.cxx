@@ -1,14 +1,16 @@
-#include<TMVA/ParallelExecutor.h>
-#include<TMVA/ResultsClassification.h>
-#include<TMVA/MethodBase.h>
-#include<TMVA/MsgLogger.h>
+#include <TMVA/ParallelExecutor.h>
+#include <TMVA/ResultsClassification.h>
+#include <TMVA/MethodBase.h>
+#include <TMVA/MsgLogger.h>
 
 //______________________________________________________________________________
-const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factory *factory, UInt_t jobs, TMVA::OptionMap options)
+const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factory *factory, UInt_t jobs,
+                                                                    TMVA::OptionMap options)
 {
    fWorkers.SetNWorkers(jobs);
 
-   std::vector<std::pair<TString, UInt_t> > methods; //the pair that have the dataset name and the method positon in the vector
+   std::vector<std::pair<TString, UInt_t>>
+      methods; // the pair that have the dataset name and the method positon in the vector
    for (auto &_methods : factory->GetMethodsMap()) {
       for (UInt_t i = 0; i < _methods.second->size(); i++)
          methods.push_back(std::pair<TString, UInt_t>(_methods.first, i));
@@ -16,15 +18,15 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
 
    if (factory->GetAnalysisType() == TMVA::Types::EAnalysisType::kClassification) {
 
-      auto executor = [factory, methods](UInt_t workerID)->OptionMap{
+      auto executor = [factory, methods](UInt_t workerID) -> OptionMap {
          TMVA::MsgLogger::InhibitOutput();
          TMVA::gConfig().SetSilent(kTRUE);
          TMVA::gConfig().SetUseColor(kFALSE);
          TMVA::gConfig().SetDrawProgressBar(kFALSE);
          OptionMap r;
          r["dataset"] = methods[workerID].first;
-         r["rocint"]  = 0;
-         r["method"]  = factory->GetMethodName(methods[workerID].first, methods[workerID].second);
+         r["rocint"] = 0;
+         r["method"] = factory->GetMethodName(methods[workerID].first, methods[workerID].second);
          factory->TrainMethod(methods[workerID].first, methods[workerID].second);
          factory->TestMethod(methods[workerID].first, methods[workerID].second);
          factory->EvaluateMethod(methods[workerID].first, methods[workerID].second);
@@ -47,9 +49,10 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
       Log() << kINFO << "-----------------------------------------------------" << Endl;
       auto counter = 0;
       for (auto &item : fResults) {
-         Log() << kINFO << Form("%-20s %-15s %#1.3f",
-                                item.GetValue<TString>("dataset").Data(), item.GetValue<TString>("method").Data(), item.GetValue<Double_t>("rocint")) << Endl;
-//         fOptResults[Form("%d",counter)]=item;
+         Log() << kINFO << Form("%-20s %-15s %#1.3f", item.GetValue<TString>("dataset").Data(),
+                                item.GetValue<TString>("method").Data(), item.GetValue<Double_t>("rocint"))
+               << Endl;
+         //         fOptResults[Form("%d",counter)]=item;
          counter++;
       }
       Log() << kINFO << "-----------------------------------------------------" << Endl;
@@ -57,18 +60,16 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::Factor
       return TMVA::ParallelExecutorResults("ParallelExecutor(Factory)", jobs, fTimer.RealTime(), fOptResults);
    }
 
-
-
-
    return TMVA::ParallelExecutorResults("Unknow", jobs, fTimer.RealTime(), options);
 }
 
 //______________________________________________________________________________
-const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::CrossValidation *cv, UInt_t jobs, TMVA::OptionMap options)
+const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::CrossValidation *cv, UInt_t jobs,
+                                                                    TMVA::OptionMap options)
 {
    fWorkers.SetNWorkers(jobs);
 
-   auto executor = [cv](UInt_t workerID)->Double_t{
+   auto executor = [cv](UInt_t workerID) -> Double_t {
       TMVA::MsgLogger::InhibitOutput();
       TMVA::gConfig().SetSilent(kTRUE);
       TMVA::gConfig().SetUseColor(kFALSE);
@@ -98,4 +99,3 @@ const TMVA::ParallelExecutorResults TMVA::ParallelExecutor::Execute(TMVA::CrossV
    TMVA::gConfig().SetSilent(kTRUE);
    return TMVA::ParallelExecutorResults("ParallelExecutor(CV)", jobs, fTimer.RealTime(), options);
 }
-
