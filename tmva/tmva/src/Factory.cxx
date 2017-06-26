@@ -2432,761 +2432,910 @@ TH1F* TMVA::Factory::GetImportance(const int nbits,std::vector<Double_t> importa
   return vih1;
 }
 
-const TString TMVA::Factory::GetMethodName(const TString &dataset,const UInt_t method) const
-{
-    TString methodName="";
-    // don't do anything if no method booked
-    if (fMethodsMap.empty()) {
-        Log() << kINFO << "...nothing found to train" << Endl;
-        return methodName;
-    }
-    
-    for(auto &_dataset:fMethodsMap)
-    {
-        if(_dataset.first==dataset)
-        {
-            if(method>=_dataset.second->size())
-            {
-                //Error here
-                return methodName;
-            }
-            MethodBase* mva = dynamic_cast<MethodBase*>((*_dataset.second)[method]);
-            methodName = mva->GetMethodName();
-            break;
-        }
-    }
+const TString TMVA::Factory::GetMethodName(const TString &dataset,
+                                           const UInt_t method) const {
+  TString methodName = "";
+  // don't do anything if no method booked
+  if (fMethodsMap.empty()) {
+    Log() << kINFO << "...nothing found to train" << Endl;
     return methodName;
+  }
+
+  for (auto &_dataset : fMethodsMap) {
+    if (_dataset.first == dataset) {
+      if (method >= _dataset.second->size()) {
+        // Error here
+        return methodName;
+      }
+      MethodBase *mva = dynamic_cast<MethodBase *>((*_dataset.second)[method]);
+      methodName = mva->GetMethodName();
+      break;
+    }
+  }
+  return methodName;
 }
 
-void TMVA::Factory::TrainMethod(const TString &dataset,const UInt_t method)
-{
-    // don't do anything if no method booked
-    if (fMethodsMap.empty()) {
-        Log() << kINFO << "...nothing found to train" << Endl;
+void TMVA::Factory::TrainMethod(const TString &dataset, const UInt_t method) {
+  // don't do anything if no method booked
+  if (fMethodsMap.empty()) {
+    Log() << kINFO << "...nothing found to train" << Endl;
+    return;
+  }
+
+  // here the training starts
+  Log() << kINFO << " " << Endl;
+  Log() << kINFO << "Train all methods for "
+        << (fAnalysisType == Types::kRegression
+                ? "Regression"
+                : (fAnalysisType == Types::kMulticlass ? "Multiclass"
+                                                       : "Classification"))
+        << " ..." << Endl;
+
+  for (auto &_dataset : fMethodsMap) {
+    if (_dataset.first == dataset) {
+      if (method >= _dataset.second->size()) {
+        // Error here
         return;
+      }
+      Event::SetIsTraining(kTRUE);
+      MethodBase *mva = dynamic_cast<MethodBase *>((*_dataset.second)[method]);
+      if (mva == 0)
+        continue;
+
+      if (mva->DataInfo().GetDataSetManager()->DataInput().GetEntries() <=
+          1) { // 0 entries --> 0 events, 1 entry --> dynamical dataset (or one
+               // entry)
+        Log() << kFATAL << "No input data for the training provided!" << Endl;
+      }
+
+      if (fAnalysisType == Types::kRegression &&
+          mva->DataInfo().GetNTargets() < 1)
+        Log()
+            << kFATAL
+            << "You want to do regression training without specifying a target."
+            << Endl;
+      else if ((fAnalysisType == Types::kMulticlass ||
+                fAnalysisType == Types::kClassification) &&
+               mva->DataInfo().GetNClasses() < 2)
+        Log() << kFATAL << "You want to do classification training, but "
+                           "specified less than two classes."
+              << Endl;
+
+      // first print some information about the default dataset
+      if (!IsSilentFile())
+        WriteDataInformation(mva->fDataSetInfo);
+
+      if (mva->Data()->GetNTrainingEvents() < MinNoTrainingEvents) {
+        Log() << kWARNING << "Method " << mva->GetMethodName()
+              << " not trained (training tree has less entries ["
+              << mva->Data()->GetNTrainingEvents() << "] than required ["
+              << MinNoTrainingEvents << "]" << Endl;
+        continue;
+      }
+
+      Log() << kINFO << "Train method: " << mva->GetMethodName() << " for "
+            << (fAnalysisType == Types::kRegression
+                    ? "Regression"
+                    : (fAnalysisType == Types::kMulticlass
+                           ? "Multiclass classification"
+                           : "Classification"))
+            << Endl;
+      mva->TrainMethod();
+      Log() << kINFO << "Training finished" << Endl;
+
+      if (fAnalysisType != Types::kRegression) {
+
+        // variable ranking
+        Log() << Endl;
+        Log() << kINFO << "Ranking input variables (method specific)..."
+              << Endl;
+        if (mva->Data()->GetNTrainingEvents() >= MinNoTrainingEvents) {
+
+          // create and print ranking
+          const Ranking *ranking = mva->CreateRanking();
+          if (ranking != 0)
+            ranking->Print();
+          else
+            Log() << kINFO << "No variable ranking supplied by classifier: "
+                  << mva->GetMethodName() << Endl;
+        }
+      }
+      // delete all methods and recreate them from weight file - this ensures
+      // that the application
+      // of the methods (in TMVAClassificationApplication) is consistent with
+      // the results obtained
+      // in the testing
+      Log() << Endl;
+      if (fModelPersistence) {
+
+        Log() << kINFO << "=== Destroy and recreate all methods via weight "
+                          "files for testing ==="
+              << Endl << Endl;
+        if (!IsSilentFile())
+          RootBaseDir()->cd();
+
+        TMVA::Types::EMVA methodType = mva->GetMethodType();
+        TString weightfile = mva->GetWeightFileName();
+
+        // decide if .txt or .xml file should be read:
+        if (READXML)
+          weightfile.ReplaceAll(".txt", ".xml");
+
+        DataSetInfo &dataSetInfo = mva->DataInfo();
+        TString testvarName = mva->GetTestvarName();
+        delete mva; // itrMethod[i];
+
+        // recreate
+        MethodBase *m =
+            dynamic_cast<MethodBase *>(ClassifierFactory::Instance().Create(
+                std::string(Types::Instance().GetMethodName(methodType)),
+                dataSetInfo, weightfile));
+        if (m->GetMethodType() == Types::kCategory) {
+          MethodCategory *methCat = (dynamic_cast<MethodCategory *>(m));
+          if (!methCat)
+            Log() << kFATAL << "Method with type kCategory cannot be casted to "
+                               "MethodCategory. /Factory"
+                  << Endl;
+          else
+            methCat->fDataSetManager = m->DataInfo().GetDataSetManager();
+        }
+        // ToDo, Do we need to fill the DataSetManager of MethodBoost here too?
+
+        TString fFileDir = m->DataInfo().GetName();
+        fFileDir += "/" + gConfig().GetIONames().fWeightFileDir;
+        m->SetWeightFileDir(fFileDir);
+        m->SetModelPersistence(fModelPersistence);
+        m->SetSilentFile(IsSilentFile());
+        m->SetAnalysisType(fAnalysisType);
+        m->SetupMethod();
+        m->ReadStateFromFile();
+        m->SetTestvarName(testvarName);
+
+        // replace trained method by newly created one (from weight file) in
+        // methods vector
+        fMethodsMap[dataset]->at(method) = m;
+      }
     }
-    
-    // here the training starts
-    Log() << kINFO << " " << Endl;
-    Log() << kINFO << "Train all methods for " 
-    << (fAnalysisType == Types::kRegression ? "Regression" : 
-    (fAnalysisType == Types::kMulticlass ? "Multiclass" : "Classification") ) << " ..." << Endl;
-    
-    for(auto &_dataset:fMethodsMap)
-    {
-        if(_dataset.first==dataset)
-        {
-            if(method>=_dataset.second->size())
-            {
-                //Error here
-                return;
-            }
-            Event::SetIsTraining(kTRUE);
-            MethodBase* mva = dynamic_cast<MethodBase*>((*_dataset.second)[method]);
-            if(mva==0) continue;
-            
-            if(mva->DataInfo().GetDataSetManager()->DataInput().GetEntries() <=1) { // 0 entries --> 0 events, 1 entry --> dynamical dataset (or one entry)
-                Log() << kFATAL << "No input data for the training provided!" << Endl;
-            }
-            
-            if(fAnalysisType == Types::kRegression && mva->DataInfo().GetNTargets() < 1 )
-                Log() << kFATAL << "You want to do regression training without specifying a target." << Endl;
-            else if( (fAnalysisType == Types::kMulticlass || fAnalysisType == Types::kClassification) 
-                && mva->DataInfo().GetNClasses() < 2 ) 
-                Log() << kFATAL << "You want to do classification training, but specified less than two classes." << Endl;
-            
-            // first print some information about the default dataset
-            if(!IsSilentFile()) WriteDataInformation(mva->fDataSetInfo);
-            
-            
-            if (mva->Data()->GetNTrainingEvents() < MinNoTrainingEvents) {
-                Log() << kWARNING << "Method " << mva->GetMethodName()
-                << " not trained (training tree has less entries ["
-                << mva->Data()->GetNTrainingEvents()
-                << "] than required [" << MinNoTrainingEvents << "]" << Endl;
+  }
+}
+
+void TMVA::Factory::TestMethod(const TString &dataset, const UInt_t method) {
+  Log() << kINFO << "Test all methods..." << Endl;
+
+  // don't do anything if no method booked
+  if (fMethodsMap.empty()) {
+    Log() << kINFO << "...nothing found to test" << Endl;
+    return;
+  }
+
+  for (auto &_dataset : fMethodsMap) {
+    if (_dataset.first == dataset) {
+      if (method >= _dataset.second->size()) {
+        // Error here
+        return;
+      }
+      Event::SetIsTraining(kFALSE);
+      MethodBase *mva = dynamic_cast<MethodBase *>((*_dataset.second)[method]);
+      if (mva == 0)
+        continue;
+      Types::EAnalysisType analysisType = mva->GetAnalysisType();
+      Log() << kINFO << "Test method: " << mva->GetMethodName() << " for "
+            << (analysisType == Types::kRegression
+                    ? "Regression"
+                    : (analysisType == Types::kMulticlass
+                           ? "Multiclass classification"
+                           : "Classification"))
+            << " performance" << Endl;
+      mva->AddOutput(Types::kTesting, analysisType);
+    }
+  }
+}
+
+void TMVA::Factory::EvaluateMethod(const TString &dataset,
+                                   const UInt_t _method) {
+  Log() << kINFO << "Evaluate all methods..." << Endl;
+
+  // don't do anything if no method booked
+  if (fMethodsMap.empty()) {
+    Log() << kINFO << "...nothing found to evaluate" << Endl;
+    return;
+  }
+
+  for (auto &_dataset : fMethodsMap) {
+    if (_dataset.first == dataset) {
+      if (_method >= _dataset.second->size()) {
+        // Error here
+        return;
+      }
+      Int_t isel;                   // will be 0 for a Method; 1 for a Variable
+      Int_t nmeth_used[2] = {0, 0}; // 0 Method; 1 Variable
+
+      std::vector<std::vector<TString>> mname(2);
+      std::vector<std::vector<Double_t>> sig(2), sep(2), roc(2);
+      std::vector<std::vector<Double_t>> eff01(2), eff10(2), eff30(2),
+          effArea(2);
+      std::vector<std::vector<Double_t>> eff01err(2), eff10err(2), eff30err(2);
+      std::vector<std::vector<Double_t>> trainEff01(2), trainEff10(2),
+          trainEff30(2);
+
+      std::vector<std::vector<Float_t>> multiclass_testEff;
+      std::vector<std::vector<Float_t>> multiclass_trainEff;
+      std::vector<std::vector<Float_t>> multiclass_testPur;
+      std::vector<std::vector<Float_t>> multiclass_trainPur;
+
+      std::vector<std::vector<Double_t>> biastrain(
+          1); // "bias" of the regression on the training data
+      std::vector<std::vector<Double_t>> biastest(
+          1); // "bias" of the regression on test data
+      std::vector<std::vector<Double_t>> devtrain(
+          1); // "dev" of the regression on the training data
+      std::vector<std::vector<Double_t>> devtest(
+          1); // "dev" of the regression on test data
+      std::vector<std::vector<Double_t>> rmstrain(
+          1); // "rms" of the regression on the training data
+      std::vector<std::vector<Double_t>> rmstest(
+          1); // "rms" of the regression on test data
+      std::vector<std::vector<Double_t>> minftrain(
+          1); // "minf" of the regression on the training data
+      std::vector<std::vector<Double_t>> minftest(
+          1); // "minf" of the regression on test data
+      std::vector<std::vector<Double_t>> rhotrain(
+          1); // correlation of the regression on the training data
+      std::vector<std::vector<Double_t>> rhotest(
+          1); // correlation of the regression on test data
+
+      // same as above but for 'truncated' quantities (computed for events
+      // within 2sigma of RMS)
+      std::vector<std::vector<Double_t>> biastrainT(1);
+      std::vector<std::vector<Double_t>> biastestT(1);
+      std::vector<std::vector<Double_t>> devtrainT(1);
+      std::vector<std::vector<Double_t>> devtestT(1);
+      std::vector<std::vector<Double_t>> rmstrainT(1);
+      std::vector<std::vector<Double_t>> rmstestT(1);
+      std::vector<std::vector<Double_t>> minftrainT(1);
+      std::vector<std::vector<Double_t>> minftestT(1);
+
+      // following vector contains all methods - with the exception of Cuts,
+      // which are special
+      MVector methodsNoCuts;
+
+      Bool_t doRegression = kFALSE;
+      Bool_t doMulticlass = kFALSE;
+
+      // iterate over methods and evaluate
+      Event::SetIsTraining(kFALSE);
+      MethodBase *theMethod =
+          dynamic_cast<MethodBase *>((*_dataset.second)[_method]);
+      if (theMethod == 0)
+        continue;
+
+      theMethod->SetFile(fgTargetFile);
+      theMethod->SetSilentFile(IsSilentFile());
+      if (theMethod->GetMethodType() != Types::kCuts)
+        methodsNoCuts.push_back((*_dataset.second)[_method]);
+
+      if (theMethod->DoRegression()) {
+        doRegression = kTRUE;
+
+        Log() << kINFO
+              << "Evaluate regression method: " << theMethod->GetMethodName()
+              << Endl;
+        Double_t bias, dev, rms, mInf;
+        Double_t biasT, devT, rmsT, mInfT;
+        Double_t rho;
+
+        theMethod->TestRegression(bias, biasT, dev, devT, rms, rmsT, mInf,
+                                  mInfT, rho, TMVA::Types::kTesting);
+        biastest[0].push_back(bias);
+        devtest[0].push_back(dev);
+        rmstest[0].push_back(rms);
+        minftest[0].push_back(mInf);
+        rhotest[0].push_back(rho);
+        biastestT[0].push_back(biasT);
+        devtestT[0].push_back(devT);
+        rmstestT[0].push_back(rmsT);
+        minftestT[0].push_back(mInfT);
+
+        theMethod->TestRegression(bias, biasT, dev, devT, rms, rmsT, mInf,
+                                  mInfT, rho, TMVA::Types::kTraining);
+        biastrain[0].push_back(bias);
+        devtrain[0].push_back(dev);
+        rmstrain[0].push_back(rms);
+        minftrain[0].push_back(mInf);
+        rhotrain[0].push_back(rho);
+        biastrainT[0].push_back(biasT);
+        devtrainT[0].push_back(devT);
+        rmstrainT[0].push_back(rmsT);
+        minftrainT[0].push_back(mInfT);
+
+        mname[0].push_back(theMethod->GetMethodName());
+        nmeth_used[0]++;
+        if (!IsSilentFile()) {
+          Log() << kINFO << "Write evaluation histograms to file" << Endl;
+          theMethod->WriteEvaluationHistosToFile(Types::kTesting);
+          theMethod->WriteEvaluationHistosToFile(Types::kTraining);
+        }
+      } else if (theMethod->DoMulticlass()) {
+        doMulticlass = kTRUE;
+        Log() << kINFO << "Evaluate multiclass classification method: "
+              << theMethod->GetMethodName() << Endl;
+        if (!IsSilentFile()) {
+          Log() << kINFO << "Write evaluation histograms to file" << Endl;
+          theMethod->WriteEvaluationHistosToFile(Types::kTesting);
+          theMethod->WriteEvaluationHistosToFile(Types::kTraining);
+        }
+        theMethod->TestMulticlass();
+        multiclass_testEff.push_back(
+            theMethod->GetMulticlassEfficiency(multiclass_testPur));
+
+        nmeth_used[0]++;
+        mname[0].push_back(theMethod->GetMethodName());
+      } else {
+
+        Log() << kINFO << "Evaluate classifier: " << theMethod->GetMethodName()
+              << Endl;
+        isel = (theMethod->GetMethodTypeName().Contains("Variable")) ? 1 : 0;
+
+        // perform the evaluation
+        theMethod->TestClassification();
+
+        // evaluate the classifier
+        mname[isel].push_back(theMethod->GetMethodName());
+        sig[isel].push_back(theMethod->GetSignificance());
+        sep[isel].push_back(theMethod->GetSeparation());
+        roc[isel].push_back(theMethod->GetROCIntegral());
+
+        Double_t err;
+        eff01[isel].push_back(
+            theMethod->GetEfficiency("Efficiency:0.01", Types::kTesting, err));
+        eff01err[isel].push_back(err);
+        eff10[isel].push_back(
+            theMethod->GetEfficiency("Efficiency:0.10", Types::kTesting, err));
+        eff10err[isel].push_back(err);
+        eff30[isel].push_back(
+            theMethod->GetEfficiency("Efficiency:0.30", Types::kTesting, err));
+        eff30err[isel].push_back(err);
+        effArea[isel].push_back(theMethod->GetEfficiency(
+            "", Types::kTesting, err)); // computes the area (average)
+
+        trainEff01[isel].push_back(theMethod->GetTrainingEfficiency(
+            "Efficiency:0.01")); // the first pass takes longer
+        trainEff10[isel].push_back(
+            theMethod->GetTrainingEfficiency("Efficiency:0.10"));
+        trainEff30[isel].push_back(
+            theMethod->GetTrainingEfficiency("Efficiency:0.30"));
+
+        nmeth_used[isel]++;
+
+        if (!IsSilentFile()) {
+          Log() << kINFO << "Write evaluation histograms to file" << Endl;
+          theMethod->WriteEvaluationHistosToFile(Types::kTesting);
+          theMethod->WriteEvaluationHistosToFile(Types::kTraining);
+        }
+      }
+      if (doRegression) {
+
+        std::vector<TString> vtemps = mname[0];
+        std::vector<std::vector<Double_t>> vtmp;
+        vtmp.push_back(devtest[0]); // this is the vector that is ranked
+        vtmp.push_back(devtrain[0]);
+        vtmp.push_back(biastest[0]);
+        vtmp.push_back(biastrain[0]);
+        vtmp.push_back(rmstest[0]);
+        vtmp.push_back(rmstrain[0]);
+        vtmp.push_back(minftest[0]);
+        vtmp.push_back(minftrain[0]);
+        vtmp.push_back(rhotest[0]);
+        vtmp.push_back(rhotrain[0]);
+        vtmp.push_back(devtestT[0]); // this is the vector that is ranked
+        vtmp.push_back(devtrainT[0]);
+        vtmp.push_back(biastestT[0]);
+        vtmp.push_back(biastrainT[0]);
+        vtmp.push_back(rmstestT[0]);
+        vtmp.push_back(rmstrainT[0]);
+        vtmp.push_back(minftestT[0]);
+        vtmp.push_back(minftrainT[0]);
+        gTools().UsefulSortAscending(vtmp, &vtemps);
+        mname[0] = vtemps;
+        devtest[0] = vtmp[0];
+        devtrain[0] = vtmp[1];
+        biastest[0] = vtmp[2];
+        biastrain[0] = vtmp[3];
+        rmstest[0] = vtmp[4];
+        rmstrain[0] = vtmp[5];
+        minftest[0] = vtmp[6];
+        minftrain[0] = vtmp[7];
+        rhotest[0] = vtmp[8];
+        rhotrain[0] = vtmp[9];
+        devtestT[0] = vtmp[10];
+        devtrainT[0] = vtmp[11];
+        biastestT[0] = vtmp[12];
+        biastrainT[0] = vtmp[13];
+        rmstestT[0] = vtmp[14];
+        rmstrainT[0] = vtmp[15];
+        minftestT[0] = vtmp[16];
+        minftrainT[0] = vtmp[17];
+      } else if (doMulticlass) {
+        // TODO: fill in something meaningfull
+
+      } else {
+        // now sort the variables according to the best 'eff at Beff=0.10'
+        for (Int_t k = 0; k < 2; k++) {
+          std::vector<std::vector<Double_t>> vtemp;
+          vtemp.push_back(effArea[k]); // this is the vector that is ranked
+          vtemp.push_back(eff10[k]);
+          vtemp.push_back(eff01[k]);
+          vtemp.push_back(eff30[k]);
+          vtemp.push_back(eff10err[k]);
+          vtemp.push_back(eff01err[k]);
+          vtemp.push_back(eff30err[k]);
+          vtemp.push_back(trainEff10[k]);
+          vtemp.push_back(trainEff01[k]);
+          vtemp.push_back(trainEff30[k]);
+          vtemp.push_back(sig[k]);
+          vtemp.push_back(sep[k]);
+          vtemp.push_back(roc[k]);
+          std::vector<TString> vtemps = mname[k];
+          gTools().UsefulSortDescending(vtemp, &vtemps);
+          effArea[k] = vtemp[0];
+          eff10[k] = vtemp[1];
+          eff01[k] = vtemp[2];
+          eff30[k] = vtemp[3];
+          eff10err[k] = vtemp[4];
+          eff01err[k] = vtemp[5];
+          eff30err[k] = vtemp[6];
+          trainEff10[k] = vtemp[7];
+          trainEff01[k] = vtemp[8];
+          trainEff30[k] = vtemp[9];
+          sig[k] = vtemp[10];
+          sep[k] = vtemp[11];
+          roc[k] = vtemp[12];
+          mname[k] = vtemps;
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // Second part of evaluation process
+      // --> compute correlations among MVAs
+      // --> compute correlations between input variables and MVA (determines
+      // importsance)
+      // --> count overlaps
+      // -----------------------------------------------------------------------
+      if (fCorrelations) {
+        const Int_t nmeth = methodsNoCuts.size();
+        MethodBase *method = theMethod;
+        const Int_t nvar = method->fDataSetInfo.GetNVariables();
+        if (!doRegression && !doMulticlass) {
+
+          if (nmeth > 0) {
+
+            //              needed for correlations
+            Double_t *dvec = new Double_t[nmeth + nvar];
+            std::vector<Double_t> rvec;
+
+            //              for correlations
+            TPrincipal *tpSig = new TPrincipal(nmeth + nvar, "");
+            TPrincipal *tpBkg = new TPrincipal(nmeth + nvar, "");
+
+            //              set required tree branch references
+            Int_t ivar = 0;
+            std::vector<TString> *theVars = new std::vector<TString>;
+            std::vector<ResultsClassification *> mvaRes;
+            for (MVector::iterator itrMethod = methodsNoCuts.begin();
+                 itrMethod != methodsNoCuts.end(); itrMethod++, ivar++) {
+              MethodBase *m = dynamic_cast<MethodBase *>(*itrMethod);
+              if (m == 0)
                 continue;
+              theVars->push_back(m->GetTestvarName());
+              rvec.push_back(m->GetSignalReferenceCut());
+              theVars->back().ReplaceAll("MVA_", "");
+              mvaRes.push_back(dynamic_cast<ResultsClassification *>(
+                  m->Data()->GetResults(m->GetMethodName(), Types::kTesting,
+                                        Types::kMaxAnalysisType)));
             }
-            
-            Log() << kINFO << "Train method: " << mva->GetMethodName() << " for "
-            << (fAnalysisType == Types::kRegression ? "Regression" :
-            (fAnalysisType == Types::kMulticlass ? "Multiclass classification" : "Classification")) << Endl;
-            mva->TrainMethod();
-            Log() << kINFO << "Training finished" << Endl;           
-            
-            if (fAnalysisType != Types::kRegression) {
-                
-                // variable ranking
-                Log() << Endl;
-                Log() << kINFO << "Ranking input variables (method specific)..." << Endl;
-                if (mva->Data()->GetNTrainingEvents() >= MinNoTrainingEvents) {
-                        
-                        // create and print ranking
-                    const Ranking* ranking = mva ->CreateRanking();
-                    if (ranking != 0) ranking->Print();
-                    else Log() << kINFO << "No variable ranking supplied by classifier: "
-                    << mva->GetMethodName() << Endl;
-                }
-            }
-            // delete all methods and recreate them from weight file - this ensures that the application
-            // of the methods (in TMVAClassificationApplication) is consistent with the results obtained
-            // in the testing
-            Log() << Endl;
-            if (fModelPersistence) {
-                
-                Log() << kINFO << "=== Destroy and recreate all methods via weight files for testing ===" << Endl << Endl;
-                if(!IsSilentFile()) RootBaseDir()->cd();
-                
-                    
-                    
-                TMVA::Types::EMVA methodType = mva->GetMethodType();
-                TString           weightfile = mva->GetWeightFileName();
-                    
-                // decide if .txt or .xml file should be read:
-                if (READXML) weightfile.ReplaceAll(".txt",".xml");
-                
-                DataSetInfo& dataSetInfo = mva->DataInfo();
-                TString      testvarName = mva->GetTestvarName();
-                delete mva; //itrMethod[i];
-                
-                // recreate
-                MethodBase* m = dynamic_cast<MethodBase*>( ClassifierFactory::Instance()
-                .Create( std::string(Types::Instance().GetMethodName(methodType)), 
-                            dataSetInfo, weightfile ) );
-                if( m->GetMethodType() == Types::kCategory ){ 
-                    MethodCategory *methCat = (dynamic_cast<MethodCategory*>(m));
-                    if( !methCat ) Log() << kFATAL << "Method with type kCategory cannot be casted to MethodCategory. /Factory" << Endl; 
-                    else methCat->fDataSetManager = m->DataInfo().GetDataSetManager();
-                }
-                //ToDo, Do we need to fill the DataSetManager of MethodBoost here too?
-                
-                
-                TString fFileDir= m->DataInfo().GetName();
-                fFileDir+="/"+gConfig().GetIONames().fWeightFileDir;
-                m->SetWeightFileDir(fFileDir);
-                m->SetModelPersistence(fModelPersistence);
-                m->SetSilentFile(IsSilentFile());
-                m->SetAnalysisType(fAnalysisType);
-                m->SetupMethod();
-                m->ReadStateFromFile();
-                m->SetTestvarName(testvarName);
-                    
-                // replace trained method by newly created one (from weight file) in methods vector
-                fMethodsMap[dataset]->at(method) = m;
-            }
-        }
-    }
-}
 
+            //              for overlap study
+            TMatrixD *overlapS = new TMatrixD(nmeth, nmeth);
+            TMatrixD *overlapB = new TMatrixD(nmeth, nmeth);
+            (*overlapS) *= 0; // init...
+            (*overlapB) *= 0; // init...
 
-void TMVA::Factory::TestMethod(const TString &dataset,const UInt_t method)
-{
-    Log() << kINFO << "Test all methods..." << Endl;
-    
-    // don't do anything if no method booked
-    if (fMethodsMap.empty()) {
-        Log() << kINFO << "...nothing found to test" << Endl;
-        return;
-    }
-    
-    for(auto &_dataset:fMethodsMap)
-    {
-        if(_dataset.first==dataset)
-        {
-            if(method>=_dataset.second->size())
-            {
-                //Error here
-                return;
-            }
-            Event::SetIsTraining(kFALSE);
-            MethodBase* mva = dynamic_cast<MethodBase*>((*_dataset.second)[method]);
-            if(mva==0) continue;
-            Types::EAnalysisType analysisType = mva->GetAnalysisType();
-            Log() << kINFO << "Test method: " << mva->GetMethodName() << " for "
-            << (analysisType == Types::kRegression ? "Regression" :
-            (analysisType == Types::kMulticlass ? "Multiclass classification" : "Classification")) << " performance" << Endl;
-            mva->AddOutput( Types::kTesting, analysisType );
-        }
-    }
-    
-}
+            //              loop over test tree
+            DataSet *defDs = method->fDataSetInfo.GetDataSet();
+            defDs->SetCurrentType(Types::kTesting);
+            for (Int_t ievt = 0; ievt < defDs->GetNEvents(); ievt++) {
+              const Event *ev = defDs->GetEvent(ievt);
 
-void TMVA::Factory::EvaluateMethod(const TString &dataset,const UInt_t _method)
-{
-    Log() << kINFO << "Evaluate all methods..." << Endl;
-    
-    // don't do anything if no method booked
-    if (fMethodsMap.empty()) {
-        Log() << kINFO << "...nothing found to evaluate" << Endl;
-        return;
-    }
-    
-    for(auto &_dataset:fMethodsMap)
-    {
-        if(_dataset.first==dataset)
-        {
-            if(_method>=_dataset.second->size())
-            {
-                //Error here
-                return;
-            }
-            Int_t isel;                  // will be 0 for a Method; 1 for a Variable
-            Int_t nmeth_used[2] = {0,0}; // 0 Method; 1 Variable
-            
-            std::vector<std::vector<TString> >  mname(2);
-            std::vector<std::vector<Double_t> > sig(2), sep(2), roc(2);
-            std::vector<std::vector<Double_t> > eff01(2), eff10(2), eff30(2), effArea(2);
-            std::vector<std::vector<Double_t> > eff01err(2), eff10err(2), eff30err(2);
-            std::vector<std::vector<Double_t> > trainEff01(2), trainEff10(2), trainEff30(2);
-            
-            std::vector<std::vector<Float_t> > multiclass_testEff;
-            std::vector<std::vector<Float_t> > multiclass_trainEff;
-            std::vector<std::vector<Float_t> > multiclass_testPur;
-            std::vector<std::vector<Float_t> > multiclass_trainPur;
-            
-            std::vector<std::vector<Double_t> > biastrain(1);  // "bias" of the regression on the training data
-            std::vector<std::vector<Double_t> > biastest(1);   // "bias" of the regression on test data
-            std::vector<std::vector<Double_t> > devtrain(1);   // "dev" of the regression on the training data
-            std::vector<std::vector<Double_t> > devtest(1);    // "dev" of the regression on test data
-            std::vector<std::vector<Double_t> > rmstrain(1);   // "rms" of the regression on the training data
-            std::vector<std::vector<Double_t> > rmstest(1);    // "rms" of the regression on test data
-            std::vector<std::vector<Double_t> > minftrain(1);  // "minf" of the regression on the training data
-            std::vector<std::vector<Double_t> > minftest(1);   // "minf" of the regression on test data
-            std::vector<std::vector<Double_t> > rhotrain(1);   // correlation of the regression on the training data
-            std::vector<std::vector<Double_t> > rhotest(1);    // correlation of the regression on test data
-            
-            // same as above but for 'truncated' quantities (computed for events within 2sigma of RMS)
-            std::vector<std::vector<Double_t> > biastrainT(1);
-            std::vector<std::vector<Double_t> > biastestT(1);
-            std::vector<std::vector<Double_t> > devtrainT(1);
-            std::vector<std::vector<Double_t> > devtestT(1);
-            std::vector<std::vector<Double_t> > rmstrainT(1);
-            std::vector<std::vector<Double_t> > rmstestT(1);
-            std::vector<std::vector<Double_t> > minftrainT(1);
-            std::vector<std::vector<Double_t> > minftestT(1);
-            
-            // following vector contains all methods - with the exception of Cuts, which are special
-            MVector methodsNoCuts;
-            
-            Bool_t doRegression = kFALSE;
-            Bool_t doMulticlass = kFALSE;
-            
-            // iterate over methods and evaluate
-            Event::SetIsTraining(kFALSE);
-            MethodBase* theMethod  = dynamic_cast<MethodBase*>((*_dataset.second)[_method]);
-            if(theMethod==0) continue;
-            
-            theMethod->SetFile(fgTargetFile);
-            theMethod->SetSilentFile(IsSilentFile());
-            if (theMethod->GetMethodType() != Types::kCuts) methodsNoCuts.push_back( (*_dataset.second)[_method] );
-                
-                if (theMethod->DoRegression()) {
-                    doRegression = kTRUE;
-                    
-                    Log() << kINFO << "Evaluate regression method: " << theMethod->GetMethodName() << Endl;
-                    Double_t bias, dev, rms, mInf;
-                    Double_t biasT, devT, rmsT, mInfT;
-                    Double_t rho;
-                    
-                    theMethod->TestRegression( bias, biasT, dev, devT, rms, rmsT, mInf, mInfT, rho, TMVA::Types::kTesting  );
-                    biastest[0]  .push_back( bias );
-                    devtest[0]   .push_back( dev );
-                    rmstest[0]   .push_back( rms );
-                    minftest[0]  .push_back( mInf );
-                    rhotest[0]   .push_back( rho );
-                    biastestT[0] .push_back( biasT );
-                    devtestT[0]  .push_back( devT );
-                    rmstestT[0]  .push_back( rmsT );
-                    minftestT[0] .push_back( mInfT );
-                    
-                    theMethod->TestRegression( bias, biasT, dev, devT, rms, rmsT, mInf, mInfT, rho, TMVA::Types::kTraining  );
-                    biastrain[0] .push_back( bias );
-                    devtrain[0]  .push_back( dev );
-                    rmstrain[0]  .push_back( rms );
-                    minftrain[0] .push_back( mInf );
-                    rhotrain[0]  .push_back( rho );
-                    biastrainT[0].push_back( biasT );
-                    devtrainT[0] .push_back( devT );
-                    rmstrainT[0] .push_back( rmsT );
-                    minftrainT[0].push_back( mInfT );
-                    
-                    mname[0].push_back( theMethod->GetMethodName() );
-                    nmeth_used[0]++;
-                    if(!IsSilentFile()) 
-                    {
-                        Log() << kINFO << "Write evaluation histograms to file" << Endl;
-                        theMethod->WriteEvaluationHistosToFile(Types::kTesting);
-                        theMethod->WriteEvaluationHistosToFile(Types::kTraining);
-                    }
-                } 
-                else if (theMethod->DoMulticlass()) {
-                    doMulticlass = kTRUE;
-                    Log() << kINFO << "Evaluate multiclass classification method: " << theMethod->GetMethodName() << Endl;
-                    if(!IsSilentFile()) 
-                    {
-                        Log() << kINFO << "Write evaluation histograms to file" << Endl;
-                        theMethod->WriteEvaluationHistosToFile(Types::kTesting);
-                        theMethod->WriteEvaluationHistosToFile(Types::kTraining);
-                    }
-                    theMethod->TestMulticlass();
-                    multiclass_testEff.push_back(theMethod->GetMulticlassEfficiency(multiclass_testPur));
-                    
-                    nmeth_used[0]++;
-                    mname[0].push_back( theMethod->GetMethodName() );
-                } 
-                else {
-                    
-                    Log() << kINFO << "Evaluate classifier: " << theMethod->GetMethodName() << Endl;
-                    isel = (theMethod->GetMethodTypeName().Contains("Variable")) ? 1 : 0;
-                    
-                    // perform the evaluation
-                    theMethod->TestClassification();
-                    
-                    
-                    // evaluate the classifier
-                    mname[isel].push_back( theMethod->GetMethodName() );
-                    sig[isel].push_back  ( theMethod->GetSignificance() );
-                    sep[isel].push_back  ( theMethod->GetSeparation() );
-                    roc[isel].push_back  ( theMethod->GetROCIntegral() );
-                    
-                    Double_t err;
-                    eff01[isel].push_back( theMethod->GetEfficiency("Efficiency:0.01", Types::kTesting, err) );
-                    eff01err[isel].push_back( err );
-                    eff10[isel].push_back( theMethod->GetEfficiency("Efficiency:0.10", Types::kTesting, err) );
-                    eff10err[isel].push_back( err );
-                    eff30[isel].push_back( theMethod->GetEfficiency("Efficiency:0.30", Types::kTesting, err) );
-                    eff30err[isel].push_back( err );
-                    effArea[isel].push_back( theMethod->GetEfficiency("",              Types::kTesting, err)  ); // computes the area (average)
-                    
-                    trainEff01[isel].push_back( theMethod->GetTrainingEfficiency("Efficiency:0.01") ); // the first pass takes longer
-                    trainEff10[isel].push_back( theMethod->GetTrainingEfficiency("Efficiency:0.10") );
-                    trainEff30[isel].push_back( theMethod->GetTrainingEfficiency("Efficiency:0.30") );
-                    
-                    nmeth_used[isel]++;
-                    
-                    if(!IsSilentFile()) 
-                    {
-                        Log() << kINFO << "Write evaluation histograms to file" << Endl;
-                        theMethod->WriteEvaluationHistosToFile(Types::kTesting);
-                        theMethod->WriteEvaluationHistosToFile(Types::kTraining);
-                    }
+              //                 for correlations
+              TMatrixD *theMat = 0;
+              for (Int_t im = 0; im < nmeth; im++) {
+                //                    check for NaN value
+                Double_t retval = (Double_t)(*mvaRes[im])[ievt][0];
+                if (TMath::IsNaN(retval)) {
+                  Log() << kWARNING
+                        << "Found NaN return value in event: " << ievt
+                        << " for method \"" << methodsNoCuts[im]->GetName()
+                        << "\"" << Endl;
+                  dvec[im] = 0;
+                } else
+                  dvec[im] = retval;
+              }
+              for (Int_t iv = 0; iv < nvar; iv++)
+                dvec[iv + nmeth] = (Double_t)ev->GetValue(iv);
+              if (method->fDataSetInfo.IsSignal(ev)) {
+                tpSig->AddRow(dvec);
+                theMat = overlapS;
+              } else {
+                tpBkg->AddRow(dvec);
+                theMat = overlapB;
+              }
+
+              //                 count overlaps
+              for (Int_t im = 0; im < nmeth; im++) {
+                for (Int_t jm = im; jm < nmeth; jm++) {
+                  if ((dvec[im] - rvec[im]) * (dvec[jm] - rvec[jm]) > 0) {
+                    (*theMat)(im, jm)++;
+                    if (im != jm)
+                      (*theMat)(jm, im)++;
+                  }
                 }
-            if (doRegression) {
-                
-                std::vector<TString> vtemps = mname[0];
-                std::vector< std::vector<Double_t> > vtmp;
-                vtmp.push_back( devtest[0]   );  // this is the vector that is ranked
-                vtmp.push_back( devtrain[0]  );
-                vtmp.push_back( biastest[0]  );
-                vtmp.push_back( biastrain[0] );
-                vtmp.push_back( rmstest[0]   );
-                vtmp.push_back( rmstrain[0]  );
-                vtmp.push_back( minftest[0]  );
-                vtmp.push_back( minftrain[0] );
-                vtmp.push_back( rhotest[0]   );
-                vtmp.push_back( rhotrain[0]  );
-                vtmp.push_back( devtestT[0]  );  // this is the vector that is ranked
-                vtmp.push_back( devtrainT[0] );
-                vtmp.push_back( biastestT[0] );
-                vtmp.push_back( biastrainT[0]);
-                vtmp.push_back( rmstestT[0]  );
-                vtmp.push_back( rmstrainT[0] );
-                vtmp.push_back( minftestT[0] );
-                vtmp.push_back( minftrainT[0]);
-                gTools().UsefulSortAscending( vtmp, &vtemps );
-                mname[0]      = vtemps;
-                devtest[0]    = vtmp[0];
-                devtrain[0]   = vtmp[1];
-                biastest[0]   = vtmp[2];
-                biastrain[0]  = vtmp[3];
-                rmstest[0]    = vtmp[4];
-                rmstrain[0]   = vtmp[5];
-                minftest[0]   = vtmp[6];
-                minftrain[0]  = vtmp[7];
-                rhotest[0]    = vtmp[8];
-                rhotrain[0]   = vtmp[9];
-                devtestT[0]   = vtmp[10];
-                devtrainT[0]  = vtmp[11];
-                biastestT[0]  = vtmp[12];
-                biastrainT[0] = vtmp[13];
-                rmstestT[0]   = vtmp[14];
-                rmstrainT[0]  = vtmp[15];
-                minftestT[0]  = vtmp[16];
-                minftrainT[0] = vtmp[17];
-            } 
-            else if (doMulticlass) {
-                // TODO: fill in something meaningfull
-                
-            }  
-            else {
-                // now sort the variables according to the best 'eff at Beff=0.10'
-                for (Int_t k=0; k<2; k++) {
-                    std::vector< std::vector<Double_t> > vtemp;
-                    vtemp.push_back( effArea[k] );  // this is the vector that is ranked
-                    vtemp.push_back( eff10[k] );
-                    vtemp.push_back( eff01[k] );
-                    vtemp.push_back( eff30[k] );
-                    vtemp.push_back( eff10err[k] ); 
-                    vtemp.push_back( eff01err[k] );
-                    vtemp.push_back( eff30err[k] );
-                    vtemp.push_back( trainEff10[k] );
-                    vtemp.push_back( trainEff01[k] );
-                    vtemp.push_back( trainEff30[k] );
-                    vtemp.push_back( sig[k] );
-                    vtemp.push_back( sep[k] );
-                    vtemp.push_back( roc[k] );
-                    std::vector<TString> vtemps = mname[k];
-                    gTools().UsefulSortDescending( vtemp, &vtemps );
-                    effArea[k]    = vtemp[0];
-                    eff10[k]      = vtemp[1];
-                    eff01[k]      = vtemp[2];
-                    eff30[k]      = vtemp[3];
-                    eff10err[k]   = vtemp[4];
-                    eff01err[k]   = vtemp[5];
-                    eff30err[k]   = vtemp[6];
-                    trainEff10[k] = vtemp[7];
-                    trainEff01[k] = vtemp[8];
-                    trainEff30[k] = vtemp[9];
-                    sig[k]        = vtemp[10];
-                    sep[k]        = vtemp[11];
-                    roc[k]        = vtemp[12];
-                    mname[k]      = vtemps;
-                }
+              }
             }
-            
-            // -----------------------------------------------------------------------
-            // Second part of evaluation process
-            // --> compute correlations among MVAs
-            // --> compute correlations between input variables and MVA (determines importsance)
-            // --> count overlaps
-            // -----------------------------------------------------------------------
-            if(fCorrelations)
-            {
-                const Int_t nmeth = methodsNoCuts.size();
-                MethodBase* method = theMethod;
-                const Int_t nvar  = method->fDataSetInfo.GetNVariables();
-                if (!doRegression && !doMulticlass ) {
-                    
-                    if (nmeth > 0) {
-                        
-                        //              needed for correlations
-                        Double_t *dvec = new Double_t[nmeth+nvar];
-                        std::vector<Double_t> rvec;
-                        
-                        //              for correlations
-                        TPrincipal* tpSig = new TPrincipal( nmeth+nvar, "" );   
-                        TPrincipal* tpBkg = new TPrincipal( nmeth+nvar, "" );   
-                        
-                        //              set required tree branch references
-                        Int_t ivar = 0;
-                        std::vector<TString>* theVars = new std::vector<TString>;
-                        std::vector<ResultsClassification*> mvaRes;
-                        for (MVector::iterator itrMethod = methodsNoCuts.begin(); itrMethod != methodsNoCuts.end(); itrMethod++, ivar++) {
-                            MethodBase* m = dynamic_cast<MethodBase*>(*itrMethod);
-                            if(m==0) continue;
-                            theVars->push_back( m->GetTestvarName() );
-                            rvec.push_back( m->GetSignalReferenceCut() );
-                            theVars->back().ReplaceAll( "MVA_", "" );
-                            mvaRes.push_back( dynamic_cast<ResultsClassification*>( m->Data()->GetResults( m->GetMethodName(), 
-                                                                                                           Types::kTesting, 
-                                                                                                           Types::kMaxAnalysisType) ) );
-                        }
-                        
-                        //              for overlap study
-                        TMatrixD* overlapS = new TMatrixD( nmeth, nmeth );
-                        TMatrixD* overlapB = new TMatrixD( nmeth, nmeth );
-                        (*overlapS) *= 0; // init...
-                        (*overlapB) *= 0; // init...
-                        
-                        //              loop over test tree
-                        DataSet* defDs = method->fDataSetInfo.GetDataSet();
-                        defDs->SetCurrentType(Types::kTesting);
-                        for (Int_t ievt=0; ievt<defDs->GetNEvents(); ievt++) {
-                            const Event* ev = defDs->GetEvent(ievt);
-                            
-                            //                 for correlations
-                            TMatrixD* theMat = 0;
-                            for (Int_t im=0; im<nmeth; im++) {
-                                //                    check for NaN value
-                                Double_t retval = (Double_t)(*mvaRes[im])[ievt][0];
-                                if (TMath::IsNaN(retval)) {
-                                    Log() << kWARNING << "Found NaN return value in event: " << ievt
-                                    << " for method \"" << methodsNoCuts[im]->GetName() << "\"" << Endl;
-                                    dvec[im] = 0;
-                                }
-                                else dvec[im] = retval;
-                            }
-                            for (Int_t iv=0; iv<nvar;  iv++) dvec[iv+nmeth]  = (Double_t)ev->GetValue(iv);
-                            if (method->fDataSetInfo.IsSignal(ev)) { tpSig->AddRow( dvec ); theMat = overlapS; }
-                            else                                   { tpBkg->AddRow( dvec ); theMat = overlapB; }
-                            
-                            //                 count overlaps
-                            for (Int_t im=0; im<nmeth; im++) {
-                                for (Int_t jm=im; jm<nmeth; jm++) {
-                                    if ((dvec[im] - rvec[im])*(dvec[jm] - rvec[jm]) > 0) {
-                                        (*theMat)(im,jm)++;
-                                        if (im != jm) (*theMat)(jm,im)++;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        //              renormalise overlap matrix
-                        (*overlapS) *= (1.0/defDs->GetNEvtSigTest());  // init...
-                        (*overlapB) *= (1.0/defDs->GetNEvtBkgdTest()); // init...
-                        
-                        tpSig->MakePrincipals();
-                        tpBkg->MakePrincipals();
-                        
-                        const TMatrixD* covMatS = tpSig->GetCovarianceMatrix();
-                        const TMatrixD* covMatB = tpBkg->GetCovarianceMatrix();
-                        
-                        const TMatrixD* corrMatS = gTools().GetCorrelationMatrix( covMatS );
-                        const TMatrixD* corrMatB = gTools().GetCorrelationMatrix( covMatB );
-                        
-                        //              print correlation matrices
-                        if (corrMatS != 0 && corrMatB != 0) {
-                            
-                            //                 extract MVA matrix
-                            TMatrixD mvaMatS(nmeth,nmeth);
-                            TMatrixD mvaMatB(nmeth,nmeth);
-                            for (Int_t im=0; im<nmeth; im++) {
-                                for (Int_t jm=0; jm<nmeth; jm++) {
-                                    mvaMatS(im,jm) = (*corrMatS)(im,jm);
-                                    mvaMatB(im,jm) = (*corrMatB)(im,jm);
-                                }
-                            }
-                            
-                            //                 extract variables - to MVA matrix
-                            std::vector<TString> theInputVars;
-                            TMatrixD varmvaMatS(nvar,nmeth);
-                            TMatrixD varmvaMatB(nvar,nmeth);
-                            for (Int_t iv=0; iv<nvar; iv++) {
-                                theInputVars.push_back( method->fDataSetInfo.GetVariableInfo( iv ).GetLabel() );
-                                for (Int_t jm=0; jm<nmeth; jm++) {
-                                    varmvaMatS(iv,jm) = (*corrMatS)(nmeth+iv,jm);
-                                    varmvaMatB(iv,jm) = (*corrMatB)(nmeth+iv,jm);
-                                }
-                            }
-                            
-                            if (nmeth > 1) {
-                                Log() << kINFO << Endl;
-                                Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "Inter-MVA correlation matrix (signal):" << Endl;
-                                gTools().FormattedOutput( mvaMatS, *theVars, Log() );
-                                Log() << kINFO << Endl;
-                                
-                                Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "Inter-MVA correlation matrix (background):" << Endl;
-                                gTools().FormattedOutput( mvaMatB, *theVars, Log() );
-                                Log() << kINFO << Endl;   
-                            }
-                            
-                            Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "Correlations between input variables and MVA response (signal):" << Endl;
-                            gTools().FormattedOutput( varmvaMatS, theInputVars, *theVars, Log() );
-                            Log() << kINFO << Endl;
-                            
-                            Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "Correlations between input variables and MVA response (background):" << Endl;
-                            gTools().FormattedOutput( varmvaMatB, theInputVars, *theVars, Log() );
-                            Log() << kINFO << Endl;
-                        }
-                        else Log() << kWARNING <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "<TestAllMethods> cannot compute correlation matrices" << Endl;
-                        
-                        //              print overlap matrices
-                        Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "The following \"overlap\" matrices contain the fraction of events for which " << Endl;
-                        Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "the MVAs 'i' and 'j' have returned conform answers about \"signal-likeness\"" << Endl;
-                        Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "An event is signal-like, if its MVA output exceeds the following value:" << Endl;
-                        gTools().FormattedOutput( rvec, *theVars, "Method" , "Cut value", Log() );
-                        Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "which correspond to the working point: eff(signal) = 1 - eff(background)" << Endl;
-                        
-                        //              give notice that cut method has been excluded from this test
-                        if (nmeth != 1) 
-                            Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "Note: no correlations and overlap with cut method are provided at present" << Endl;
-                        
-                        if (nmeth > 1) {
-                            Log() << kINFO << Endl;
-                            Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "Inter-MVA overlap matrix (signal):" << Endl;
-                            gTools().FormattedOutput( *overlapS, *theVars, Log() );
-                            Log() << kINFO << Endl;
-                            
-                            Log() << kINFO <<Form("Dataset[%s] : ",method->fDataSetInfo.GetName())<< "Inter-MVA overlap matrix (background):" << Endl;
-                            gTools().FormattedOutput( *overlapB, *theVars, Log() );
-                        }
-                        
-                        //              cleanup
-                        delete tpSig;
-                        delete tpBkg;
-                        delete corrMatS;
-                        delete corrMatB;
-                        delete theVars;
-                        delete overlapS;
-                        delete overlapB;
-                        delete [] dvec;
-                    }
+
+            //              renormalise overlap matrix
+            (*overlapS) *= (1.0 / defDs->GetNEvtSigTest());  // init...
+            (*overlapB) *= (1.0 / defDs->GetNEvtBkgdTest()); // init...
+
+            tpSig->MakePrincipals();
+            tpBkg->MakePrincipals();
+
+            const TMatrixD *covMatS = tpSig->GetCovarianceMatrix();
+            const TMatrixD *covMatB = tpBkg->GetCovarianceMatrix();
+
+            const TMatrixD *corrMatS = gTools().GetCorrelationMatrix(covMatS);
+            const TMatrixD *corrMatB = gTools().GetCorrelationMatrix(covMatB);
+
+            //              print correlation matrices
+            if (corrMatS != 0 && corrMatB != 0) {
+
+              //                 extract MVA matrix
+              TMatrixD mvaMatS(nmeth, nmeth);
+              TMatrixD mvaMatB(nmeth, nmeth);
+              for (Int_t im = 0; im < nmeth; im++) {
+                for (Int_t jm = 0; jm < nmeth; jm++) {
+                  mvaMatS(im, jm) = (*corrMatS)(im, jm);
+                  mvaMatB(im, jm) = (*corrMatB)(im, jm);
                 }
-            }
-            // -----------------------------------------------------------------------
-            // Third part of evaluation process
-            // --> output
-            // ----------------------------------------------------------------------- 
-            
-            if (doRegression) {
-                
+              }
+
+              //                 extract variables - to MVA matrix
+              std::vector<TString> theInputVars;
+              TMatrixD varmvaMatS(nvar, nmeth);
+              TMatrixD varmvaMatB(nvar, nmeth);
+              for (Int_t iv = 0; iv < nvar; iv++) {
+                theInputVars.push_back(
+                    method->fDataSetInfo.GetVariableInfo(iv).GetLabel());
+                for (Int_t jm = 0; jm < nmeth; jm++) {
+                  varmvaMatS(iv, jm) = (*corrMatS)(nmeth + iv, jm);
+                  varmvaMatB(iv, jm) = (*corrMatB)(nmeth + iv, jm);
+                }
+              }
+
+              if (nmeth > 1) {
                 Log() << kINFO << Endl;
-                TString hLine = "--------------------------------------------------------------------------------------------------";
-                Log() << kINFO << "Evaluation results ranked by smallest RMS on test sample:" << Endl;
-                Log() << kINFO << "(\"Bias\" quotes the mean deviation of the regression from true target." << Endl;
-                Log() << kINFO << " \"MutInf\" is the \"Mutual Information\" between regression and target." << Endl;
-                Log() << kINFO << " Indicated by \"_T\" are the corresponding \"truncated\" quantities ob-" << Endl;
-                Log() << kINFO << " tained when removing events deviating more than 2sigma from average.)" << Endl;
-                Log() << kINFO << hLine << Endl;
-                Log() << kINFO << "DataSet Name:        MVA Method:        <Bias>   <Bias_T>    RMS    RMS_T  |  MutInf MutInf_T" << Endl;
-                Log() << kINFO << hLine << Endl;
-                
-                Int_t i=0;    
-                Log() << kINFO << Form("%-20s %-15s:%#9.3g%#9.3g%#9.3g%#9.3g  |  %#5.3f  %#5.3f",
-                                           theMethod->fDataSetInfo.GetName(), 
-                                           (const char*)mname[0][i], 
-                                           biastest[0][i], biastestT[0][i], 
-                                           rmstest[0][i], rmstestT[0][i], 
-                                           minftest[0][i], minftestT[0][i] )
+                Log() << kINFO
+                      << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                      << "Inter-MVA correlation matrix (signal):" << Endl;
+                gTools().FormattedOutput(mvaMatS, *theVars, Log());
+                Log() << kINFO << Endl;
+
+                Log() << kINFO
+                      << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                      << "Inter-MVA correlation matrix (background):" << Endl;
+                gTools().FormattedOutput(mvaMatB, *theVars, Log());
+                Log() << kINFO << Endl;
+              }
+
+              Log() << kINFO
+                    << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                    << "Correlations between input variables and MVA response "
+                       "(signal):"
                     << Endl;
-                
-                Log() << kINFO << hLine << Endl;
-                Log() << kINFO << Endl;
-                Log() << kINFO << "Evaluation results ranked by smallest RMS on training sample:" << Endl;
-                Log() << kINFO << "(overtraining check)" << Endl;
-                Log() << kINFO << hLine << Endl;
-                Log() << kINFO << "DataSet Name:         MVA Method:        <Bias>   <Bias_T>    RMS    RMS_T  |  MutInf MutInf_T" << Endl;
-                Log() << kINFO << hLine << Endl;
-                
-                    Log() << kINFO << Form("%-20s %-15s:%#9.3g%#9.3g%#9.3g%#9.3g  |  %#5.3f  %#5.3f",
-                                           theMethod->fDataSetInfo.GetName(), 
-                                           (const char*)mname[0][i], 
-                                           biastrain[0][i], biastrainT[0][i], 
-                                           rmstrain[0][i], rmstrainT[0][i], 
-                                           minftrain[0][i], minftrainT[0][i] )
+              gTools().FormattedOutput(varmvaMatS, theInputVars, *theVars,
+                                       Log());
+              Log() << kINFO << Endl;
+
+              Log() << kINFO
+                    << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                    << "Correlations between input variables and MVA response "
+                       "(background):"
+                    << Endl;
+              gTools().FormattedOutput(varmvaMatB, theInputVars, *theVars,
+                                       Log());
+              Log() << kINFO << Endl;
+            } else
+              Log() << kWARNING
+                    << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                    << "<TestAllMethods> cannot compute correlation matrices"
                     << Endl;
 
-                Log() << kINFO << hLine << Endl;
-                Log() << kINFO << Endl;
-            }
-            else if( doMulticlass ){
-                Log() << Endl;
-                TString hLine = "-------------------------------------------------------------------------------------------------------";
-                Log() << kINFO << "Evaluation results ranked by best signal efficiency times signal purity " << Endl;
-                Log() << kINFO << hLine << Endl;
-                // iterate over methods and evaluate
-                    
-                    TString header= "DataSet Name     MVA Method     "; 
-                    for(UInt_t icls = 0; icls<theMethod->fDataSetInfo.GetNClasses(); ++icls){
-                        header += Form("%-12s ",theMethod->fDataSetInfo.GetClassInfo(icls)->GetName());
-                    }
-                    Log() << kINFO << header << Endl;
-                    Log() << kINFO << hLine << Endl;
-                    Int_t i=0;
-                        TString res =  Form("[%-14s] %-15s",theMethod->fDataSetInfo.GetName(),(const char*)mname[0][i]);
-                        for(UInt_t icls = 0; icls<theMethod->fDataSetInfo.GetNClasses(); ++icls){
-                            res += Form("%#1.3f        ",(multiclass_testEff[i][icls])*(multiclass_testPur[i][icls]));
-                        }
-                        Log() << kINFO << res << Endl;
-                    Log() << kINFO << hLine << Endl;
-                    Log() << kINFO << Endl;
-            } 
-            else {
-                if(fROC)
-                {
-                    Log().EnableOutput();
-                    gConfig().SetSilent(kFALSE);
-                    Log() << Endl;
-                    TString hLine = "-------------------------------------------------------------------------------------------------------------------";
-                    Log() << kINFO << "Evaluation results ranked by best signal efficiency and purity (area)" << Endl;
-                    Log() << kINFO << hLine << Endl;
-                    Log() << kINFO << "DataSet              MVA              Signal efficiency at bkg eff.(error):                | Sepa-    Signifi- "   << Endl;
-                    Log() << kINFO << "Name:                Method:          @B=0.01    @B=0.10    @B=0.30    ROC-integ    ROCCurve| ration:  cance:   "   << Endl;
-                    Log() << kINFO << hLine << Endl;
-                    Int_t k=0;
-                        if (k == 1 && nmeth_used[k] > 0) {
-                            Log() << kINFO << hLine << Endl;
-                            Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
-                        }
-                            Int_t i=0;
+            //              print overlap matrices
+            Log() << kINFO
+                  << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                  << "The following \"overlap\" matrices contain the fraction "
+                     "of events for which "
+                  << Endl;
+            Log() << kINFO
+                  << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                  << "the MVAs 'i' and 'j' have returned conform answers about "
+                     "\"signal-likeness\""
+                  << Endl;
+            Log() << kINFO
+                  << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                  << "An event is signal-like, if its MVA output exceeds the "
+                     "following value:"
+                  << Endl;
+            gTools().FormattedOutput(rvec, *theVars, "Method", "Cut value",
+                                     Log());
+            Log() << kINFO
+                  << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                  << "which correspond to the working point: eff(signal) = 1 - "
+                     "eff(background)"
+                  << Endl;
 
-                            if (k == 1) mname[k][i].ReplaceAll( "Variable_", "" );
-                            
-                            TMVA::Results *results=theMethod->Data()->GetResults(mname[k][i],Types::kTesting,Types::kClassification);
-                            std::vector<Float_t> *mvaRes = dynamic_cast<ResultsClassification *>(results)->GetValueVector();
-                            std::vector<Bool_t>  *mvaResType = dynamic_cast<ResultsClassification *>(results)->GetValueVectorTypes();
-                            Double_t fROCalcValue = 0;
-                            TMVA::ROCCurve *fROCCurve = nullptr;
-                            if (mvaResType->size() != 0) { 
-                                fROCCurve = new TMVA::ROCCurve(*mvaRes, *mvaResType);
-                                fROCalcValue = fROCCurve->GetROCIntegral();
-                            }
-                            
-                            if (sep[k][i] < 0 || sig[k][i] < 0) {
-                                // cannot compute separation/significance -> no MVA (usually for Cuts)
-                                
-                                Log() << kINFO << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  %#1.3f(%02i)    %#1.3f       %#1.3f | --       --",
-                                                       dataset.Data(), 
-                                                       (const char*)mname[k][i], 
-                                                       eff01[k][i], Int_t(1000*eff01err[k][i]), 
-                                                       eff10[k][i], Int_t(1000*eff10err[k][i]), 
-                                                       eff30[k][i], Int_t(1000*eff30err[k][i]), 
-                                                       effArea[k][i],fROCalcValue) << Endl;
-                            }
-                            else {
-                                Log() << kINFO << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  %#1.3f(%02i)    %#1.3f       %#1.3f | %#1.3f    %#1.3f",
-                                                       dataset.Data(), 
-                                                       (const char*)mname[k][i], 
-                                                       eff01[k][i], Int_t(1000*eff01err[k][i]), 
-                                                       eff10[k][i], Int_t(1000*eff10err[k][i]), 
-                                                       eff30[k][i], Int_t(1000*eff30err[k][i]), 
-                                                       effArea[k][i],fROCalcValue, 
-                                                       sep[k][i], sig[k][i]) << Endl;
-                            }
-                            if (fROCCurve) delete fROCCurve;
-                    Log() << kINFO << hLine << Endl;
-                    Log() << kINFO << Endl;
-                    Log() << kINFO << "Testing efficiency compared to training efficiency (overtraining check)" << Endl;
-                    Log() << kINFO << hLine << Endl;
-                    Log() << kINFO << "DataSet              MVA              Signal efficiency: from test sample (from training sample) "   << Endl;
-                    Log() << kINFO << "Name:                Method:          @B=0.01             @B=0.10            @B=0.30   "   << Endl;
-                    Log() << kINFO << hLine << Endl;
-                        if (k == 1 && nmeth_used[k] > 0) {
-                            Log() << kINFO << hLine << Endl;
-                            Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
-                        }
-                            if (k == 1) mname[k][i].ReplaceAll( "Variable_", "" );
-                            
-                            Log() << kINFO << Form("%-20s %-15s: %#1.3f (%#1.3f)       %#1.3f (%#1.3f)      %#1.3f (%#1.3f)",
-                                                   theMethod->fDataSetInfo.GetName(), 
-                                                   (const char*)mname[k][i], 
-                                                   eff01[k][i],trainEff01[k][i], 
-                                                   eff10[k][i],trainEff10[k][i],
-                                                   eff30[k][i],trainEff30[k][i]) << Endl;
-                    Log() << kINFO << hLine << Endl;
-                    Log() << kINFO << Endl; 
-                    if (gTools().CheckForSilentOption( GetOptions() )) Log().InhibitOutput();
-                }//end fROC
+            //              give notice that cut method has been excluded from
+            //              this test
+            if (nmeth != 1)
+              Log() << kINFO
+                    << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                    << "Note: no correlations and overlap with cut method are "
+                       "provided at present"
+                    << Endl;
+
+            if (nmeth > 1) {
+              Log() << kINFO << Endl;
+              Log() << kINFO
+                    << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                    << "Inter-MVA overlap matrix (signal):" << Endl;
+              gTools().FormattedOutput(*overlapS, *theVars, Log());
+              Log() << kINFO << Endl;
+
+              Log() << kINFO
+                    << Form("Dataset[%s] : ", method->fDataSetInfo.GetName())
+                    << "Inter-MVA overlap matrix (background):" << Endl;
+              gTools().FormattedOutput(*overlapB, *theVars, Log());
             }
-            if(!IsSilentFile())
-            {
-                std::list<TString> datasets;
-                for (Int_t k=0; k<2; k++) {
-                    for (Int_t i=0; i<nmeth_used[k]; i++) {
-                        // write test/training trees
-                        RootBaseDir()->cd(theMethod->fDataSetInfo.GetName());
-                        if(std::find(datasets.begin(), datasets.end(), theMethod->fDataSetInfo.GetName()) == datasets.end())
-                        {
-                            theMethod->fDataSetInfo.GetDataSet()->GetTree(Types::kTesting)->Write( "", TObject::kOverwrite );
-                            theMethod->fDataSetInfo.GetDataSet()->GetTree(Types::kTraining)->Write( "", TObject::kOverwrite );
-                            datasets.push_back(theMethod->fDataSetInfo.GetName());
-                        }
-                    }
-                }
-            }
-            
-            
-            
+
+            //              cleanup
+            delete tpSig;
+            delete tpBkg;
+            delete corrMatS;
+            delete corrMatB;
+            delete theVars;
+            delete overlapS;
+            delete overlapB;
+            delete[] dvec;
+          }
         }
-    }
-}
+      }
+      // -----------------------------------------------------------------------
+      // Third part of evaluation process
+      // --> output
+      // -----------------------------------------------------------------------
 
+      if (doRegression) {
+
+        Log() << kINFO << Endl;
+        TString hLine = "------------------------------------------------------"
+                        "--------------------------------------------";
+        Log() << kINFO
+              << "Evaluation results ranked by smallest RMS on test sample:"
+              << Endl;
+        Log() << kINFO << "(\"Bias\" quotes the mean deviation of the "
+                          "regression from true target."
+              << Endl;
+        Log() << kINFO << " \"MutInf\" is the \"Mutual Information\" between "
+                          "regression and target."
+              << Endl;
+        Log() << kINFO << " Indicated by \"_T\" are the corresponding "
+                          "\"truncated\" quantities ob-"
+              << Endl;
+        Log() << kINFO << " tained when removing events deviating more than "
+                          "2sigma from average.)"
+              << Endl;
+        Log() << kINFO << hLine << Endl;
+        Log() << kINFO << "DataSet Name:        MVA Method:        <Bias>   "
+                          "<Bias_T>    RMS    RMS_T  |  MutInf MutInf_T"
+              << Endl;
+        Log() << kINFO << hLine << Endl;
+
+        Int_t i = 0;
+        Log() << kINFO
+              << Form("%-20s %-15s:%#9.3g%#9.3g%#9.3g%#9.3g  |  %#5.3f  %#5.3f",
+                      theMethod->fDataSetInfo.GetName(),
+                      (const char *)mname[0][i], biastest[0][i],
+                      biastestT[0][i], rmstest[0][i], rmstestT[0][i],
+                      minftest[0][i], minftestT[0][i])
+              << Endl;
+
+        Log() << kINFO << hLine << Endl;
+        Log() << kINFO << Endl;
+        Log() << kINFO
+              << "Evaluation results ranked by smallest RMS on training sample:"
+              << Endl;
+        Log() << kINFO << "(overtraining check)" << Endl;
+        Log() << kINFO << hLine << Endl;
+        Log() << kINFO << "DataSet Name:         MVA Method:        <Bias>   "
+                          "<Bias_T>    RMS    RMS_T  |  MutInf MutInf_T"
+              << Endl;
+        Log() << kINFO << hLine << Endl;
+
+        Log() << kINFO
+              << Form("%-20s %-15s:%#9.3g%#9.3g%#9.3g%#9.3g  |  %#5.3f  %#5.3f",
+                      theMethod->fDataSetInfo.GetName(),
+                      (const char *)mname[0][i], biastrain[0][i],
+                      biastrainT[0][i], rmstrain[0][i], rmstrainT[0][i],
+                      minftrain[0][i], minftrainT[0][i])
+              << Endl;
+
+        Log() << kINFO << hLine << Endl;
+        Log() << kINFO << Endl;
+      } else if (doMulticlass) {
+        Log() << Endl;
+        TString hLine = "------------------------------------------------------"
+                        "-------------------------------------------------";
+        Log() << kINFO << "Evaluation results ranked by best signal efficiency "
+                          "times signal purity "
+              << Endl;
+        Log() << kINFO << hLine << Endl;
+        // iterate over methods and evaluate
+
+        TString header = "DataSet Name     MVA Method     ";
+        for (UInt_t icls = 0; icls < theMethod->fDataSetInfo.GetNClasses();
+             ++icls) {
+          header += Form("%-12s ",
+                         theMethod->fDataSetInfo.GetClassInfo(icls)->GetName());
+        }
+        Log() << kINFO << header << Endl;
+        Log() << kINFO << hLine << Endl;
+        Int_t i = 0;
+        TString res = Form("[%-14s] %-15s", theMethod->fDataSetInfo.GetName(),
+                           (const char *)mname[0][i]);
+        for (UInt_t icls = 0; icls < theMethod->fDataSetInfo.GetNClasses();
+             ++icls) {
+          res += Form("%#1.3f        ", (multiclass_testEff[i][icls]) *
+                                            (multiclass_testPur[i][icls]));
+        }
+        Log() << kINFO << res << Endl;
+        Log() << kINFO << hLine << Endl;
+        Log() << kINFO << Endl;
+      } else {
+        if (fROC) {
+          Log().EnableOutput();
+          gConfig().SetSilent(kFALSE);
+          Log() << Endl;
+          TString hLine = "----------------------------------------------------"
+                          "----------------------------------------------------"
+                          "-----------";
+          Log() << kINFO << "Evaluation results ranked by best signal "
+                            "efficiency and purity (area)"
+                << Endl;
+          Log() << kINFO << hLine << Endl;
+          Log() << kINFO
+                << "DataSet              MVA              Signal efficiency at "
+                   "bkg eff.(error):                | Sepa-    Signifi- "
+                << Endl;
+          Log() << kINFO
+                << "Name:                Method:          @B=0.01    @B=0.10   "
+                   " @B=0.30    ROC-integ    ROCCurve| ration:  cance:   "
+                << Endl;
+          Log() << kINFO << hLine << Endl;
+          Int_t k = 0;
+          if (k == 1 && nmeth_used[k] > 0) {
+            Log() << kINFO << hLine << Endl;
+            Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
+          }
+          Int_t i = 0;
+
+          if (k == 1)
+            mname[k][i].ReplaceAll("Variable_", "");
+
+          TMVA::Results *results = theMethod->Data()->GetResults(
+              mname[k][i], Types::kTesting, Types::kClassification);
+          std::vector<Float_t> *mvaRes =
+              dynamic_cast<ResultsClassification *>(results)->GetValueVector();
+          std::vector<Bool_t> *mvaResType =
+              dynamic_cast<ResultsClassification *>(results)
+                  ->GetValueVectorTypes();
+          Double_t fROCalcValue = 0;
+          TMVA::ROCCurve *fROCCurve = nullptr;
+          if (mvaResType->size() != 0) {
+            fROCCurve = new TMVA::ROCCurve(*mvaRes, *mvaResType);
+            fROCalcValue = fROCCurve->GetROCIntegral();
+          }
+
+          if (sep[k][i] < 0 || sig[k][i] < 0) {
+            // cannot compute separation/significance -> no MVA (usually for
+            // Cuts)
+
+            Log() << kINFO
+                  << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  "
+                          "%#1.3f(%02i)    %#1.3f       %#1.3f | --       --",
+                          dataset.Data(), (const char *)mname[k][i],
+                          eff01[k][i], Int_t(1000 * eff01err[k][i]),
+                          eff10[k][i], Int_t(1000 * eff10err[k][i]),
+                          eff30[k][i], Int_t(1000 * eff30err[k][i]),
+                          effArea[k][i], fROCalcValue)
+                  << Endl;
+          } else {
+            Log() << kINFO
+                  << Form("%-20s %-15s: %#1.3f(%02i)  %#1.3f(%02i)  "
+                          "%#1.3f(%02i)    %#1.3f       %#1.3f | %#1.3f    "
+                          "%#1.3f",
+                          dataset.Data(), (const char *)mname[k][i],
+                          eff01[k][i], Int_t(1000 * eff01err[k][i]),
+                          eff10[k][i], Int_t(1000 * eff10err[k][i]),
+                          eff30[k][i], Int_t(1000 * eff30err[k][i]),
+                          effArea[k][i], fROCalcValue, sep[k][i], sig[k][i])
+                  << Endl;
+          }
+          if (fROCCurve)
+            delete fROCCurve;
+          Log() << kINFO << hLine << Endl;
+          Log() << kINFO << Endl;
+          Log() << kINFO << "Testing efficiency compared to training "
+                            "efficiency (overtraining check)"
+                << Endl;
+          Log() << kINFO << hLine << Endl;
+          Log() << kINFO
+                << "DataSet              MVA              Signal efficiency: "
+                   "from test sample (from training sample) "
+                << Endl;
+          Log() << kINFO << "Name:                Method:          @B=0.01     "
+                            "        @B=0.10            @B=0.30   "
+                << Endl;
+          Log() << kINFO << hLine << Endl;
+          if (k == 1 && nmeth_used[k] > 0) {
+            Log() << kINFO << hLine << Endl;
+            Log() << kINFO << "Input Variables: " << Endl << hLine << Endl;
+          }
+          if (k == 1)
+            mname[k][i].ReplaceAll("Variable_", "");
+
+          Log() << kINFO
+                << Form("%-20s %-15s: %#1.3f (%#1.3f)       %#1.3f (%#1.3f)    "
+                        "  %#1.3f (%#1.3f)",
+                        theMethod->fDataSetInfo.GetName(),
+                        (const char *)mname[k][i], eff01[k][i],
+                        trainEff01[k][i], eff10[k][i], trainEff10[k][i],
+                        eff30[k][i], trainEff30[k][i])
+                << Endl;
+          Log() << kINFO << hLine << Endl;
+          Log() << kINFO << Endl;
+          if (gTools().CheckForSilentOption(GetOptions()))
+            Log().InhibitOutput();
+        } // end fROC
+      }
+      if (!IsSilentFile()) {
+        std::list<TString> datasets;
+        for (Int_t k = 0; k < 2; k++) {
+          for (Int_t i = 0; i < nmeth_used[k]; i++) {
+            // write test/training trees
+            RootBaseDir()->cd(theMethod->fDataSetInfo.GetName());
+            if (std::find(datasets.begin(), datasets.end(),
+                          theMethod->fDataSetInfo.GetName()) ==
+                datasets.end()) {
+              theMethod->fDataSetInfo.GetDataSet()
+                  ->GetTree(Types::kTesting)
+                  ->Write("", TObject::kOverwrite);
+              theMethod->fDataSetInfo.GetDataSet()
+                  ->GetTree(Types::kTraining)
+                  ->Write("", TObject::kOverwrite);
+              datasets.push_back(theMethod->fDataSetInfo.GetName());
+            }
+          }
+        }
+      }
+    }
+  }
+}
