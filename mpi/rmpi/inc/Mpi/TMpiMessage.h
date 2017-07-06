@@ -109,4 +109,9 @@ void TMpiMessage::WriteObject(ClassType &obj)
 }
 }
 
+// #if PYTHON_FOUND
+// template<> TMpiMessage::void TMpiMessage::WriteObject(PyObject *obj);
+// template<> TMpiMessage::void TMpiMessage::WriteObject(PyObject &obj);
+// #endif
+
 #endif

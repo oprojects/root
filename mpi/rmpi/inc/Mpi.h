@@ -2,11 +2,12 @@
 #ifndef ROOT_Mpi
 #define ROOT_Mpi
 
-#include <Mpi/TEnvironment.h>
 #include <Mpi/Globals.h>
+#include <Mpi/TEnvironment.h>
 #include <Mpi/TMpiMessage.h>
 #include <Mpi/TInfo.h>
 #include <Mpi/TMpiTimer.h>
+#include <Mpi/TMpiFile.h>
 #include <Mpi/TIntraCommunicator.h>
 #include <Mpi/TInterCommunicator.h>
 

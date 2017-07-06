@@ -377,6 +377,7 @@ void TCommunicator::Unserialize<TMpiMessage>(Char_t *ibuffer, Int_t isize, TMpiM
    }
 }
 
+//______________________________________________________________________________
 TString TCommunicator::GetCommName() const
 {
    Char_t name[MPI_MAX_PROCESSOR_NAME];
@@ -385,6 +386,7 @@ TString TCommunicator::GetCommName() const
    return TString(name, size);
 }
 
+//______________________________________________________________________________
 void TCommunicator::SetCommName(const TString name)
 {
    ROOT_MPI_CHECK_CALL(MPI_Comm_set_name, (fComm, name.Data()), this);

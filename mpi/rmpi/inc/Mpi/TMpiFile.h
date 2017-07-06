@@ -11,7 +11,6 @@
 namespace ROOT {
 
 namespace Mpi {
-class TCommunicator;
 /**
 * \class TMpiFileMerger
 * Class that inherits from TFileMerger that helps to merge TMpiFiles in memory.

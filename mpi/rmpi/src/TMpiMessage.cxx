@@ -30,3 +30,9 @@ TMpiMessage::TMpiMessage(Char_t *buffer, Int_t size) : TMessage(buffer, size)
 TMpiMessage::TMpiMessage(UInt_t what, Int_t bufsiz) : TMessage(what, bufsiz)
 {
 }
+
+// #if PYTHON_FOUND
+// template<> TMpiMessage::void TMpiMessage::WriteObject(PyObject *obj){}
+// template<> TMpiMessage::void TMpiMessage::WriteObject(PyObject &obj){}
+// #endif
+

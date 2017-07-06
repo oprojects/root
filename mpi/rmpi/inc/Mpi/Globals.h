@@ -2,6 +2,11 @@
 #ifndef ROOT_Mpi_Globals
 #define ROOT_Mpi_Globals
 
+#if PYTHON_FOUND
+#include <Python.h> // Needs to support ROOTMpi on  PyROOT
+#endif
+
+
 #include <Rtypes.h>
 #include <TError.h>
 #include <TObject.h>

@@ -17,6 +17,8 @@
 #pragma link C++ nestedclass;
 #pragma link C++ nestedtypedef;
 
+#pragma link C++ namespace Mpi;
+
 /*
  * Some raw MPI datatypes
  */
@@ -24,6 +26,7 @@
 #pragma link C++ class MPI_Request+;
 #pragma link C++ class MPI_Info+;
 
+#pragma link off all methods;
 
 /*
  * ROOTMpi datatypes
@@ -42,6 +45,8 @@
 #pragma link C++ class ROOT::Mpi::TEnvironment;
 #pragma link C++ class ROOT::Mpi::TNullCommunicator;
 #pragma link C++ class ROOT::Mpi::TCommunicator;
+#pragma link C++ class ROOT::Mpi::TCommunicator::Send<TMatrixD>;
+#pragma link C++ class ROOT::Mpi::TCommunicator::Recv<TMatrixD>;
 #pragma link C++ class ROOT::Mpi::TIntraCommunicator;
 #pragma link C++ class ROOT::Mpi::TInterCommunicator;
 #pragma link C++ class ROOT::Mpi::TGroup;
@@ -51,10 +56,5 @@
  * Global communicator
  */
 #pragma link C++ global ROOT::Mpi::COMM_WORLD;
-
-#ifdef USE_FOR_AUTLOADING
-#pragma link C++ class ROOT::Mpi;
-#endif
-
 
 #endif

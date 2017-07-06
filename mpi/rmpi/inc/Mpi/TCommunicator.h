@@ -983,6 +983,13 @@ template <>
 void TCommunicator::Unserialize<TMpiMessage>(Char_t *ibuffer, Int_t isize, TMpiMessage *vars, Int_t count,
                                              const TCommunicator *comm, Int_t dest, Int_t source, Int_t tag,
                                              Int_t root);
+
+
+#if PYTHON_FOUND
+//if python found added template specialization to support PyROOT
+
+#endif
+
 }
 }
 
