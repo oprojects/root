@@ -845,7 +845,8 @@ INPUT                  = . \
                          ../../math/ \
                          ../../misc/memstat/ \
                          ../../montecarlo/ \
-                         ../../mpi \
+                         ../../mpi/rmpi \
+                         ../../mpi/rootmpi \
                          ../../net/alien/ \
                          ../../net/auth/ \
                          ../../net/davix/ \
