@@ -111,7 +111,26 @@ namespace Rcpp {
       return TString(::Rcpp::as<std::string>(s).c_str());
    }
 
-//TVectorT
+   // Bool_t
+   template <>
+   inline SEXP wrap(const Bool_t &s)
+   {
+      return wrap((unsigned int)s);
+   }
+   template <>
+   inline Bool_t as(SEXP s)
+   {
+      return ::Rcpp::as<unsigned int>(s);
+   }
+   // Char_t
+   template <>
+   inline SEXP wrap(const Char_t &s)
+   {
+      TString str(s);
+      return wrap(str);
+   }
+
+   // TVectorT
    template<> SEXP wrap(const TVectorT<Double_t> &v);
    template<> TVectorT<Double_t> as(SEXP v);
 
@@ -137,6 +156,7 @@ namespace Rcpp {
    ROOT_R_RAW_PTR_PROTOTYPE(Float_t)
    ROOT_R_RAW_PTR_PROTOTYPE(Int_t)
    ROOT_R_RAW_PTR_PROTOTYPE(Char_t)
+   ROOT_R_RAW_PTR_PROTOTYPE(Option_t)
 
    // TRFunctionImport
    template<> SEXP wrap(const ROOT::R::TRFunctionImport &o);
