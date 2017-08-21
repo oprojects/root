@@ -50,30 +50,52 @@
 //Some useful typedefs
 typedef std::vector<TString> TVectorString;
 
-#define ROOT_R_RAW_PTR_PROTOTYPE(TypeDefClass, TypeDefPtr) \
-   template <>                                             \
-   SEXP wrap(const ROOT::R::TypeDefClass &o);              \
-   template <>                                             \
-   ROOT::R::TypeDefClass as(SEXP);                         \
-   template <>                                             \
-   SEXP wrap(const ROOT::R::TypeDefPtr &o);                \
-   template <>                                             \
-   ROOT::R::TypeDefPtr as(SEXP);
+#define ROOT_R_RAW_PTR_PROTOTYPE(Type)       \
+   typedef Type *Type##ptr;                  \
+   typedef ROOT::R::TRPtr<Type> TRPtr##Type; \
+   template <>                               \
+   SEXP wrap(const TRPtr##Type &o);          \
+   template <>                               \
+   TRPtr##Type as(SEXP);                     \
+   template <>                               \
+   SEXP wrap(const Type##ptr &o);            \
+   template <>                               \
+   Type##ptr as(SEXP);
+
+#define ROOT_R_EXPORT_PTR(Type)              \
+   namespace Rcpp {                          \
+   typedef Type *Type##ptr;                  \
+   typedef ROOT::R::TRPtr<Type> TRPtr##Type; \
+   template <>                               \
+   SEXP wrap(const TRPtr##Type &o)           \
+   {                                         \
+      return (SEXP)o;                        \
+   }                                         \
+   template <>                               \
+   TRPtr##Type as(SEXP o)                    \
+   {                                         \
+      return TRPtr##Type(o);                 \
+   }                                         \
+   template <>                               \
+   SEXP wrap(const Type##ptr &o)             \
+   {                                         \
+      return TRPtr##Type(o);                 \
+   }                                         \
+   template <>                               \
+   Type##ptr as(SEXP o)                      \
+   {                                         \
+      return TRPtr##Type(o).As();            \
+   }                                         \
+   }
 
 #include<RcppCommon.h>
-#include <Rcpp/XPtr.h>
+#include <TRPtr.h>
 namespace ROOT {
    namespace R {
       class TRFunctionExport;
       class TRFunctionImport;
       class TRDataFrame;
       class TRObject;
-      template <class T>
-      class TRPtr;
-      typedef TRPtr<Double_t> TRPtrD;
-      typedef TRPtr<Int_t> TRPtrI;
-      typedef Double_t *Double_ptr;
-      typedef Int_t *Int_ptr;
    }
 }
 
@@ -111,9 +133,10 @@ namespace Rcpp {
    template<> ROOT::R::TRObject as(SEXP) ;
 
    // TRPtr
-   ROOT_R_RAW_PTR_PROTOTYPE(TRPtrD, Double_ptr)
-
-   ROOT_R_RAW_PTR_PROTOTYPE(TRPtrI, Int_ptr)
+   ROOT_R_RAW_PTR_PROTOTYPE(Double_t)
+   ROOT_R_RAW_PTR_PROTOTYPE(Float_t)
+   ROOT_R_RAW_PTR_PROTOTYPE(Int_t)
+   ROOT_R_RAW_PTR_PROTOTYPE(Char_t)
 
    // TRFunctionImport
    template<> SEXP wrap(const ROOT::R::TRFunctionImport &o);

@@ -14,26 +14,26 @@
 
 Rcpp::internal::NamedPlaceHolder ROOT::R::Label;
 
-#define ROOT_R_RAW_PTR_DEFINITION(TypeDefClass, TypeDefPtr) \
-   template <>                                              \
-   SEXP wrap(const ROOT::R::TypeDefClass &o)                \
-   {                                                        \
-      return (SEXP)o;                                       \
-   }                                                        \
-   template <>                                              \
-   ROOT::R::TypeDefClass as(SEXP o)                         \
-   {                                                        \
-      return ROOT::R::TypeDefClass(o);                      \
-   }                                                        \
-   template <>                                              \
-   SEXP wrap(const ROOT::R::TypeDefPtr &o)                  \
-   {                                                        \
-      return ROOT::R::TypeDefClass(o);                      \
-   }                                                        \
-   template <>                                              \
-   ROOT::R::TypeDefPtr as(SEXP o)                           \
-   {                                                        \
-      return ROOT::R::TypeDefClass(o).As();                 \
+#define ROOT_R_RAW_PTR_DEFINITION(Type) \
+   template <>                          \
+   SEXP wrap(const TRPtr##Type &o)      \
+   {                                    \
+      return (SEXP)o;                   \
+   }                                    \
+   template <>                          \
+   TRPtr##Type as(SEXP o)               \
+   {                                    \
+      return TRPtr##Type(o);            \
+   }                                    \
+   template <>                          \
+   SEXP wrap(const Type##ptr &o)        \
+   {                                    \
+      return TRPtr##Type(o);            \
+   }                                    \
+   template <>                          \
+   Type##ptr as(SEXP o)                 \
+   {                                    \
+      return TRPtr##Type(o).As();       \
    }
 
 namespace Rcpp {
@@ -129,9 +129,10 @@ namespace Rcpp {
    }
 
    // TRPtr
-
-   ROOT_R_RAW_PTR_DEFINITION(TRPtrD, Double_ptr)
-   ROOT_R_RAW_PTR_DEFINITION(TRPtrI, Int_ptr)
+   ROOT_R_RAW_PTR_DEFINITION(Double_t)
+   ROOT_R_RAW_PTR_DEFINITION(Float_t)
+   ROOT_R_RAW_PTR_DEFINITION(Int_t)
+   ROOT_R_RAW_PTR_DEFINITION(Char_t)
 }
 namespace ROOT {
    namespace R {
