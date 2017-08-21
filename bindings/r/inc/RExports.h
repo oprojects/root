@@ -50,14 +50,30 @@
 //Some useful typedefs
 typedef std::vector<TString> TVectorString;
 
+#define ROOT_R_RAW_PTR_PROTOTYPE(TypeDefClass, TypeDefPtr) \
+   template <>                                             \
+   SEXP wrap(const ROOT::R::TypeDefClass &o);              \
+   template <>                                             \
+   ROOT::R::TypeDefClass as(SEXP);                         \
+   template <>                                             \
+   SEXP wrap(const ROOT::R::TypeDefPtr &o);                \
+   template <>                                             \
+   ROOT::R::TypeDefPtr as(SEXP);
 
 #include<RcppCommon.h>
+#include <Rcpp/XPtr.h>
 namespace ROOT {
    namespace R {
       class TRFunctionExport;
       class TRFunctionImport;
       class TRDataFrame;
       class TRObject;
+      template <class T>
+      class TRPtr;
+      typedef TRPtr<Double_t> TRPtrD;
+      typedef TRPtr<Int_t> TRPtrI;
+      typedef Double_t *Double_ptr;
+      typedef Int_t *Int_ptr;
    }
 }
 
@@ -94,7 +110,12 @@ namespace Rcpp {
    template<> SEXP wrap(const ROOT::R::TRObject &o);
    template<> ROOT::R::TRObject as(SEXP) ;
 
-//TRFunctionImport
+   // TRPtr
+   ROOT_R_RAW_PTR_PROTOTYPE(TRPtrD, Double_ptr)
+
+   ROOT_R_RAW_PTR_PROTOTYPE(TRPtrI, Int_ptr)
+
+   // TRFunctionImport
    template<> SEXP wrap(const ROOT::R::TRFunctionImport &o);
    template<> ROOT::R::TRFunctionImport as(SEXP) ;
 

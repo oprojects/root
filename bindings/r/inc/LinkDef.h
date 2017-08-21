@@ -29,4 +29,9 @@
 
 #pragma link C++ class ROOT::R::TRDataFrame+;
 
+#pragma link C++ class ROOT::R::TRPtr < Double_t > +;
+#pragma link C++ typedef ROOT::R::TRPtrD;
+#pragma link C++ class ROOT::R::TRPtr < Int_t > +;
+#pragma link C++ typedef ROOT::R::TRPtrI;
+
 #endif

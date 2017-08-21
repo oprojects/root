@@ -10,8 +10,31 @@
 #include<TRObject.h>
 #include<TRDataFrame.h>
 #include<Rcpp/Vector.h>
+#include <TRPtr.h>
 
 Rcpp::internal::NamedPlaceHolder ROOT::R::Label;
+
+#define ROOT_R_RAW_PTR_DEFINITION(TypeDefClass, TypeDefPtr) \
+   template <>                                              \
+   SEXP wrap(const ROOT::R::TypeDefClass &o)                \
+   {                                                        \
+      return (SEXP)o;                                       \
+   }                                                        \
+   template <>                                              \
+   ROOT::R::TypeDefClass as(SEXP o)                         \
+   {                                                        \
+      return ROOT::R::TypeDefClass(o);                      \
+   }                                                        \
+   template <>                                              \
+   SEXP wrap(const ROOT::R::TypeDefPtr &o)                  \
+   {                                                        \
+      return ROOT::R::TypeDefClass(o);                      \
+   }                                                        \
+   template <>                                              \
+   ROOT::R::TypeDefPtr as(SEXP o)                           \
+   {                                                        \
+      return ROOT::R::TypeDefClass(o).As();                 \
+   }
 
 namespace Rcpp {
 //TVectorT
@@ -105,6 +128,10 @@ namespace Rcpp {
       return ROOT::R::TRFunctionImport(Rcpp::as<Rcpp::Function>(obj));
    }
 
+   // TRPtr
+
+   ROOT_R_RAW_PTR_DEFINITION(TRPtrD, Double_ptr)
+   ROOT_R_RAW_PTR_DEFINITION(TRPtrI, Int_ptr)
 }
 namespace ROOT {
    namespace R {

@@ -22,6 +22,8 @@
 
 #include <TThread.h>
 
+#include <TRPtr.h>
+
 /**
  @namespace ROOT::R
  namespace associated R package for ROOT.
@@ -191,6 +193,25 @@ namespace ROOT {
                fInterface->Assign<T>(var, fName);
                return *this;
             }
+            template <class T = SEXP>
+            Binding &operator<<(SEXP var)
+            {
+               fInterface->Assign<T>(var, fName);
+               return *this;
+            }
+            template <class T>
+            Binding &operator<<(T *var)
+            {
+               TRPtr<T> ptr(var);
+               fInterface->Assign<T>(ptr, fName);
+               return *this;
+            }
+            template <class T>
+            Binding &operator<<(TRPtr<T> var)
+            {
+               fInterface->Assign<T>(var, fName);
+               return *this;
+            }
 #include<TRInterface_Binding.h>
             template <class T> operator T()
             {
@@ -272,6 +293,11 @@ namespace ROOT {
          */
          void Assign(const TRDataFrame &df, const TString &name);
 
+         template <class T>
+         void Assign(const T *df, const TString &name);
+         template <class T>
+         void Assign(const TRPtr<T> df, const TString &name);
+
          /**
          Method to get a R prompt to work interactively with tab completation support
          */
@@ -317,6 +343,18 @@ namespace ROOT {
          ClassDef(TRInterface, 0)
       };
    }
+}
+
+template <class T>
+void ROOT::R::TRInterface::Assign(const T *ptr, const TString &name)
+{
+   fR->assign(Rcpp::XPtr<T>(const_cast<T *>(ptr)), name.Data());
+}
+
+template <class T>
+void ROOT::R::TRInterface::Assign(const TRPtr<T> ptr, const TString &name)
+{
+   fR->assign(&ptr, name.Data());
 }
 
 inline ROOT::R::TRInterface &operator<<(ROOT::R::TRInterface &r, TString code)

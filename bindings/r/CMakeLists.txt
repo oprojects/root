@@ -15,7 +15,9 @@ set(R_HEADERS ${CMAKE_SOURCE_DIR}/bindings/r/inc/TRInterface.h
               ${CMAKE_SOURCE_DIR}/bindings/r/inc/TRFunctionImport.h
               ${CMAKE_SOURCE_DIR}/bindings/r/inc/TRInternalFunction.h
               ${CMAKE_SOURCE_DIR}/bindings/r/inc/TRDataFrame.h
-              ${CMAKE_SOURCE_DIR}/bindings/r/inc/RExports.h)
+              ${CMAKE_SOURCE_DIR}/bindings/r/inc/TRPtr.h
+              ${CMAKE_SOURCE_DIR}/bindings/r/inc/RExports.h
+              )
 
 ROOT_STANDARD_LIBRARY_PACKAGE(RInterface
                               HEADERS ${R_HEADERS}
