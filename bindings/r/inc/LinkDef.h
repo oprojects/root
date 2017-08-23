@@ -29,4 +29,6 @@
 
 #pragma link C++ class ROOT::R::TRDataFrame+;
 
+#pragma link C++ class ROOT::R::TRCppyy + ;
+
 #endif

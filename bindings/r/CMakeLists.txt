@@ -16,6 +16,7 @@ set(R_HEADERS ${CMAKE_SOURCE_DIR}/bindings/r/inc/TRInterface.h
               ${CMAKE_SOURCE_DIR}/bindings/r/inc/TRInternalFunction.h
               ${CMAKE_SOURCE_DIR}/bindings/r/inc/TRDataFrame.h
               ${CMAKE_SOURCE_DIR}/bindings/r/inc/TRPtr.h
+              ${CMAKE_SOURCE_DIR}/bindings/r/inc/TRCppyy.h
               ${CMAKE_SOURCE_DIR}/bindings/r/inc/TCallContext.h
               ${CMAKE_SOURCE_DIR}/bindings/r/inc/RCppyy.h
               ${CMAKE_SOURCE_DIR}/bindings/r/inc/RExports.h
