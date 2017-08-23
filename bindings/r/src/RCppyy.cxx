@@ -90,14 +90,14 @@ public:
 } // unnamed namespace
 
 // local helpers -------------------------------------------------------------
-static inline TClassRef &type_from_handle(ROOT::R::Cppyy::TCppScope_t scope)
+inline TClassRef &type_from_handle(ROOT::R::Cppyy::TCppScope_t scope)
 {
    assert((ClassRefs_t::size_type)scope < g_classrefs.size());
    return g_classrefs[(ClassRefs_t::size_type)scope];
 }
 
 // type_from_handle to go here
-static inline TFunction *type_get_method(ROOT::R::Cppyy::TCppType_t klass, ROOT::R::Cppyy::TCppIndex_t idx)
+inline TFunction *type_get_method(ROOT::R::Cppyy::TCppType_t klass, ROOT::R::Cppyy::TCppIndex_t idx)
 {
    TClassRef &cr = type_from_handle(klass);
    if (cr.GetClass())
@@ -106,7 +106,7 @@ static inline TFunction *type_get_method(ROOT::R::Cppyy::TCppType_t klass, ROOT:
    return (TFunction *)idx;
 }
 
-static inline ROOT::R::Cppyy::TCppScope_t declaring_scope(ROOT::R::Cppyy::TCppMethod_t method)
+inline ROOT::R::Cppyy::TCppScope_t declaring_scope(ROOT::R::Cppyy::TCppMethod_t method)
 {
    TMethod *m = dynamic_cast<TMethod *>((TFunction *)method);
    if (m)

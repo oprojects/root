@@ -185,6 +185,51 @@ namespace Rcpp {
       private:
          std::array<T, i> t;
       } ;
+      typedef Double_t(*funprt)(Double_t*,Double_t*);
+      template <>
+      class Exporter<funprt> {
+      public:
+         Exporter(SEXP x)
+         {
+            t = *Rcpp::XPtr<funprt>(x).get();
+         }
+         funprt get()
+         {
+            return t;
+         }
+      private:
+         funprt t;
+      } ;
+      typedef Double_t(*cfunprt)(const Double_t*,const Double_t*);
+      template <>
+      class Exporter<cfunprt> {
+      public:
+         Exporter(SEXP x)
+         {
+            t = *Rcpp::XPtr<cfunprt>(x).get();
+         }
+         cfunprt get()
+         {
+            return t;
+         }
+      private:
+         cfunprt t;
+      } ;
+      typedef const Char_t* ccharptr;
+      template <>
+      class Exporter<ccharptr> {
+      public:
+         Exporter(SEXP x)
+         {
+            t = Rcpp::as<TString>(x);
+         }
+         ccharptr get()
+         {
+            return t;
+         }
+      private:
+         ccharptr t;
+      } ;
    }
 }
 //added to fix bug in last version of Rcpp on mac
