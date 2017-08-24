@@ -33,6 +33,9 @@ TString TRCodeGen::GenClass()
       auto args = fCppyy.GetListOfMethodArgs(i);
       if (!fCppyy.IsPublicMethod(i))
          continue;
+      if (fCppyy.IsOperator(i))
+         continue;
+
       if (fCppyy.IsConstructor(i)) {
 
          if (args->GetSize() == 0) {
