@@ -12,9 +12,17 @@
 using namespace ROOT::R;
 
 //______________________________________________________________________________
+TRCppyy::TRCppyy(TClass *cl) : fCl(cl)
+{
+   TString name = cl->GetName();
+   fNamespaces = GetNameSpaces(name.Data(), fClearName);
+}
+
+//______________________________________________________________________________
 TRCppyy::TRCppyy(const Char_t *name)
 {
    fCl = gROOT->GetClass(name, 1, 0);
+   fNamespaces = GetNameSpaces(name, fClearName);
 }
 
 //______________________________________________________________________________
@@ -159,4 +167,37 @@ Bool_t TRCppyy::IsConstMethod(TMethod *m)
       return m->Property() & kIsConstMethod;
    }
    return kFALSE;
+}
+
+//______________________________________________________________________________
+std::vector<TString> TRCppyy::GetNameSpaces(const Char_t *name, TString &cname)
+{
+   std::vector<TString> namespaces;
+   TString sname = name;
+   if (sname.Contains("::")) {
+      auto names = sname.Tokenize("::");
+      for (auto i = 0; i < names->GetSize(); i++) {
+         TString tname = names->At(i)->GetName();
+         if (gROOT->GetClass(tname.Data())->Property() & kIsNamespace)
+            namespaces.push_back(cname);
+         else
+            cname = tname;
+      }
+   }
+   return namespaces;
+}
+
+//______________________________________________________________________________
+std::vector<TString> TRCppyy::GetNameSpaces(const Char_t *name)
+{
+   TString dummy;
+   return GetNameSpaces(name, dummy);
+}
+
+//______________________________________________________________________________
+std::vector<TString> TRCppyy::GetNameSpaces(TClass *cl)
+{
+   if (cl)
+      return GetNameSpaces(cl->GetName());
+   return std::vector<TString>();
 }

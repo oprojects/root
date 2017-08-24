@@ -24,9 +24,12 @@ namespace ROOT {
 namespace R {
 class TRCppyy : public TObject {
    TClass *fCl;
+   TString fClearName;
+   std::vector<TString> fNamespaces;
+   static std::vector<TString> GetNameSpaces(const Char_t *name, TString &cname);
 
 public:
-   TRCppyy(TClass *cl) : fCl(cl) {}
+   TRCppyy(TClass *cl);
    TRCppyy(const Char_t *name);
 
    TListOfFunctions *GetListOfMethods();
@@ -46,6 +49,9 @@ public:
    TList *GetListOfMethodArgs(Int_t index);
 
    const Char_t *GetName() { return fCl->GetName(); }
+   const Char_t *GetClearName() { return fClearName.Data(); }
+
+   std::vector<TString> GetNameSpaces() { return fNamespaces; }
 
    // static
    static Bool_t IsPublicMethod(TMethod *m);
@@ -55,6 +61,8 @@ public:
    static Bool_t IsNamespace(TClass *cl);
    static Bool_t IsNamespace(const Char_t *name);
    static Bool_t IsConstMethod(TMethod *m);
+   static std::vector<TString> GetNameSpaces(const Char_t *name);
+   static std::vector<TString> GetNameSpaces(TClass *cl);
 
    ClassDef(TRCppyy, 0) //
 };
