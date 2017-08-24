@@ -26,13 +26,14 @@ class TRCppyy : public TObject {
    TClass *fCl;
    TString fClearName;
    std::vector<TString> fNamespaces;
-   static std::vector<TString> GetNameSpaces(const Char_t *name, TString &cname);
+   static std::vector<TString> GetNameSpaces(const TString name, TString &cname);
 
 public:
    TRCppyy(TClass *cl);
-   TRCppyy(const Char_t *name);
+   TRCppyy(const TString name);
 
    TListOfFunctions *GetListOfMethods();
+   TListOfFunctions *GetListOfPublicMethods();
 
    Bool_t IsNamespace();
 
@@ -48,10 +49,12 @@ public:
    // Args related methods
    TList *GetListOfMethodArgs(Int_t index);
 
-   const Char_t *GetName() { return fCl->GetName(); }
-   const Char_t *GetClearName() { return fClearName.Data(); }
+   const TString GetName() { return fCl->GetName(); }
+   const TString GetClearName() { return fClearName; }
 
    std::vector<TString> GetNameSpaces() { return fNamespaces; }
+
+   Bool_t IsConstructor(Int_t index);
 
    // static
    static Bool_t IsPublicMethod(TMethod *m);
@@ -59,9 +62,10 @@ public:
    static Bool_t IsArgEnum(TMethodArg *arg);
    static TString GetArgPrototype(TMethodArg *arg);
    static Bool_t IsNamespace(TClass *cl);
-   static Bool_t IsNamespace(const Char_t *name);
+   static Bool_t IsNamespace(const TString name);
    static Bool_t IsConstMethod(TMethod *m);
-   static std::vector<TString> GetNameSpaces(const Char_t *name);
+   static Bool_t IsConstructor(TMethod *m);
+   static std::vector<TString> GetNameSpaces(const TString name);
    static std::vector<TString> GetNameSpaces(TClass *cl);
 
    ClassDef(TRCppyy, 0) //

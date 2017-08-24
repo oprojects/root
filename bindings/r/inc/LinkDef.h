@@ -31,4 +31,5 @@
 
 #pragma link C++ class ROOT::R::TRCppyy + ;
 
+#pragma link C++ class ROOT::R::TRCodeGen + ;
 #endif

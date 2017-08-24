@@ -15,20 +15,30 @@ using namespace ROOT::R;
 TRCppyy::TRCppyy(TClass *cl) : fCl(cl)
 {
    TString name = cl->GetName();
-   fNamespaces = GetNameSpaces(name.Data(), fClearName);
+   fNamespaces = GetNameSpaces(name, fClearName);
+   if (fClearName.IsNull())
+      fClearName = name;
 }
 
 //______________________________________________________________________________
-TRCppyy::TRCppyy(const Char_t *name)
+TRCppyy::TRCppyy(const TString name)
 {
-   fCl = gROOT->GetClass(name, 1, 0);
+   fCl = gROOT->GetClass(name.Data(), 1, 0);
    fNamespaces = GetNameSpaces(name, fClearName);
+   if (fClearName.IsNull())
+      fClearName = name;
 }
 
 //______________________________________________________________________________
 TListOfFunctions *TRCppyy::GetListOfMethods()
 {
    return (TListOfFunctions *)fCl->GetListOfMethods(1);
+}
+
+//______________________________________________________________________________
+TListOfFunctions *TRCppyy::GetListOfPublicMethods()
+{
+   return (TListOfFunctions *)fCl->GetListOfAllPublicMethods(1);
 }
 
 //______________________________________________________________________________
@@ -111,6 +121,15 @@ TList *TRCppyy::GetListOfMethodArgs(Int_t index)
 }
 
 //______________________________________________________________________________
+Bool_t TRCppyy::IsConstructor(Int_t index)
+{
+   auto m = GetMethod(index);
+   if (m)
+      return m->ExtraProperty() & kIsConstructor;
+   return kFALSE;
+}
+
+//______________________________________________________________________________
 Bool_t TRCppyy::IsArgEnum(TMethodArg *arg)
 {
    return gInterpreter->ClassInfo_IsEnum(arg->GetTitle());
@@ -152,9 +171,9 @@ Bool_t TRCppyy::IsNamespace(TClass *cl)
    return kFALSE;
 }
 //______________________________________________________________________________
-Bool_t TRCppyy::IsNamespace(const Char_t *name)
+Bool_t TRCppyy::IsNamespace(const TString name)
 {
-   auto cl = gROOT->GetClass(name);
+   auto cl = gROOT->GetClass(name.Data());
    if (cl)
       return cl->Property() & kIsNamespace;
    return kFALSE;
@@ -170,25 +189,24 @@ Bool_t TRCppyy::IsConstMethod(TMethod *m)
 }
 
 //______________________________________________________________________________
-std::vector<TString> TRCppyy::GetNameSpaces(const Char_t *name, TString &cname)
+std::vector<TString> TRCppyy::GetNameSpaces(const TString name, TString &cname)
 {
    std::vector<TString> namespaces;
-   TString sname = name;
-   if (sname.Contains("::")) {
-      auto names = sname.Tokenize("::");
-      for (auto i = 0; i < names->GetSize(); i++) {
-         TString tname = names->At(i)->GetName();
-         if (gROOT->GetClass(tname.Data())->Property() & kIsNamespace)
-            namespaces.push_back(cname);
+   if (name.Contains("::")) {
+      auto names = name.Tokenize("::");
+      for (auto i = 0; i < names->GetEntries(); i++) {
+         auto item = ((TObjString *)names->At(i))->GetString();
+         if (IsNamespace(item))
+            namespaces.push_back(item);
          else
-            cname = tname;
+            cname = item;
       }
    }
    return namespaces;
 }
 
 //______________________________________________________________________________
-std::vector<TString> TRCppyy::GetNameSpaces(const Char_t *name)
+std::vector<TString> TRCppyy::GetNameSpaces(const TString name)
 {
    TString dummy;
    return GetNameSpaces(name, dummy);
@@ -200,4 +218,12 @@ std::vector<TString> TRCppyy::GetNameSpaces(TClass *cl)
    if (cl)
       return GetNameSpaces(cl->GetName());
    return std::vector<TString>();
+}
+
+//______________________________________________________________________________
+Bool_t TRCppyy::IsConstructor(TMethod *m)
+{
+   if (m)
+      return m->ExtraProperty() & kIsConstructor;
+   return kFALSE;
 }
