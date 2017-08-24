@@ -20,12 +20,14 @@ namespace R {
 class TRCodeGen : public TObject {
    TRCppyy fCppyy;
    TString fClassCode;
+   TString fWrapCode;
 
 public:
    TRCodeGen(TClass *cl);
    TRCodeGen(const TString name);
 
    TString GenClass();
+   TString GenWrap();
 
    ClassDef(TRCodeGen, 0) //
 };
