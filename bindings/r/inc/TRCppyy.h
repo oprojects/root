@@ -56,6 +56,7 @@ public:
 
    Bool_t IsConstructor(Int_t index);
    Bool_t IsOperator(Int_t index);
+   Bool_t IsStaticMethod(Int_t index);
 
    // static
    static Bool_t IsPublicMethod(TMethod *m);
@@ -67,6 +68,7 @@ public:
    static Bool_t IsConstMethod(TMethod *m);
    static Bool_t IsConstructor(TMethod *m);
    static Bool_t IsOperator(TMethod *m);
+   static Bool_t IsStaticMethod(TMethod *m);
    static std::vector<TString> GetNameSpaces(const TString name);
    static std::vector<TString> GetNameSpaces(TClass *cl);
 

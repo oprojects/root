@@ -139,6 +139,15 @@ Bool_t TRCppyy::IsOperator(Int_t index)
 }
 
 //______________________________________________________________________________
+Bool_t TRCppyy::IsStaticMethod(Int_t index)
+{
+   auto m = GetMethod(index);
+   if (m)
+      return m->Property() & kIsStatic;
+   return kFALSE;
+}
+
+//______________________________________________________________________________
 Bool_t TRCppyy::IsArgEnum(TMethodArg *arg)
 {
    return gInterpreter->ClassInfo_IsEnum(arg->GetTitle());
@@ -243,5 +252,13 @@ Bool_t TRCppyy::IsOperator(TMethod *m)
    auto f = (TFunction *)m;
    if (f)
       return f->ExtraProperty() & kIsOperator;
+   return kFALSE;
+}
+
+//______________________________________________________________________________
+Bool_t TRCppyy::IsStaticMethod(TMethod *m)
+{
+   if (m)
+      return m->Property() & kIsStatic;
    return kFALSE;
 }

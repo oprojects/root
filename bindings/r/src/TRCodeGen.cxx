@@ -61,7 +61,11 @@ TString TRCodeGen::GenClass()
             fClassCode += "){}\n";
          }
       } else {
-         fClassCode += Form("\t%s %s(", meth->GetReturnTypeName(), meth->GetName());
+         if (fCppyy.IsStaticMethod(i))
+            fClassCode += "\tstatic ";
+         else
+            fClassCode += "\t";
+         fClassCode += Form("%s %s(", meth->GetReturnTypeName(), meth->GetName());
          for (auto j = 0; j < args->GetSize(); j++) {
             fClassCode += fCppyy.GetArgPrototype(i, j);
             if (j < args->GetSize() - 1)
