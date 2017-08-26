@@ -51,7 +51,9 @@ public:
 
    const TString GetName() { return fCl->GetName(); }
    const TString GetClearName() { return fClearName; }
+   const TString GetTitle() { return fCl->GetTitle(); }
 
+   
    std::vector<TString> GetNameSpaces() { return fNamespaces; }
 
    Bool_t IsConstructor(Int_t index);

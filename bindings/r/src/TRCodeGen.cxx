@@ -61,6 +61,8 @@ TString TRCodeGen::GenClass()
             fClassCode += "){}\n";
          }
       } else {
+         if (TString(meth->GetName()).Contains("~"))
+            continue;
          if (fCppyy.IsStaticMethod(i))
             fClassCode += "\tstatic ";
          else
@@ -94,20 +96,43 @@ TString TRCodeGen::GenClass()
 }
 
 //______________________________________________________________________________
-TString TRCodeGen::GenWrap()
+TString TRCodeGen::GenClassWrap()
 {
    auto cname = fCppyy.GetClearName();
    auto name = fCppyy.GetName();
    auto mlist = fCppyy.GetListOfPublicMethods();
-   fWrapCode = "";
+   
+   fWrapCode =Form("ROOT::R::class_<R%s>(\"R%s\", \"%s\")\n",cname.Data(),cname.Data(),fCppyy.GetTitle().Data());
+
    for (auto i = 0; i < mlist->GetSize(); i++) {
       auto meth = fCppyy.GetMethod(i);
       auto args = fCppyy.GetListOfMethodArgs(i);
       if (!fCppyy.IsPublicMethod(i))
          continue;
+      if (fCppyy.IsOperator(i))
+         continue;
       if (fCppyy.IsConstructor(i)) {
 
+         if (args->GetSize() == 0) {
+            fWrapCode += "\t.constructor()\n";
+         } else {
+            fWrapCode += "\t.constructor<";
+            for (auto j = 0; j < args->GetSize(); j++) {
+               auto arg = fCppyy.GetMethodArg(i, j);
+               if (fCppyy.IsArgEnum(arg)) {
+                  fWrapCode += "Int_t";
+               } else {
+                  fWrapCode += arg->GetTitle();
+               }
+               if (j < args->GetSize() - 1)
+                  fWrapCode += ",";
+            }
+            fWrapCode += ">()\n";
+         }
+
       } else {
+         if (TString(meth->GetName()).Contains("~"))
+            continue;
          fWrapCode += Form("\t.method(\"%s\",(%s (R%s::*)(", meth->GetName(), meth->GetReturnTypeName(), cname.Data());
          for (auto j = 0; j < args->GetSize(); j++) {
             fWrapCode += fCppyy.GetMethodArg(i, j)->GetTitle();
@@ -115,10 +140,11 @@ TString TRCodeGen::GenWrap()
                fWrapCode += ",";
          }
          if (fCppyy.IsConstMethod(meth)) {
-            fWrapCode += Form(")const)&%s::%s)\n", cname.Data(), meth->GetName());
+            fWrapCode += Form(")const)&R%s::%s)\n", cname.Data(), meth->GetName());
          } else
-            fWrapCode += Form("))&%s::%s)\n", cname.Data(), meth->GetName());
+            fWrapCode += Form("))&R%s::%s)\n", cname.Data(), meth->GetName());
       }
    }
+   fWrapCode +=";\n";
    return fWrapCode;
 }

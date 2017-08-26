@@ -27,7 +27,7 @@ public:
    TRCodeGen(const TString name);
 
    TString GenClass();
-   TString GenWrap();
+   TString GenClassWrap();
 
    ClassDef(TRCodeGen, 0) //
 };
