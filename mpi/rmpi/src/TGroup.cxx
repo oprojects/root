@@ -193,6 +193,26 @@ TGroup TGroup::Include(Int_t n, const Int_t ranks[]) const
 
 //______________________________________________________________________________
 /**
+ * Produces a group by reordering an existing group and taking only listed
+ * members.
+ * The Method ROOT::Mpi::TGroup::Include creates a group that consists of the n
+ * processes in group with ranks rank[0], ..., rank[n-1];
+ * the process with rank i in output group is the process with rank ranks[i] in
+ * group. Each of the n elements of ranks must be a valid rank in group and all
+ * elements must be distinct, or else the program is erroneous. If n = 0, then
+ * group_out is ROOT::Mpi::GROUP_EMPTY. This function can, for instance, be used
+ * to reorder the elements of a group.
+ * \param ranks ROOT::TSeqI objects with ranks of processes in group to appear in new group (array of
+ * integers).
+ * \return New group derived from above, in the order defined by ranks (handle).
+ */
+TGroup TGroup::Include(const TSeqI &ranks) const
+{
+   return Include(ranks.size(), Seq2Ptr(ranks));
+}
+
+//______________________________________________________________________________
+/**
  * Produces a group by reordering an existing group and taking only unlisted
  * members.
  * The function ROOT::Mpi::TGroup::Exclude creates a group of processes that is
@@ -212,6 +232,26 @@ TGroup TGroup::Exclude(Int_t n, const Int_t ranks[]) const
    MPI_Group newgroup;
    ROOT_MPI_CHECK_CALL(MPI_Group_excl, (fGroup, n, const_cast<Int_t *>(ranks), &newgroup), this);
    return newgroup;
+}
+
+//______________________________________________________________________________
+/**
+ * Produces a group by reordering an existing group and taking only unlisted
+ * members.
+ * The function ROOT::Mpi::TGroup::Exclude creates a group of processes that is
+ * obtained by deleting from group those processes with ranks ranks[0], ...
+ * ranks[n-1].
+ * The ordering of processes in newgroup is identical to the ordering in group.
+ * Each of the n elements of ranks must be a valid rank in group  and  all
+ * elements must be distinct; otherwise, the call is erroneous. If n = 0, then
+ * new group is identical to group.
+ * \param ranks ROOT::TSeqI objects with ranks in group not to appear in new group.
+ * \return New group derived from above, preserving the order defined by group
+ * (handle).
+ */
+TGroup TGroup::Exclude(const TSeqI &ranks) const
+{
+   return Exclude(ranks.size(), Seq2Ptr(ranks));
 }
 
 //______________________________________________________________________________
