@@ -56,6 +56,8 @@ public:
    virtual TIntraCommunicator *Dup() const;
 
    virtual TIntraCommunicator Create(const TGroup &group) const;
+   
+   virtual TIntraCommunicator CreateGroup(const TSeqI &ranks,Int_t tag) const;
 
    virtual TIntraCommunicator Split(Int_t color, Int_t key) const;
 
