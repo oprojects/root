@@ -66,25 +66,35 @@ TIntraCommunicator TIntraCommunicator::Create(const TGroup &group) const
 //______________________________________________________________________________
 /**
  * Creates a new communicator.
- * TIntraCommunicator::CreateGroup is  similar  to  TIntraCommunicator::Create;  however, TIntraCommunicator::Create must be called by all processes in the group of comm, whereas TIntraCommunicator::CreateGroup must be called by all processes in group, which is a subgroup of the group of comm. In addition, TIntraCommunicator::CreateGroup  requires  that  comm  is  an intracommunicator.  TIntraCommunicator::CreateGroup  returns  a  new TIntraCommunicator, new comm, for which the group argument defines the communication group. No cached information propagates from comm to newcomm.
+ * TIntraCommunicator::CreateGroup is  similar  to  TIntraCommunicator::Create;  however, TIntraCommunicator::Create
+ must be called by all processes in the group of comm, whereas TIntraCommunicator::CreateGroup must be called by all
+ processes in group, which is a subgroup of the group of comm. In addition, TIntraCommunicator::CreateGroup  requires
+ that  comm  is  an intracommunicator.  TIntraCommunicator::CreateGroup  returns  a  new TIntraCommunicator, new comm,
+ for which the group argument defines the communication group. No cached information propagates from comm to newcomm.
 
- Each process must provide a group argument that is a subgroup of the group associated with comm; this could be ROOT::Mpi::GROUP_EMPTY. If a non-empty group is specified,  then  all  processes in that group must call the function, and each of these processes must provide the same arguments, including a group that contains the same members with the same ordering. Otherwise the call is erroneous. If the calling process is a member of the group given as the  group  argument,  then new comm  is  a communicator with group as its associated group. If the calling process is not a member of group, e.g., group is ROOT::Mpi::GROUP_EMPTY, then the call is a local operation and ROOT::Mpi::COMM_NULL is returned as newcomm.
- 
+ Each process must provide a group argument that is a subgroup of the group associated with comm; this could be
+ ROOT::Mpi::GROUP_EMPTY. If a non-empty group is specified,  then  all  processes in that group must call the function,
+ and each of these processes must provide the same arguments, including a group that contains the same members with the
+ same ordering. Otherwise the call is erroneous. If the calling process is a member of the group given as the  group
+ argument,  then new comm  is  a communicator with group as its associated group. If the calling process is not a member
+ of group, e.g., group is ROOT::Mpi::GROUP_EMPTY, then the call is a local operation and ROOT::Mpi::COMM_NULL is
+ returned as newcomm.
+
  \param ranks ROOT::TSeqI object with ranks to use in the new group
  \param tag id for the new group
  \return TIntraCommunicator object for a given group of ranks
  */
-TIntraCommunicator TIntraCommunicator::CreateGroup(const TSeqI &ranks,Int_t tag) const
+TIntraCommunicator TIntraCommunicator::CreateGroup(const TSeqI &ranks, Int_t tag) const
 {
-   auto group=GetGroup(); //global group
+   auto group = GetGroup(); // global group
    ROOT_MPI_CHECK_GROUP((MPI_Group)group, this);
-   
+
    MPI_Group subgroup;
-   ROOT_MPI_CHECK_CALL(MPI_Group_incl,(group, ranks.size(), Seq2Ptr(ranks), &subgroup),this);
+   ROOT_MPI_CHECK_CALL(MPI_Group_incl, (group, ranks.size(), Seq2Ptr(ranks), &subgroup), this);
    ROOT_MPI_CHECK_GROUP(subgroup, this);
 
    MPI_Comm ncomm;
-   ROOT_MPI_CHECK_CALL(MPI_Comm_create_group,(fComm, subgroup, tag, &ncomm),this);   
+   ROOT_MPI_CHECK_CALL(MPI_Comm_create_group, (fComm, subgroup, tag, &ncomm), this);
    return ncomm;
 }
 

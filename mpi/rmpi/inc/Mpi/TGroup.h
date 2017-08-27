@@ -67,7 +67,11 @@ public:
 
    virtual TGroup Include(Int_t n, const Int_t ranks[]) const;
 
+   virtual TGroup Include(const TSeqI &ranks) const;
+
    virtual TGroup Exclude(Int_t n, const Int_t ranks[]) const;
+
+   virtual TGroup Exclude(const TSeqI &ranks) const;
 
    virtual TGroup RangeInclude(Int_t n, const Int_t ranges[][3]) const;
 

@@ -312,6 +312,18 @@ void communicators()
       ROOT_MPI_ASSERT(neighbors[0] == 2, &graph);
       //       std::cout << "neighbor rank 3 = " << neighbors[0] << std::endl;
    }
-   
-   
+
+   auto size = COMM_WORLD.GetSize();
+   rank = COMM_WORLD.GetRank();
+   auto subcomm = COMM_WORLD.CreateGroup({0, size, 2}, 0);
+   Int_t result = 0;
+
+   if (rank % 2 == 0) {
+      subcomm.Reduce(rank, result, SUM, 0);
+      if (subcomm.GetRank() == 0) {
+         Int_t sum = 0;
+         for (auto i : ROOT::TSeqI(0, size, 2)) sum += i;
+         ROOT_MPI_ASSERT(result == sum, &subcomm);
+      }
+   }
 }
