@@ -10,9 +10,20 @@ using namespace ROOT::Mpi;
  * ROOT::Mpi::TIntraCommunicator::Aceept
  * \param info TInfo object with the port information
  */
-TPort::TPort(const TInfo &info) : fPort(""), fPublishName(""), fInfo(info)
+TPort::TPort(const TInfo &info, const Bool_t open) : fPort(""), fPublishName(""), fInfo(info)
 {
-   Open(info);
+   if (open)
+      Open(info);
+}
+
+//______________________________________________________________________________
+/**
+ * Set a port a given port name
+ * \param port TString object with the port name
+ */
+void TPort::SetPortName(const TString &port)
+{
+   fPort = port;
 }
 
 //______________________________________________________________________________
