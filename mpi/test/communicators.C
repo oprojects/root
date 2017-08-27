@@ -312,4 +312,6 @@ void communicators()
       ROOT_MPI_ASSERT(neighbors[0] == 2, &graph);
       //       std::cout << "neighbor rank 3 = " << neighbors[0] << std::endl;
    }
+   
+   
 }

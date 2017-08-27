@@ -150,6 +150,18 @@ const MPI_Datatype DATATYPE_NULL = MPI_DATATYPE_NULL;
 TIntraCommunicator COMM_WORLD = TIntraCommunicator(MPI_COMM_WORLD);
 TIntraCommunicator COMM_SELF = TIntraCommunicator(MPI_COMM_SELF);
 
+//______________________________________________________________________________
+const Int_t* Seq2Ptr(const TSeqI &seq)
+{
+    Int_t *s=new Int_t[seq.size()];
+    for(UInt_t i=0;i<seq.size();i++)
+    {
+        s[i]=seq[i];
+    }
+    return const_cast<const Int_t*>(s);
+}
+
+
 Bool_t TMpiSignalHandler::Notify()
 {
    if (!fEnv.IsFinalized()) {
