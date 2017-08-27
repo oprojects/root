@@ -26,7 +26,11 @@ public:
    TGroup(const MPI_Group &group) : fGroup(group) {}
    TGroup(const TGroup &group) : TObject(group), fGroup(group.fGroup) {}
 
-   inline virtual ~TGroup() {}
+   inline virtual ~TGroup()
+   {
+      if (fGroup != GROUP_EMPTY)
+         Free();
+   }
 
    inline TGroup &operator=(const TGroup &group)
    {

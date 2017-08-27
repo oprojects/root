@@ -95,6 +95,9 @@ TIntraCommunicator TIntraCommunicator::CreateGroup(const TSeqI &ranks, Int_t tag
 
    MPI_Comm ncomm;
    ROOT_MPI_CHECK_CALL(MPI_Comm_create_group, (fComm, subgroup, tag, &ncomm), this);
+
+   group.Free();
+   ROOT_MPI_CHECK_CALL(MPI_Group_free, (&subgroup), this);
    return ncomm;
 }
 
