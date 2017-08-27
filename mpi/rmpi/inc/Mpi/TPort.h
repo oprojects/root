@@ -25,7 +25,7 @@ protected:
    TPort(const TInfo &info, TString port, TString pname);
 
 public:
-   TPort(const TInfo &info = INFO_NULL);
+   TPort(const TInfo &info = INFO_NULL, const Bool_t open = kFALSE);
    TPort(const TPort &port);
    virtual ~TPort();
 
@@ -33,6 +33,7 @@ public:
    const TInfo GetInfo() const;
    const TString GetPublishName() const;
 
+   void SetPortName(const TString &port);
    void Open(const TInfo &info = INFO_NULL);
    void Close();
    Bool_t IsOpen();
