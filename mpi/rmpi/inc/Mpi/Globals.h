@@ -9,6 +9,7 @@
 #include <TClassEdit.h>
 #include <TROOT.h>
 #include <TSystem.h>
+#include <ROOT/TSeq.hxx>
 
 #include <Mpi/TOp.h>
 
@@ -347,6 +348,8 @@ MPI_Datatype GetDataType()
    Warning("GetDataType", "Unknown raw datatype <%s>, returning null datatype", ROOT_MPI_TYPE_NAME(T));
    return DATATYPE_NULL;
 }
+const Int_t *Seq2Ptr(const TSeqI &seq);
+
 // MPI Interrupt signal handler
 class TMpiSignalHandler : public TSignalHandler {
 private:
