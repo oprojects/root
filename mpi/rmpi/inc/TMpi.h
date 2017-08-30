@@ -10,4 +10,7 @@
 #include <Mpi/TIntraCommunicator.h>
 #include <Mpi/TInterCommunicator.h>
 
+#if defined(ROOT_MPI_SCR)
+#include <Mpi/TCheckPoint.h>
+#endif
 #endif

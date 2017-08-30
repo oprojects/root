@@ -41,6 +41,8 @@ private:
    TMpiSignalHandler *fTerminationSignal;
    TMpiSignalHandler *fSigSegmentationViolationSignal;
 
+   static Bool_t fCheckPoint;
+
 protected:
    void InitSignalHandlers();
 
@@ -50,6 +52,8 @@ public:
    ~TEnvironment();
 
    void Finalize();
+
+   void EnableCheckPoint();
 
    // static public functions TODO
    static void SyncOutput(Bool_t status = kTRUE, FILE *output = NULL);

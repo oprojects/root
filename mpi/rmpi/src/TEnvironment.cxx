@@ -21,6 +21,8 @@ Int_t TEnvironment::fProfiling = 0;
 
 FILE *TEnvironment::fOutput = NULL;
 
+Bool_t TEnvironment::fCheckPoint = kFALSE;
+
 // TODO: enable thread level and thread-safe for ROOT
 
 //______________________________________________________________________________
@@ -118,6 +120,10 @@ void TEnvironment::InitSignalHandlers()
 TEnvironment::~TEnvironment()
 {
    // if mpi's environment is initialized then finalize it
+#if defined(ROOT_MPI_SCR)
+   if (fCheckPoint && !IsFinalized())
+      SCR_Finalize();
+#endif
    if (!IsFinalized()) {
       Finalize();
    }
@@ -362,6 +368,10 @@ Bool_t TEnvironment::IsInitialized()
  */
 void TEnvironment::Finalize()
 {
+#if defined(ROOT_MPI_SCR)
+   if (fCheckPoint && !IsFinalized())
+      SCR_Finalize();
+#endif
    if (!IsFinalized()) {
       MPI_Finalize();
    }
@@ -454,4 +464,15 @@ Int_t TEnvironment::IsProfiling()
 void TEnvironment::SetVerbose(Bool_t status)
 {
    TErrorHandler::SetVerbose(status);
+}
+
+//______________________________________________________________________________
+void TEnvironment::EnableCheckPoint()
+{
+#if defined(ROOT_MPI_SCR)
+   if (IsInitialized()) {
+      TEnvironment::fCheckPoint = kTRUE;
+      SCR_Init();
+   }
+#endif
 }

@@ -4,6 +4,7 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #MPI ENVIRONMENT#
 #################
 FIND_PACKAGE(MPI REQUIRED)
+FIND_PACKAGE(SCR)
 
 #Standalone Build
 if(NOT CMAKE_PROJECT_NAME STREQUAL ROOT)
@@ -65,9 +66,12 @@ if(NOT CMAKE_PROJECT_NAME STREQUAL ROOT)
   add_custom_target(move_headers ALL DEPENDS ${__allHeaders})  
 endif()
 
+if(SCR_FOUND)
+message(STATUS "Enabling ROOT Mpi Scalable Checkpoint / Restart ")
+add_definitions("-DROOT_MPI_SCR")
+endif()
 
-
-include_directories(${MPI_CXX_INCLUDE_PATH} ${MPI_C_INCLUDE_PATH} "${CMAKE_BINARY_DIR}/include")
+include_directories(${MPI_CXX_INCLUDE_PATH} ${MPI_C_INCLUDE_PATH} ${SCR_INCLUDE_DIR} "${CMAKE_BINARY_DIR}/include")
 ROOT_ADD_CXX_FLAG(CMAKE_CXX_FLAGS  -Wno-overloaded-virtual  -Wno-literal-suffix)
 
 add_subdirectory(rmpi)

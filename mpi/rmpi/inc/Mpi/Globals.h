@@ -22,6 +22,10 @@
 #include <functional>
 #include <memory>
 
+#if defined(ROOT_MPI_SCR)
+#include <scr.h>
+#endif
+
 #if defined(SEEK_SET) || defined(SEEK_CUR) || defined(SEEK_END)
 static const Int_t rmpi_stdio_seek_set = SEEK_SET;
 static const Int_t rmpi_stdio_seek_cur = SEEK_CUR;

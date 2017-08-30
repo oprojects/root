@@ -41,6 +41,9 @@
 #pragma link C++ class ROOT::Mpi::TGroup;
 #pragma link C++ class ROOT::Mpi::TErrorHandler;
 
+#if defined(ROOT_MPI_SCR)
+#pragma link C++ class ROOT::Mpi::TCheckPoint + ;
+#endif
 /*
  * Global communicator
  */
