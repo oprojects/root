@@ -15,27 +15,31 @@ namespace Mpi {
  \ingroup Mpi
  */
 class TCheckPoint : public TObject {
-   TString fName; // checkpoint name
-protected:
+   TString fName;   // checkpoint file name
+   TString fSuffix; // checkpoint file name suffix
+public:
    class TRestarter {
       friend class TCheckPoint;
-      Char_t *fDataSet;
       Bool_t fHaveRestart;
-      TRestarter(Bool_t haverestart, Char_t *dataset);
+      Char_t *fDataSet;
+      TCheckPoint *fCkp;
+      TRestarter(Bool_t haverestart, Char_t *dataset, TCheckPoint *ckp);
       TRestarter(const TRestarter &obj);
 
    public:
       Bool_t HaveRestart() const;
       void Restart() const;
       void Complete(Bool_t valid = 1);
+      const Char_t *GetRouteFile() const;
    };
 
 public:
-   TCheckPoint(const TString name);
+   TCheckPoint(const TString name, const TString suffix);
    void Init();
    void Finalize();
    TCheckPoint::TRestarter GetRestarter();
    const Char_t *GetRouteFile() const;
+   const Char_t *GetRankFile() const;
    void Start();
    void Complete(Bool_t valid = kTRUE);
    Int_t NeedCheckPoint();

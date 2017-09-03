@@ -11,7 +11,7 @@ TCheckPoint::TCheckPoint(const TString name, const TString suffix) : fName(name)
 }
 
 //______________________________________________________________________________
-TCheckPoint::TRestarter::TRestarter(Int_t haverestart, Char_t *dataset, TCheckPoint *ckp)
+TCheckPoint::TRestarter::TRestarter(Bool_t haverestart, Char_t *dataset, TCheckPoint *ckp)
    : fHaveRestart(haverestart), fDataSet(dataset), fCkp(ckp)
 {
 }
@@ -78,8 +78,14 @@ TCheckPoint::TRestarter TCheckPoint::GetRestarter()
 const Char_t *TCheckPoint::GetRouteFile() const
 {
    Char_t *file = new Char_t[SCR_MAX_FILENAME];
-   SCR_Route_file(Form("%s_%d.%s", fName.Data(), COMM_WORLD.GetRank(), fSuffix.Data()), file);
+   SCR_Route_file(GetRankFile(), file);
    return const_cast<Char_t *>(file);
+}
+
+//______________________________________________________________________________
+const Char_t *TCheckPoint::GetRankFile() const
+{
+   return Form("%s_%d.%s", fName.Data(), COMM_WORLD.GetRank(), fSuffix.Data());
 }
 
 //______________________________________________________________________________
