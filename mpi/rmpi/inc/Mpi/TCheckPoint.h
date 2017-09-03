@@ -9,22 +9,36 @@
 namespace ROOT {
 
 namespace Mpi {
+
 /**
 \class TCheckPoint
  \ingroup Mpi
  */
 class TCheckPoint : public TObject {
-   std::map<TString, TString> fEnvVars; // SCR enviromental variable
-   TFile *fCkpFile;                     // Check Point file
-   TString fCkpFileName;                // Tmp Check point file name
-   TString fName;                       // CheckPoint name
-   TString fPath;                       // CheckPoint path
+   TString fName; // checkpoint name
+protected:
+   class TRestarter {
+      friend class TCheckPoint;
+      Char_t *fDataSet;
+      Bool_t fHaveRestart;
+      TRestarter(Bool_t haverestart, Char_t *dataset);
+      TRestarter(const TRestarter &obj);
+
+   public:
+      Bool_t HaveRestart() const;
+      void Restart() const;
+      void Complete(Bool_t valid = 1);
+   };
+
 public:
-   TCheckPoint(const TString name, const TString path);
-   TString CkpPathName();
-   static void Start();
-   static void Complete(Int_t valid = 1);
-   static Int_t NeedCheckPoint();
+   TCheckPoint(const TString name);
+   void Init();
+   void Finalize();
+   TCheckPoint::TRestarter GetRestarter();
+   const Char_t *GetRouteFile() const;
+   void Start();
+   void Complete(Bool_t valid = kTRUE);
+   Int_t NeedCheckPoint();
 
    ClassDef(TCheckPoint, 0)
 };

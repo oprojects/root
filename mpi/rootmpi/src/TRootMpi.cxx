@@ -168,6 +168,11 @@ Int_t TRootMpi::ProcessArgs()
          if ((arg == "-b") || (arg == "-n") || (arg == "-l") || (arg == "-q") || (arg == "-x") || (arg == "-memstat")) {
             sRootParams += " " + arg;
          } else {
+            if (arg == "-ckp-jobid") {
+               // error control here
+               fCkpJobId = fArgv[i + 1];
+               i = i + 1;
+            } else {
 #if ROOT_MPI_VALGRINDFOUND
             if (arg == "-valgrind")
                fCallValgrind = kTRUE;
@@ -176,6 +181,7 @@ Int_t TRootMpi::ProcessArgs()
 #else
             fMpirunParams += " " + arg;
 #endif
+            }
          }
       }
 
@@ -217,6 +223,7 @@ Int_t TRootMpi::Execute()
    auto cmd = fMpirun + " " + fMpirunParams;
    if (fVerbose)
       printf("\nEXECUTING %s\n", cmd.Data());
+   gSystem->Setenv("SCR_JOB_ID", fCkpJobId.Data());
    auto status = gSystem->Exec(cmd.Data());
 
    if (fCallValgrind)
