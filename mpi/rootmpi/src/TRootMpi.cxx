@@ -121,6 +121,10 @@ Int_t TRootMpi::ProcessArgs()
       return gSystem->Exec(cmd_help.Data());
    }
 
+   if (fArgc == 1 && (TString(fArgv[1]) == TString("-ckp-clean"))) {
+      return gSystem->Exec(Form("rm -rf .scr /tmp/%s", gSystem->Getenv("USER")));
+   }
+
    if (TString(fArgv[1]) == "-C") {
       for (int i = 2; i < fArgc; i++) {
          TString arg = fArgv[i];

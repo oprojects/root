@@ -6,6 +6,7 @@
 #include <Mpi/Globals.h>
 #include <Mpi/TMpiMessage.h>
 #include <Mpi/TInfo.h>
+#include <Mpi/TOp.h>
 #include <Mpi/TMpiTimer.h>
 #include <Mpi/TIntraCommunicator.h>
 #include <Mpi/TInterCommunicator.h>

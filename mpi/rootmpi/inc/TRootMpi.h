@@ -32,9 +32,10 @@ private:
    TString fPython;         // Python interpreter path to executo ROOT Mpi in python
    Bool_t fVerbose;
 
-   TString fCkpJobId;      // Checkpoint  job id for SCR_JOB_ID
-   TString fCkpConfigFile; // Checkpoint config file path for SCR_CONF_FILE
-   TString fCkpClusterNae; // Checkpoint cluster name string for SCR_CLUSTER_NAME
+   TString fCkpJobId;       // Checkpoint  job id for SCR_JOB_ID
+   TString fCkpConfigFile;  // Checkpoint config file path for SCR_CONF_FILE
+   TString fCkpClusterName; // Checkpoint cluster name string for SCR_CLUSTER_NAME
+   Bool_t fCkpClean;        // Checkpoint clean cache files
 
 protected:
    Int_t ProcessArgs();

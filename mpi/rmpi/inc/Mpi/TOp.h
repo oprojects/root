@@ -14,17 +14,21 @@ namespace Mpi {
 template <typename T>
 class TOp {
    T (*fOp)(const T &, const T &);
+   T *(*fOpPtr)(const T *, const T *, Int_t);
 
 public:
-   TOp(T (*op)(const T &, const T &)) : fOp(op) {}
-   TOp(const TOp<T> &op) : fOp(op.fOp) {}
+   TOp(T (*op)(const T &, const T &)) : fOp(op), fOpPtr(nullptr) {}
+   TOp(T *(*op)(const T *, const T *, Int_t)) : fOp(nullptr), fOpPtr(op) {}
+   TOp(const TOp<T> &op) : fOp(op.fOp), fOpPtr(op.fOpPtr) {}
 
    TOp<T> &operator=(TOp<T> const &obj)
    {
       fOp = obj.fOp;
+      fOpPtr = obj.fOpPtr;
       return *this;
    }
 
+   Bool_t IsPrtFunction() { return fOpPtr != nullptr ? kTRUE : kFALSE; }
    //______________________________________________________________________________
    /**
     * Method to call the encapsulate function with the operation.
@@ -33,8 +37,10 @@ public:
     * \return object with the result of the operation.
     */
    T Call(const T &a, const T &b) const { return fOp(a, b); }
+   T *Call(const T *a, const T *b, Int_t count) const { return fOpPtr(a, b, count); }
 
    T operator()(const T &a, const T &b) const { return fOp(a, b); }
+   T *operator()(const T *a, const T *b, Int_t count) const { return fOpPtr(a, b, count); }
 };
 
 //______________________________________________________________________________

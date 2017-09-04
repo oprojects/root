@@ -24,9 +24,9 @@ public:
       Char_t *fDataSet;
       TCheckPoint *fCkp;
       TRestarter(Bool_t haverestart, Char_t *dataset, TCheckPoint *ckp);
-      TRestarter(const TRestarter &obj);
 
    public:
+      TRestarter(const TRestarter &obj);
       Bool_t HaveRestart() const;
       void Restart() const;
       void Complete(Bool_t valid = 1);
@@ -34,7 +34,7 @@ public:
    };
 
 public:
-   TCheckPoint(const TString name, const TString suffix);
+   TCheckPoint(const TString name, const TString suffix = "root");
    void Init();
    void Finalize();
    TCheckPoint::TRestarter GetRestarter();
