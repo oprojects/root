@@ -863,11 +863,7 @@ void TCommunicator::Reduce(const Type *in_var, Type *out_var, Int_t count, TOp<T
 {
    auto op = opf();
 
-   if (!std::is_class<Type>::value)
-      memmove((void *)out_var, (void *)in_var, sizeof(Type) * count);
-   else {
-      TMpiMessage::MsgMemMove<Type>(in_var, out_var, count);
-   }
+   MemMove<Type>(in_var, out_var, count);
 
    auto size = GetSize();
    auto lastpower = 1 << (Int_t)log2(size);
@@ -881,7 +877,7 @@ void TCommunicator::Reduce(const Type *in_var, Type *out_var, Int_t count, TOp<T
          Recv(recvbuffer, count, i + lastpower, GetInternalTag());
          if (op.IsPrtFunction()) {
             auto tmp_out_var = op(in_var, recvbuffer, count);
-            TMpiMessage::MsgMemMove<Type>(tmp_out_var, out_var, count);
+            MemMove<Type>(tmp_out_var, out_var, count);
          } else {
             for (Int_t j = 0; j < count; j++)
                out_var[j] = op(in_var[j], recvbuffer[j]);
@@ -898,7 +894,7 @@ void TCommunicator::Reduce(const Type *in_var, Type *out_var, Int_t count, TOp<T
             Recv(recvbuffer, count, sender, GetInternalTag());
             if (op.IsPrtFunction()) {
                auto tmp_out_var = op(out_var, recvbuffer, count);
-               TMpiMessage::MsgMemMove<Type>(tmp_out_var, out_var, count);
+               MemMove<Type>(tmp_out_var, out_var, count);
             } else {
                for (Int_t j = 0; j < count; j++)
                   out_var[j] = op(out_var[j], recvbuffer[j]);

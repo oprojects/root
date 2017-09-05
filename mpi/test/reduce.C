@@ -61,9 +61,6 @@ void reduce_test_scalar(Int_t root = 0)
          sum = SUM<Int_t>()(sum, i);
          prod = PROD<Int_t>()(prod, i + 1);
       }
-      std::cout << std::endl;
-      //       prInt_tf("MPI Result     = %d\n", value);
-      //       prInt_tf("Correct Result = %d\n", sum);
 
       // require values to compare if everything is ok
       TMatrixD req_mat(size, size);
@@ -75,6 +72,7 @@ void reduce_test_scalar(Int_t root = 0)
       }
 
       // assertions
+      std::cout << value << std::endl;
       ROOT_MPI_ASSERT(value == sum);
       ROOT_MPI_ASSERT(recv_vec == req_vec);
       ROOT_MPI_ASSERT(recv_mat == req_mat);
@@ -97,8 +95,11 @@ void reduce_test_array(Int_t root = 0, Int_t count = 2)
    /////////////////////////
    TMatrixD send_mat[count];
    TVectorD send_vec[count];
+   Double_t send_d[count * 2];
    for (auto k = 0; k < count; k++) {
       vars[k] = rank;
+      send_d[(k * 2)] = k;
+      send_d[(k * 2) + 1] = k;
       for (auto i = 0; i < size; i++) {
          send_mat[k].ResizeTo(size, size);
          send_vec[k].ResizeTo(size);
@@ -117,6 +118,10 @@ void reduce_test_array(Int_t root = 0, Int_t count = 2)
 
    TVectorD recv_vec[count];
    COMM_WORLD.Reduce(send_vec, recv_vec, count, SUM, root); // testing custom object
+   COMM_WORLD.Barrier();
+
+   Double_t recv_d[count * 2];
+   COMM_WORLD.Reduce(send_d, recv_d, count * 2, SUM, root); // testing custom object
    COMM_WORLD.Barrier();
 
    if (rank == root) {
@@ -139,6 +144,11 @@ void reduce_test_array(Int_t root = 0, Int_t count = 2)
          ROOT_MPI_ASSERT(values[i] == sum);
          ROOT_MPI_ASSERT(recv_mat[i] == req_mat);
          ROOT_MPI_ASSERT(recv_vec[i] == req_vec);
+         Double_t dsum = 0;
+         for (auto j = 0; j < size; j++)
+            dsum = SUM<Int_t>()(dsum, i);
+         ROOT_MPI_ASSERT(recv_d[i * 2] == dsum);
+         ROOT_MPI_ASSERT(recv_d[(i * 2) + 1] == dsum);
       }
    }
 }

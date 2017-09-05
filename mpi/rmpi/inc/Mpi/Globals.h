@@ -12,6 +12,7 @@
 #include <ROOT/TSeq.hxx>
 
 #include <Mpi/TOp.h>
+#include <Mpi/TMpiMessage.h>
 
 #define MPICH_ERROR_MSG_LEVEL MPICH_ERROR_MSG_NONE
 
@@ -352,7 +353,44 @@ MPI_Datatype GetDataType()
    Warning("GetDataType", "Unknown raw datatype <%s>, returning null datatype", ROOT_MPI_TYPE_NAME(T));
    return DATATYPE_NULL;
 }
-const Int_t *Seq2Ptr(const TSeqI &seq);
+
+/////////////////
+// memory tools //
+/////////////////
+
+template <class T>
+const T *Seq2Ptr(const TSeq<T> &seq)
+{
+   T *s = new T[seq.size()];
+   for (UInt_t i = 0; i < seq.size(); i++) {
+      s[i] = seq[i];
+   }
+   return const_cast<const T *>(s);
+}
+template <class T>
+void MemMove(const T *in_var, T *out_var, Int_t count)
+{
+   if (!std::is_class<T>::value) // if not class trivial memory move
+      memmove((void *)out_var, (void *)in_var, sizeof(T) * count);
+   else {
+      // if it is a class move memory through a TMpiMessage
+      for (auto i = 0; i < count; i++) {
+         TMpiMessage msgi;
+         msgi.WriteObject(in_var[i]);
+         Char_t *buffer = new Char_t[msgi.BufferSize()]; // this pointer can't be freed,
+                                                         // it will be free when the
+                                                         // object dies
+         memcpy((void *)buffer, (void *)msgi.Buffer(), sizeof(Char_t) * msgi.BufferSize());
+         TMpiMessage msgo(buffer, msgi.BufferSize()); // using serialization
+                                                      // to copy memory
+                                                      // without copy
+                                                      // constructor
+         auto cl = gROOT->GetClass(typeid(T));
+         auto obj_tmp = msgo.ReadObjectAny(cl);
+         memmove((void *)&out_var[i], obj_tmp, sizeof(T));
+      }
+   }
+}
 
 // MPI Interrupt signal handler
 class TMpiSignalHandler : public TSignalHandler {

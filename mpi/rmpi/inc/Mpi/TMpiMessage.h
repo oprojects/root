@@ -2,8 +2,10 @@
 #ifndef ROOT_Mpi_TMpiMessage
 #define ROOT_Mpi_TMpiMessage
 
-#include <Mpi/Globals.h>
 #include <TMessage.h>
+#include <TString.h>
+#include <TROOT.h>
+#include <TClass.h>
 
 namespace ROOT {
 namespace Mpi {
@@ -79,8 +81,6 @@ public:
    void WriteObject(ClassType *obj);
    template <class ClassType>
    void WriteObject(ClassType &obj);
-   template <class T>
-   static void MsgMemMove(const T *in_var, T *out_var, Int_t count);
 
    ClassDef(TMpiMessage, 1);
 };
@@ -108,26 +108,6 @@ template <class ClassType>
 void TMpiMessage::WriteObject(ClassType &obj)
 {
    WriteObject<ClassType>(&obj);
-}
-
-template <class T>
-void TMpiMessage::MsgMemMove(const T *in_var, T *out_var, Int_t count)
-{
-   for (auto i = 0; i < count; i++) {
-      TMpiMessage msgi;
-      msgi.WriteObject(in_var[i]);
-      Char_t *buffer = new Char_t[msgi.BufferSize()]; // this pointer can't be freed,
-                                                      // it will be free when the
-                                                      // object dies
-      memcpy((void *)buffer, (void *)msgi.Buffer(), sizeof(Char_t) * msgi.BufferSize());
-      TMpiMessage msgo(buffer, msgi.BufferSize()); // using serialization
-                                                   // to copy memory
-                                                   // without copy
-                                                   // constructor
-      auto cl = gROOT->GetClass(typeid(T));
-      auto obj_tmp = msgo.ReadObjectAny(cl);
-      memmove((void *)&out_var[i], obj_tmp, sizeof(T));
-   }
 }
 }
 }

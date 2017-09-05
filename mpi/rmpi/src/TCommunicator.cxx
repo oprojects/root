@@ -422,7 +422,7 @@ void TCommunicator::Reduce<TTree>(const TTree *in_var, TTree *out_var, Int_t cou
 {
    auto op = opf();
 
-   TMpiMessage::MsgMemMove<TTree>(in_var, out_var, count);
+   MemMove<TTree>(in_var, out_var, count);
 
    auto size = GetSize();
    auto lastpower = 1 << (Int_t)log2(size);
@@ -436,7 +436,7 @@ void TCommunicator::Reduce<TTree>(const TTree *in_var, TTree *out_var, Int_t cou
          Recv(recvbuffer, count, i + lastpower, GetInternalTag());
          if (op.IsPrtFunction()) {
             auto tmp_out_var = op(in_var, recvbuffer, count);
-            TMpiMessage::MsgMemMove<TTree>(tmp_out_var, out_var, count);
+            MemMove<TTree>(tmp_out_var, out_var, count);
          } else {
             Error(__FUNCTION__, "TTree dont have copy assignment operator, use TOp object using function with pointers "
                                 "in the arguments.");
@@ -454,7 +454,7 @@ void TCommunicator::Reduce<TTree>(const TTree *in_var, TTree *out_var, Int_t cou
             Recv(recvbuffer, count, sender, GetInternalTag());
             if (op.IsPrtFunction()) {
                auto tmp_out_var = op(out_var, recvbuffer, count);
-               TMpiMessage::MsgMemMove<TTree>(tmp_out_var, out_var, count);
+               MemMove<TTree>(tmp_out_var, out_var, count);
             } else {
                Error(__FUNCTION__, "TTree dont have copy assignment operator, use TOp object using function with "
                                    "pointers in the arguments.");

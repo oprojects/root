@@ -1,6 +1,7 @@
 // @(#)root/mpi / Author: Omar.Zapata@cern.ch 2017 http://oproject.org
 #ifndef ROOT_Mpi_TOp
 #define ROOT_Mpi_TOp
+#include <Rtypes.h>
 namespace ROOT {
 namespace Mpi {
 /**
@@ -28,6 +29,9 @@ public:
       return *this;
    }
 
+   void SetFunction(T (*op)(const T &, const T &)) { fOp = op; }
+   void SetFunction(T *(*op)(const T *, const T *, Int_t)) { fOpPtr = op; }
+
    Bool_t IsPrtFunction() { return fOpPtr != nullptr ? kTRUE : kFALSE; }
    //______________________________________________________________________________
    /**
@@ -52,7 +56,14 @@ public:
 template <class T>
 TOp<T> SUM()
 {
-   return TOp<T>([](const T &a, const T &b) { return a + b; });
+   TOp<T> op([](const T *a, const T *b, Int_t count) {
+      std::vector<T> *r = new std::vector<T>;
+      for (auto i = 0; i < count; i++)
+         r->push_back(a[i] + b[i]);
+      return (T *)&(*r)[0];
+   });
+   op.SetFunction([](const T &a, const T &b) { return a + b; });
+   return op;
 }
 
 //______________________________________________________________________________
@@ -64,7 +75,14 @@ TOp<T> SUM()
 template <class T>
 TOp<T> PROD()
 {
-   return TOp<T>([](const T &a, const T &b) { return a * b; });
+   TOp<T> op([](const T *a, const T *b, Int_t count) {
+      std::vector<T> *r = new std::vector<T>;
+      for (auto i = 0; i < count; i++)
+         r->push_back(a[i] * b[i]);
+      return (T *)&(*r)[0];
+   });
+   op.SetFunction([](const T &a, const T &b) { return a * b; });
+   return op;
 }
 
 //______________________________________________________________________________
@@ -77,7 +95,14 @@ TOp<T> PROD()
 template <class T>
 TOp<T> MIN()
 {
-   return TOp<T>([](const T &a, const T &b) { return a < b ? a : b; });
+   TOp<T> op([](const T *a, const T *b, Int_t count) {
+      std::vector<T> *r = new std::vector<T>;
+      for (auto i = 0; i < count; i++)
+         r->push_back(a[i] < b[i] ? a[i] : b[i]);
+      return (T *)&(*r)[0];
+   });
+   op.SetFunction([](const T &a, const T &b) { return a < b ? a : b; });
+   return op;
 }
 
 //______________________________________________________________________________
@@ -90,7 +115,14 @@ TOp<T> MIN()
 template <class T>
 TOp<T> MAX()
 {
-   return TOp<T>([](const T &a, const T &b) { return a > b ? a : b; });
+   TOp<T> op([](const T *a, const T *b, Int_t count) {
+      std::vector<T> *r = new std::vector<T>;
+      for (auto i = 0; i < count; i++)
+         r->push_back(a[i] > b[i] ? a[i] : b[i]);
+      return (T *)&(*r)[0];
+   });
+   op.SetFunction([](const T &a, const T &b) { return a > b ? a : b; });
+   return op;
 }
 
 } // end namespace Mpi
