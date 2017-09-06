@@ -43,6 +43,13 @@
 
 #if defined(ROOT_MPI_SCR)
 #pragma link C++ class ROOT::Mpi::TCheckPoint + ;
+#pragma link C++ class ROOT::Mpi::TCkpFile - ;
+#pragma link C++ class ROOT::Mpi::TCkpVar < Int_t > +;
+#pragma link C++ class ROOT::Mpi::TCkpVar < Long_t > +;
+#pragma link C++ class ROOT::Mpi::TCkpVar < Double_t > +;
+#pragma link C++ class ROOT::Mpi::TCkpVar < Float_t > +;
+#pragma link C++ class ROOT::Mpi::TCkpVar < Char_t > +;
+#pragma link C++ class ROOT::Mpi::TCkpVar < Bool_t > +;
 #endif
 /*
  * Global communicator

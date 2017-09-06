@@ -6,13 +6,22 @@
 using namespace ROOT::Mpi;
 
 //______________________________________________________________________________
-TCheckPoint::TCheckPoint(const TString name, const TString suffix) : fName(name), fSuffix(suffix)
+TCheckPoint::TCheckPoint(const TString name, const TString suffix) : fName(name), fSuffix(suffix), fCkpFile(nullptr)
 {
 }
 
 //______________________________________________________________________________
+TCheckPoint::~TCheckPoint()
+{
+   if (fCkpFile) {
+      delete fCkpFile;
+      fCkpFile = nullptr;
+   }
+}
+
+//______________________________________________________________________________
 TCheckPoint::TRestarter::TRestarter(Bool_t haverestart, Char_t *dataset, TCheckPoint *ckp)
-   : fHaveRestart(haverestart), fDataSet(dataset), fCkp(ckp)
+   : fHaveRestart(haverestart), fDataSet(dataset), fCkp(ckp), fCkpFile(nullptr)
 {
 }
 
@@ -31,14 +40,28 @@ Bool_t TCheckPoint::TRestarter::HaveRestart() const
 }
 
 //______________________________________________________________________________
-void TCheckPoint::TRestarter::Restart() const
+TCheckPoint::TRestarter::~TRestarter()
+{
+   if (fCkpFile)
+      delete fCkpFile;
+}
+
+//______________________________________________________________________________
+void TCheckPoint::TRestarter::Restart()
 {
    SCR_Start_restart(fDataSet);
+   if (!fCkpFile)
+      fCkpFile = new TCkpFile(fCkp->GetRouteFile(), "READ", "CkpFile");
 }
 
 //______________________________________________________________________________
 void TCheckPoint::TRestarter::Complete(Bool_t valid)
 {
+   if (fCkpFile) {
+      fCkpFile->Close();
+      delete fCkpFile;
+      fCkpFile = nullptr;
+   }
    SCR_Complete_restart(valid);
    if (valid)
       fHaveRestart = kFALSE;
@@ -48,6 +71,26 @@ void TCheckPoint::TRestarter::Complete(Bool_t valid)
 const Char_t *TCheckPoint::TRestarter::GetRouteFile() const
 {
    return fCkp->GetRouteFile();
+}
+
+//______________________________________________________________________________
+TCkpFile *TCheckPoint::TRestarter::GetCkpFile()
+{
+   //     if(fCkpFile) return *fCkpFile;
+   //     else{
+   //         //error handling here
+   return fCkpFile;
+   //     }
+}
+
+//______________________________________________________________________________
+TCkpFile *TCheckPoint::GetCkpFile()
+{
+   //     if(fCkpFile) return *fCkpFile;
+   //     else{
+   //         //error handling here
+   return fCkpFile;
+   //     }
 }
 
 //______________________________________________________________________________
@@ -92,18 +135,48 @@ const Char_t *TCheckPoint::GetRankFile() const
 void TCheckPoint::Start()
 {
    SCR_Start_checkpoint();
+   if (!fCkpFile)
+      fCkpFile = new TCkpFile(GetRouteFile(), "RECREATE", "CkpFile");
 }
 
 //______________________________________________________________________________
 void TCheckPoint::Complete(Bool_t valid)
 {
+   if (fCkpFile) {
+      fCkpFile->Close();
+      delete fCkpFile;
+      fCkpFile = nullptr;
+   }
    SCR_Complete_checkpoint(valid);
 }
 
 //______________________________________________________________________________
-Int_t TCheckPoint::NeedCheckPoint()
+Int_t TCheckPoint::NeedCheckPoint() const
 {
    Int_t flag = 0;
    SCR_Need_checkpoint(&flag);
    return flag;
+}
+
+//______________________________________________________________________________
+TCkpFile::TCkpFile(const char *fname, Option_t *option, const char *ftitle, Int_t compress)
+{
+   fFile = new TFile(fname, option, ftitle, compress);
+}
+
+//______________________________________________________________________________
+TCkpFile::~TCkpFile()
+{
+   if (fFile) {
+      fFile->Close();
+      delete fFile;
+      fFile = nullptr;
+   }
+}
+
+//______________________________________________________________________________
+void TCkpFile::Close()
+{
+   if (fFile)
+      fFile->Close();
 }
