@@ -69,9 +69,10 @@ endif()
 if(SCR_FOUND)
 message(STATUS "Enabling ROOT Mpi Scalable Checkpoint / Restart ")
 add_definitions("-DROOT_MPI_SCR")
+include_directories({SCR_INCLUDE_DIR})
 endif()
 
-include_directories(${MPI_CXX_INCLUDE_PATH} ${MPI_C_INCLUDE_PATH} ${SCR_INCLUDE_DIR} "${CMAKE_BINARY_DIR}/include")
+include_directories(${MPI_CXX_INCLUDE_PATH} ${MPI_C_INCLUDE_PATH} "${CMAKE_BINARY_DIR}/include")
 ROOT_ADD_CXX_FLAG(CMAKE_CXX_FLAGS  -Wno-overloaded-virtual  -Wno-literal-suffix)
 
 add_subdirectory(rmpi)
