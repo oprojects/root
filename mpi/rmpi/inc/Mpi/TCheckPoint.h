@@ -83,12 +83,12 @@ public:
    inline Bool_t cd(const char *path = 0) { return fFile->cd(path); }
    inline void ReadAll(Option_t *option = "") { fFile->ReadAll(option); }
    template <class T>
-   void WriteObject(const T *, const Char_t *name);
+   void WriteObject(const Char_t *name, const T *);
    template <class T>
    void ReadObject(const Char_t *name, T *obj);
 
    template <class T>
-   void WriteVar(const T &, const Char_t *name);
+   void WriteVar(const Char_t *name, const T &);
    template <class T>
    void ReadVar(const Char_t *name, T &var);
 
@@ -96,7 +96,7 @@ public:
 };
 
 template <class T>
-void TCkpFile::WriteObject(const T *var, const Char_t *name)
+void TCkpFile::WriteObject(const Char_t *name, const T *var)
 {
    fFile->WriteObjectAny(var, gROOT->GetClass(typeid(T)), name);
    fFile->Flush();
@@ -113,10 +113,10 @@ void TCkpFile::ReadObject(const Char_t *name, T *obj)
 }
 
 template <class T>
-void TCkpFile::WriteVar(const T &var, const Char_t *name)
+void TCkpFile::WriteVar(const Char_t *name, const T &var)
 {
    TCkpVar<T> *ckpvar = new TCkpVar<T>(&var, 1);
-   WriteObject<TCkpVar<T>>(ckpvar, name);
+   WriteObject<TCkpVar<T>>(name, ckpvar);
    delete ckpvar;
 }
 
