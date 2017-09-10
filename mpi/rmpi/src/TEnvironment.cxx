@@ -21,6 +21,8 @@ Int_t TEnvironment::fProfiling = 0;
 
 FILE *TEnvironment::fOutput = NULL;
 
+static Bool_t fCkpInit = kFALSE;
+
 // TODO: enable thread level and thread-safe for ROOT
 
 //______________________________________________________________________________
@@ -57,6 +59,9 @@ TEnvironment::TEnvironment(Int_t level)
          COMM_WORLD.SetCommName("ROOT::Mpi::COMM_WORLD");
       ROOT_MPI_CHECK_CALL(MPI_Comm_set_errhandler, (MPI_COMM_WORLD, (MPI_Errhandler)fErrorHandler), &COMM_WORLD);
       InitSignalHandlers();
+#if defined(ROOT_MPI_SCR)
+      SetJobId(0, kFALSE);
+#endif
    } else {
       // TODO: added error handling here
    }
@@ -95,6 +100,9 @@ TEnvironment::TEnvironment(Int_t argc, Char_t **argv, Int_t level)
       ROOT_MPI_CHECK_CALL(MPI_Comm_compare, ((MPI_Comm)COMM_WORLD, MPI_COMM_WORLD, &result), &COMM_WORLD);
       ROOT_MPI_CHECK_CALL(MPI_Comm_set_errhandler, (MPI_COMM_WORLD, (MPI_Errhandler)fErrorHandler), &COMM_WORLD);
       InitSignalHandlers();
+#if defined(ROOT_MPI_SCR)
+      SetJobId(0, kFALSE);
+#endif
    } else {
       // TODO: added error handling here
    }
@@ -127,6 +135,10 @@ TEnvironment::~TEnvironment()
       delete fTerminationSignal;
    if (fSigSegmentationViolationSignal)
       delete fSigSegmentationViolationSignal;
+   if (fCkpInit)
+      if (SCR_Finalize() == SCR_SUCCESS)
+         fCkpInit = kFALSE;
+   /*else error handling here shuptting down SCR*/
 }
 
 //______________________________________________________________________________
@@ -455,3 +467,71 @@ void TEnvironment::SetVerbose(Bool_t status)
 {
    TErrorHandler::SetVerbose(status);
 }
+
+#if defined(ROOT_MPI_SCR)
+
+//______________________________________________________________________________
+void TEnvironment::CkpInit()
+{
+   if (IsInitialized()) {
+      if (!fCkpInit)
+         if (SCR_Init() == SCR_SUCCESS)
+            fCkpInit = kTRUE;
+   }
+   /*If mpi environment is not initialized, then error here*/
+}
+
+//______________________________________________________________________________
+void TEnvironment::CpkFinalize()
+{
+   if (!IsFinalized()) {
+      if (fCkpInit)
+         if (SCR_Finalize() == SCR_SUCCESS)
+            fCkpInit = kFALSE;
+   }
+   /*If mpi environment is was finalized, then error here*/
+}
+
+//______________________________________________________________________________
+Bool_t TEnvironment::IsCpkFinalized()
+{
+   return fCkpInit == kFALSE;
+}
+
+//______________________________________________________________________________
+Bool_t TEnvironment::IsCpkInitialized()
+{
+   return fCkpInit;
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetJobId(UInt_t value, Bool_t overwrite)
+{
+   Export("SCR_JOB_ID", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetJobName(const Char_t *value, Bool_t overwrite)
+{
+   Export("SCR_JOB_NAME", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetPrefix(const Char_t *value, Bool_t overwrite)
+{
+   Export("SCR_PREFIX", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpDebug(Bool_t value, Bool_t overwrite)
+{
+   Export("SCR_DEBUG", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCacheBase(const Char_t *value, Bool_t overwrite)
+{
+   Export("SCR_CACHE_BASE", value, overwrite);    
+}
+
+#endif

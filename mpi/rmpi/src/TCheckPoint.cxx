@@ -5,6 +5,54 @@
 #include <iostream>
 using namespace ROOT::Mpi;
 
+// Bool_t TCkpEnvironment::fStatus=kFALSE;
+//
+// //______________________________________________________________________________
+// TCkpEnvironment::TCkpEnvironment() : TObject()
+// {
+//     if(TEnvironment::IsInitialized())
+//     {
+//     }else{
+//         #warning Error handling here
+//     }
+// //    // setting up default options
+// //    fOptions["SCR_CACHE_SIZE"] = "1";
+// //    fOptions["SCR_CHECKPOINT_INTERVAL"] = "";
+// //    fOptions["SCR_CHECKPOINT_OVERHEAD"] = "";
+// //    fOptions["SCR_CHECKPOINT_SECONDS"] = "";
+// //    fOptions["SCR_CLUSTER_NAME"] = "";
+// //    fOptions["SCR_CNTL_BASE"] = "";
+// //    fOptions["SCR_COPY_TYPE"] = "SINGLE"; // Set to one of: SINGLE, PARTNER, XOR, or FILE.
+// //    fOptions["SCR_CRC_ON_COPY"] = "0";
+// //    fOptions["SCR_CRC_ON_DELETE"] = "0";
+// //    fOptions["SCR_CRC_ON_FLUSH"] = "1";
+// //    fOptions["SCR_DISTRIBUTE"] = "1";
+// //    fOptions["SCR_FETCH "] = "1";
+// //    fOptions["SCR_FETCH_WIDTH"] = "256";
+// //    fOptions["SCR_FILE_BUF_SIZE"] = "1048576";
+// //    fOptions["SCR_FLUSH"] = "10";
+// //    fOptions["SCR_FLUSH_WIDTH"] = "256";
+// //    fOptions["SCR_FLUSH_ON_RESTART"] = "0";
+// //    fOptions["SCR_GLOBAL_RESTART"] = "";
+// //    fOptions["SCR_GROUP"] = "NODE"; //
+// //    fOptions["SCR_HALT SECONDS"] = "0";
+// //    fOptions["SCR_HALT_ENABLED"] = "";
+// //    fOptions["SCR_LOG_ENABLE"] = "0";
+// //    fOptions["SCR_MPI_BUF_SIZE"] = "131072";
+// //    fOptions["SCR_PREFIX"] = gSystem->pwd();
+// //    fOptions["SCR_RUNS"] = "0";
+// //    fOptions["SCR_SET_SIZE"] = "8";
+// //    fOptions["SCR_USER_NAME"] = gSystem->GetUserInfo(gSystem->GetUid())->fUser;
+// //    fOptions["SCR_USE_CONTAINERS"] = "";
+// //    fOptions["SCR_CONTAINER_SIZE"] = "";
+// }
+
+// //______________________________________________________________________________
+// void TCkpEnvironment::Finalize()
+// {
+//    SCR_Finalize();
+// }
+
 //______________________________________________________________________________
 TCheckPoint::TCheckPoint(const TString name, const TString suffix) : fName(name), fSuffix(suffix), fCkpFile(nullptr)
 {
@@ -21,12 +69,12 @@ TCheckPoint::~TCheckPoint()
 
 //______________________________________________________________________________
 TCheckPoint::TRestarter::TRestarter(Bool_t haverestart, Char_t *dataset, TCheckPoint *ckp)
-   : fHaveRestart(haverestart), fDataSet(dataset), fCkp(ckp), fCkpFile(nullptr)
+   : TObject(), fHaveRestart(haverestart), fDataSet(dataset), fCkp(ckp), fCkpFile(nullptr)
 {
 }
 
 //______________________________________________________________________________
-TCheckPoint::TRestarter::TRestarter(const TRestarter &obj)
+TCheckPoint::TRestarter::TRestarter(const TRestarter &obj) : TObject(obj)
 {
    fHaveRestart = obj.fHaveRestart;
    fDataSet = obj.fDataSet;
@@ -74,7 +122,7 @@ const Char_t *TCheckPoint::TRestarter::GetRouteFile() const
 }
 
 //______________________________________________________________________________
-TCkpFile *TCheckPoint::TRestarter::GetCkpFile()
+TCheckPoint::TCkpFile *TCheckPoint::TRestarter::GetCkpFile()
 {
    //     if(fCkpFile) return *fCkpFile;
    //     else{
@@ -83,26 +131,12 @@ TCkpFile *TCheckPoint::TRestarter::GetCkpFile()
    //     }
 }
 
+
 //______________________________________________________________________________
-TCkpFile *TCheckPoint::GetCkpFile()
+TCheckPoint::TCkpFile *TCheckPoint::GetCkpFile()
 {
-   //     if(fCkpFile) return *fCkpFile;
-   //     else{
-   //         //error handling here
+   // error handling here(check if Start was called)
    return fCkpFile;
-   //     }
-}
-
-//______________________________________________________________________________
-void TCheckPoint::Init()
-{
-   SCR_Init();
-}
-
-//______________________________________________________________________________
-void TCheckPoint::Finalize()
-{
-   SCR_Finalize();
 }
 
 //______________________________________________________________________________
@@ -159,13 +193,13 @@ Int_t TCheckPoint::NeedCheckPoint() const
 }
 
 //______________________________________________________________________________
-TCkpFile::TCkpFile(const char *fname, Option_t *option, const char *ftitle, Int_t compress)
+TCheckPoint::TCkpFile::TCkpFile(const char *fname, Option_t *option, const char *ftitle, Int_t compress)
 {
    fFile = new TFile(fname, option, ftitle, compress);
 }
 
 //______________________________________________________________________________
-TCkpFile::~TCkpFile()
+TCheckPoint::TCkpFile::~TCkpFile()
 {
    if (fFile) {
       fFile->Close();
@@ -175,7 +209,7 @@ TCkpFile::~TCkpFile()
 }
 
 //______________________________________________________________________________
-void TCkpFile::Close()
+void TCheckPoint::TCkpFile::Close()
 {
    if (fFile)
       fFile->Close();

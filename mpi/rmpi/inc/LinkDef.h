@@ -43,7 +43,8 @@
 
 #if defined(ROOT_MPI_SCR)
 #pragma link C++ class ROOT::Mpi::TCheckPoint + ;
-#pragma link C++ class ROOT::Mpi::TCkpFile - ;
+#pragma link C++ class ROOT::Mpi::TCheckPoint::TRestarter;
+#pragma link C++ class ROOT::Mpi::TCheckPoint::TCkpFile;
 #pragma link C++ class ROOT::Mpi::TCkpVar < Int_t > +;
 #pragma link C++ class ROOT::Mpi::TCkpVar < Long_t > +;
 #pragma link C++ class ROOT::Mpi::TCkpVar < Double_t > +;
