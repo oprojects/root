@@ -41,6 +41,11 @@ public:
       template <class T>
       void ReadVar(const Char_t *name, T &var);
 
+      template <class T>
+      void WriteArray(const Char_t *name, const T *, const Int_t size);
+      template <class T>
+      void ReadArray(const Char_t *name, T *, const Int_t size);
+
       void Close();
       ClassDef(TCkpFile, 0)
    };
@@ -64,6 +69,16 @@ public:
       TCheckPoint::TCkpFile *GetCkpFile();
       ClassDef(TRestarter, 0)
    };
+   template <class T>
+   class TCkpVar : public TObject {
+      UInt_t fSize;  ///<
+      const T *fVar; ///<[fSize] value to encapsulate
+   public:
+      TCkpVar(const T *var = nullptr, UInt_t size = 0) : fSize(size), fVar(var) {}
+      UInt_t GetSize() { return fSize; }
+      const T *GetVar() { return fVar; }
+      ClassDef(TCkpVar, 1)
+   };
 
 protected:
    TString fName;   // checkpoint file name
@@ -85,16 +100,6 @@ public:
    ClassDef(TCheckPoint, 0)
 };
 
-template <class T>
-class TCkpVar : public TObject {
-   UInt_t fSize;  ///<
-   const T *fVar; ///<[fSize] value to encapsulate
-public:
-   TCkpVar(const T *var = nullptr, UInt_t size = 0) : fSize(size), fVar(var) {}
-   UInt_t GetSize() { return fSize; }
-   const T *GetVar() { return fVar; }
-   ClassDef(TCkpVar, 1)
-};
 
 template <class T>
 void TCheckPoint::TCkpFile::WriteObject(const Char_t *name, const T *var)
@@ -127,6 +132,21 @@ void TCheckPoint::TCkpFile::ReadVar(const Char_t *name, T &var)
    TCkpVar<T> ckpvar;
    ReadObject<TCkpVar<T>>(name, &ckpvar);
    var = *ckpvar.GetVar();
+}
+template <class T>
+void TCheckPoint::TCkpFile::WriteArray(const Char_t *name, const T *array, const Int_t size)
+{
+   TCkpVar<T> *ckpvar = new TCkpVar<T>(array, size);
+   WriteObject<TCkpVar<T>>(name, ckpvar);
+   delete ckpvar;
+}
+
+template <class T>
+void TCheckPoint::TCkpFile::ReadArray(const Char_t *name, T *array, const Int_t size)
+{
+   TCkpVar<T> ckpvar;
+   ReadObject<TCkpVar<T>>(name, &ckpvar);
+   MemMove(ckpvar.GetVar(), array, size);
 }
 }
 }

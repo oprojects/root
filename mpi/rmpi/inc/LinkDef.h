@@ -45,12 +45,12 @@
 #pragma link C++ class ROOT::Mpi::TCheckPoint + ;
 #pragma link C++ class ROOT::Mpi::TCheckPoint::TRestarter;
 #pragma link C++ class ROOT::Mpi::TCheckPoint::TCkpFile;
-#pragma link C++ class ROOT::Mpi::TCkpVar < Int_t > +;
-#pragma link C++ class ROOT::Mpi::TCkpVar < Long_t > +;
-#pragma link C++ class ROOT::Mpi::TCkpVar < Double_t > +;
-#pragma link C++ class ROOT::Mpi::TCkpVar < Float_t > +;
-#pragma link C++ class ROOT::Mpi::TCkpVar < Char_t > +;
-#pragma link C++ class ROOT::Mpi::TCkpVar < Bool_t > +;
+#pragma link C++ class ROOT::Mpi::TCheckPoint::TCkpVar < Int_t > +;
+#pragma link C++ class ROOT::Mpi::TCheckPoint::TCkpVar < Long_t > +;
+#pragma link C++ class ROOT::Mpi::TCheckPoint::TCkpVar < Double_t > +;
+#pragma link C++ class ROOT::Mpi::TCheckPoint::TCkpVar < Float_t > +;
+#pragma link C++ class ROOT::Mpi::TCheckPoint::TCkpVar < Char_t > +;
+#pragma link C++ class ROOT::Mpi::TCheckPoint::TCkpVar < Bool_t > +;
 #endif
 /*
  * Global communicator
