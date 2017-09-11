@@ -51,7 +51,7 @@ private:
 protected:
    void InitSignalHandlers();
    template <class T>
-   void Export(const Char_t *var, T value, Bool_t overwrite);
+   void SetEnv(const Char_t *var, T value, Bool_t overwrite);
 
 public:
    TEnvironment(Int_t level = ROOT::Mpi::THREAD_SINGLE);
@@ -133,7 +133,7 @@ public:
 };
 
 template <class T>
-void TEnvironment::Export(const Char_t *var, T value, Bool_t overwrite)
+void TEnvironment::SetEnv(const Char_t *var, T value, Bool_t overwrite)
 {
    std::stringstream ost;
    ost << value;

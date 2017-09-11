@@ -507,49 +507,49 @@ Bool_t TEnvironment::IsCpkInitialized()
 //______________________________________________________________________________
 void TEnvironment::SetCkpJobId(UInt_t value, Bool_t overwrite)
 {
-   Export("SCR_JOB_ID", value, overwrite);
+   SetEnv("SCR_JOB_ID", value, overwrite);
 }
 
 //______________________________________________________________________________
 void TEnvironment::SetCkpJobName(const Char_t *value, Bool_t overwrite)
 {
-   Export("SCR_JOB_NAME", value, overwrite);
+   SetEnv("SCR_JOB_NAME", value, overwrite);
 }
 
 //______________________________________________________________________________
 void TEnvironment::SetCkpPrefix(const Char_t *value, Bool_t overwrite)
 {
-   Export("SCR_PREFIX", value, overwrite);
+   SetEnv("SCR_PREFIX", value, overwrite);
 }
 
 //______________________________________________________________________________
 void TEnvironment::SetCkpDebug(Bool_t value, Bool_t overwrite)
 {
-   Export("SCR_DEBUG", value, overwrite);
+   SetEnv("SCR_DEBUG", value, overwrite);
 }
 
 //______________________________________________________________________________
 void TEnvironment::SetCkpCacheBase(const Char_t *value, Bool_t overwrite)
 {
-   Export("SCR_CACHE_BASE", value, overwrite);
+   SetEnv("SCR_CACHE_BASE", value, overwrite);
 }
 
 //______________________________________________________________________________
 void TEnvironment::SetCkpInterval(UInt_t value, Bool_t overwrite)
 {
-   Export("SCR_CHECKPOINT_INTERVAL", value, overwrite);    
+   SetEnv("SCR_CHECKPOINT_INTERVAL", value, overwrite);    
 }
 
 //______________________________________________________________________________
 void TEnvironment::SetCkpSeconds(UInt_t value, Bool_t overwrite)
 {
-   Export("SCR_CHECKPOINT_SECONDS", value, overwrite);        
+   SetEnv("SCR_CHECKPOINT_SECONDS", value, overwrite);        
 }
 
 //______________________________________________________________________________
 void TEnvironment::SetCkpConfigFile(const Char_t *value, Bool_t overwrite)
 {
-   Export("SCR_CONF_FILE", value, overwrite);    
+   SetEnv("SCR_CONF_FILE", value, overwrite);    
 }
 
 
