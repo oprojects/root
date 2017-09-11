@@ -482,7 +482,7 @@ void TEnvironment::CkpInit()
 }
 
 //______________________________________________________________________________
-void TEnvironment::CpkFinalize()
+void TEnvironment::CkpFinalize()
 {
    if (!IsFinalized()) {
       if (fCkpInit)
@@ -531,7 +531,7 @@ void TEnvironment::SetCkpDebug(Bool_t value, Bool_t overwrite)
 //______________________________________________________________________________
 void TEnvironment::SetCacheBase(const Char_t *value, Bool_t overwrite)
 {
-   Export("SCR_CACHE_BASE", value, overwrite);    
+   Export("SCR_CACHE_BASE", value, overwrite);
 }
 
 #endif

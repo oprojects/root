@@ -2,6 +2,8 @@
 #ifndef ROOT_Mpi_TRootMpi
 #define ROOT_Mpi_TRootMpi
 
+#include <Mpi/TMpiExport.h>
+
 #ifndef ROOT_Rtypes
 #include "Rtypes.h"
 #endif

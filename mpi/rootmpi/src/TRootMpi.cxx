@@ -23,7 +23,7 @@ TRootMpi::TRootMpi(Int_t argc, Char_t **argv)
    fMpirunParams = " ";
 
    fCompiler = ROOT_MPI_CXX;
-#if ROOT_MPI_VALGRINDFOUND
+#if defined(ROOT_MPI_VALGRINDFOUND)
    fValgrind = ROOT_MPI_VALGRIND;
 #else
    fValgrind = "";
@@ -146,7 +146,7 @@ Int_t TRootMpi::ProcessArgs()
          TString arg = fArgv[i];
          arg.ReplaceAll(" ", "");
 
-#if ROOT_MPI_VALGRINDFOUND
+#if defined(ROOT_MPI_VALGRINDFOUND)
          if (arg == "-valgrind")
             fCallValgrind = kTRUE;
          else
@@ -177,11 +177,11 @@ Int_t TRootMpi::ProcessArgs()
                fCkpJobId = fArgv[i + 1];
                i = i + 1;
             } else {
-#if ROOT_MPI_VALGRINDFOUND
-            if (arg == "-valgrind")
-               fCallValgrind = kTRUE;
-            else
-               fMpirunParams += " " + arg;
+#if defined(ROOT_MPI_VALGRINDFOUND)
+               if (arg == "-valgrind")
+                  fCallValgrind = kTRUE;
+               else
+                  fMpirunParams += " " + arg;
 #else
             fMpirunParams += " " + arg;
 #endif

@@ -2,6 +2,8 @@
 #ifndef ROOT_Mpi_Globals
 #define ROOT_Mpi_Globals
 
+#include <Mpi/TMpiExport.h>
+
 #include <Rtypes.h>
 #include <TError.h>
 #include <TObject.h>

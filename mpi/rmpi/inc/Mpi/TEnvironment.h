@@ -105,7 +105,7 @@ public:
    // CheckPoint related methods
    static void CkpInit();
 
-   static void CpkFinalize();
+   static void CkpFinalize();
 
    static Bool_t IsCpkFinalized();
 
