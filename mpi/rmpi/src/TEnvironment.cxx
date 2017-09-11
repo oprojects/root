@@ -60,7 +60,7 @@ TEnvironment::TEnvironment(Int_t level)
       ROOT_MPI_CHECK_CALL(MPI_Comm_set_errhandler, (MPI_COMM_WORLD, (MPI_Errhandler)fErrorHandler), &COMM_WORLD);
       InitSignalHandlers();
 #if defined(ROOT_MPI_SCR)
-      SetJobId(0, kFALSE);
+      SetCkpJobId(0, kFALSE);
 #endif
    } else {
       // TODO: added error handling here
@@ -101,7 +101,7 @@ TEnvironment::TEnvironment(Int_t argc, Char_t **argv, Int_t level)
       ROOT_MPI_CHECK_CALL(MPI_Comm_set_errhandler, (MPI_COMM_WORLD, (MPI_Errhandler)fErrorHandler), &COMM_WORLD);
       InitSignalHandlers();
 #if defined(ROOT_MPI_SCR)
-      SetJobId(0, kFALSE);
+      SetCkpJobId(0, kFALSE);
 #endif
    } else {
       // TODO: added error handling here
@@ -505,19 +505,19 @@ Bool_t TEnvironment::IsCpkInitialized()
 }
 
 //______________________________________________________________________________
-void TEnvironment::SetJobId(UInt_t value, Bool_t overwrite)
+void TEnvironment::SetCkpJobId(UInt_t value, Bool_t overwrite)
 {
    Export("SCR_JOB_ID", value, overwrite);
 }
 
 //______________________________________________________________________________
-void TEnvironment::SetJobName(const Char_t *value, Bool_t overwrite)
+void TEnvironment::SetCkpJobName(const Char_t *value, Bool_t overwrite)
 {
    Export("SCR_JOB_NAME", value, overwrite);
 }
 
 //______________________________________________________________________________
-void TEnvironment::SetPrefix(const Char_t *value, Bool_t overwrite)
+void TEnvironment::SetCkpPrefix(const Char_t *value, Bool_t overwrite)
 {
    Export("SCR_PREFIX", value, overwrite);
 }
@@ -529,9 +529,28 @@ void TEnvironment::SetCkpDebug(Bool_t value, Bool_t overwrite)
 }
 
 //______________________________________________________________________________
-void TEnvironment::SetCacheBase(const Char_t *value, Bool_t overwrite)
+void TEnvironment::SetCkpCacheBase(const Char_t *value, Bool_t overwrite)
 {
    Export("SCR_CACHE_BASE", value, overwrite);
 }
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpInterval(UInt_t value, Bool_t overwrite)
+{
+   Export("SCR_CHECKPOINT_INTERVAL", value, overwrite);    
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpSeconds(UInt_t value, Bool_t overwrite)
+{
+   Export("SCR_CHECKPOINT_SECONDS", value, overwrite);        
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpConfigFile(const Char_t *value, Bool_t overwrite)
+{
+   Export("SCR_CONF_FILE", value, overwrite);    
+}
+
 
 #endif

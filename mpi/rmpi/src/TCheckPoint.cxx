@@ -17,9 +17,7 @@ using namespace ROOT::Mpi;
 //     }
 // //    // setting up default options
 // //    fOptions["SCR_CACHE_SIZE"] = "1";
-// //    fOptions["SCR_CHECKPOINT_INTERVAL"] = "";
 // //    fOptions["SCR_CHECKPOINT_OVERHEAD"] = "";
-// //    fOptions["SCR_CHECKPOINT_SECONDS"] = "";
 // //    fOptions["SCR_CLUSTER_NAME"] = "";
 // //    fOptions["SCR_CNTL_BASE"] = "";
 // //    fOptions["SCR_COPY_TYPE"] = "SINGLE"; // Set to one of: SINGLE, PARTNER, XOR, or FILE.
@@ -39,7 +37,6 @@ using namespace ROOT::Mpi;
 // //    fOptions["SCR_HALT_ENABLED"] = "";
 // //    fOptions["SCR_LOG_ENABLE"] = "0";
 // //    fOptions["SCR_MPI_BUF_SIZE"] = "131072";
-// //    fOptions["SCR_PREFIX"] = gSystem->pwd();
 // //    fOptions["SCR_RUNS"] = "0";
 // //    fOptions["SCR_SET_SIZE"] = "8";
 // //    fOptions["SCR_USER_NAME"] = gSystem->GetUserInfo(gSystem->GetUid())->fUser;

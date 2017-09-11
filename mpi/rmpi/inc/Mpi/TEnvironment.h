@@ -111,15 +111,21 @@ public:
 
    static Bool_t IsCpkInitialized();
 
-   void SetJobId(UInt_t value, Bool_t overwrite = kTRUE);
+   void SetCkpJobId(UInt_t value, Bool_t overwrite = kTRUE);
 
-   void SetJobName(const Char_t *value, Bool_t overwrite = kTRUE);
+   void SetCkpJobName(const Char_t *value, Bool_t overwrite = kTRUE);
 
-   void SetPrefix(const Char_t *value, Bool_t overwrite = kTRUE);
+   void SetCkpPrefix(const Char_t *value, Bool_t overwrite = kTRUE);
 
    void SetCkpDebug(Bool_t value, Bool_t overwrite = kTRUE);
 
-   void SetCacheBase(const Char_t *value, Bool_t overwrite = kTRUE);
+   void SetCkpCacheBase(const Char_t *value, Bool_t overwrite = kTRUE);
+   
+   void SetCkpInterval(UInt_t value, Bool_t overwrite = kTRUE);
+   
+   void SetCkpSeconds(UInt_t value, Bool_t overwrite = kTRUE);
+   
+   void SetCkpConfigFile(const Char_t *value, Bool_t overwrite = kTRUE);
 
 #endif
 
