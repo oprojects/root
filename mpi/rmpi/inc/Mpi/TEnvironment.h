@@ -111,6 +111,8 @@ public:
 
    static Bool_t IsCpkInitialized();
 
+   void CkpCleanCache();
+
    void SetCkpJobId(UInt_t value, Bool_t overwrite = kTRUE);
 
    void SetCkpJobName(const Char_t *value, Bool_t overwrite = kTRUE);

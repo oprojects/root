@@ -2,6 +2,7 @@
 #include <Mpi/TIntraCommunicator.h>
 #include <Mpi/TErrorHandler.h>
 #include <iostream>
+#include <TApplication.h>
 using namespace ROOT::Mpi;
 
 TErrorHandler TEnvironment::fErrorHandler = TErrorHandler();
@@ -49,9 +50,18 @@ TEnvironment::TEnvironment(Int_t level)
 #if defined(R__MACOSX) && defined(OPEN_MPI)
    gSystem->Setenv("TMPDIR", "/tmp");
 #endif
+#if defined(ROOT_MPI_SCR)
+   auto argc = gApplication->Argc();
+   auto argv = gApplication->Argv();
+   for (auto i = 0; i < argc; i++) {
+      TString opt = argv[i];
+      if (opt == "-ckp-clean")
+         CkpCleanCache();
+   }
+#endif
+
    Int_t provided;
    MPI_Init_thread(NULL, NULL, level, &provided);
-
    if (IsInitialized()) {
       Int_t result;
       MPI_Comm_compare((MPI_Comm)COMM_WORLD, MPI_COMM_WORLD, &result);
@@ -93,6 +103,16 @@ TEnvironment::TEnvironment(Int_t argc, Char_t **argv, Int_t level)
 #if defined(R__MACOSX) && defined(OPEN_MPI)
    gSystem->Setenv("TMPDIR", "/tmp");
 #endif
+#if defined(ROOT_MPI_SCR)
+   auto argca = gApplication->Argc();
+   auto argva = gApplication->Argv();
+   for (auto i = 0; i < argca; i++) {
+      TString opt = argva[i];
+      if (opt == "-ckp-clean")
+         CkpCleanCache();
+   }
+#endif
+
    Int_t provided;
    MPI_Init_thread(&argc, &argv, level, &provided);
    if (IsInitialized()) {
@@ -505,6 +525,13 @@ Bool_t TEnvironment::IsCpkInitialized()
 }
 
 //______________________________________________________________________________
+void TEnvironment::CkpCleanCache()
+{
+   gSystem->Exec(Form("rm -rf /tmp/%s/scr.*/", gSystem->GetUserInfo(gSystem->GetUid())->fUser.Data()));
+   gSystem->Exec("rm -rf .scr/");
+}
+
+//______________________________________________________________________________
 void TEnvironment::SetCkpJobId(UInt_t value, Bool_t overwrite)
 {
    SetEnv("SCR_JOB_ID", value, overwrite);
@@ -537,19 +564,19 @@ void TEnvironment::SetCkpCacheBase(const Char_t *value, Bool_t overwrite)
 //______________________________________________________________________________
 void TEnvironment::SetCkpInterval(UInt_t value, Bool_t overwrite)
 {
-   SetEnv("SCR_CHECKPOINT_INTERVAL", value, overwrite);    
+   SetEnv("SCR_CHECKPOINT_INTERVAL", value, overwrite);
 }
 
 //______________________________________________________________________________
 void TEnvironment::SetCkpSeconds(UInt_t value, Bool_t overwrite)
 {
-   SetEnv("SCR_CHECKPOINT_SECONDS", value, overwrite);        
+   SetEnv("SCR_CHECKPOINT_SECONDS", value, overwrite);
 }
 
 //______________________________________________________________________________
 void TEnvironment::SetCkpConfigFile(const Char_t *value, Bool_t overwrite)
 {
-   SetEnv("SCR_CONF_FILE", value, overwrite);    
+   SetEnv("SCR_CONF_FILE", value, overwrite);
 }
 
 

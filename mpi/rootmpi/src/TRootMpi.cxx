@@ -121,10 +121,6 @@ Int_t TRootMpi::ProcessArgs()
       return gSystem->Exec(cmd_help.Data());
    }
 
-   if (fArgc == 1 && (TString(fArgv[1]) == TString("-ckp-clean"))) {
-      return gSystem->Exec(Form("rm -rf .scr /tmp/%s", gSystem->Getenv("USER")));
-   }
-
    if (TString(fArgv[1]) == "-C") {
       for (int i = 2; i < fArgc; i++) {
          TString arg = fArgv[i];
@@ -169,7 +165,8 @@ Int_t TRootMpi::ProcessArgs()
       for (int i = 1; i < fArgc - 1; i++) {
          TString arg = fArgv[i];
          arg.ReplaceAll(" ", "");
-         if ((arg == "-b") || (arg == "-n") || (arg == "-l") || (arg == "-q") || (arg == "-x") || (arg == "-memstat")) {
+         if ((arg == "-b") || (arg == "-n") || (arg == "-l") || (arg == "-q") || (arg == "-x") || (arg == "-memstat") ||
+             (arg == "-ckp-clean")) {
             sRootParams += " " + arg;
          } else {
             if (arg == "-ckp-jobid") {
