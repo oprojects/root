@@ -71,6 +71,7 @@ TEnvironment::TEnvironment(Int_t level)
       InitSignalHandlers();
 #if defined(ROOT_MPI_SCR)
       SetCkpJobId(0, kFALSE);
+      SetCkpFlush(0, kFALSE);
 #endif
    } else {
       // TODO: added error handling here
@@ -122,6 +123,7 @@ TEnvironment::TEnvironment(Int_t argc, Char_t **argv, Int_t level)
       InitSignalHandlers();
 #if defined(ROOT_MPI_SCR)
       SetCkpJobId(0, kFALSE);
+      SetCkpFlush(0, kFALSE);
 #endif
    } else {
       // TODO: added error handling here
@@ -577,6 +579,12 @@ void TEnvironment::SetCkpSeconds(UInt_t value, Bool_t overwrite)
 void TEnvironment::SetCkpConfigFile(const Char_t *value, Bool_t overwrite)
 {
    SetEnv("SCR_CONF_FILE", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpFlush(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_FLUSH", value, overwrite);
 }
 
 

@@ -129,6 +129,8 @@ public:
    
    void SetCkpConfigFile(const Char_t *value, Bool_t overwrite = kTRUE);
 
+   void SetCkpFlush(UInt_t value, Bool_t overwrite = kTRUE);
+
 #endif
 
    ClassDef(TEnvironment, 1)
