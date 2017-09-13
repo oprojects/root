@@ -157,10 +157,12 @@ TEnvironment::~TEnvironment()
       delete fTerminationSignal;
    if (fSigSegmentationViolationSignal)
       delete fSigSegmentationViolationSignal;
+#if defined(ROOT_MPI_SCR)
    if (fCkpInit)
       if (SCR_Finalize() == SCR_SUCCESS)
          fCkpInit = kFALSE;
    /*else error handling here shuptting down SCR*/
+#endif
 }
 
 //______________________________________________________________________________
