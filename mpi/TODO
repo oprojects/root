@@ -4,3 +4,7 @@ TMpiFile:
  * check that ranks are not major that the size of the communicator and to integrate that to ROOTMpi error handling
  * improve tests
  * measure of perfomance for I/O 
+Ckp:
+ * To create a system to clear cache dirs and files
+ * To create a system to manage ckp cache files
+ * Fix bug flushing datasets to disk

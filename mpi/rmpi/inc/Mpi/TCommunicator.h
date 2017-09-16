@@ -15,6 +15,8 @@
  * @defgroup Mpi Message Passing Interface
  */
 
+class TTree;
+
 namespace ROOT {
 
 namespace Mpi {
@@ -861,25 +863,7 @@ void TCommunicator::Reduce(const Type *in_var, Type *out_var, Int_t count, TOp<T
 {
    auto op = opf();
 
-   if (!std::is_class<Type>::value)
-      memmove((void *)out_var, (void *)in_var, sizeof(Type) * count);
-   else {
-      for (auto i = 0; i < count; i++) {
-         TMpiMessage msgi;
-         msgi.WriteObject(in_var[i]);
-         Char_t *buffer = new Char_t[msgi.BufferSize()]; // this pointer can't be freed,
-                                                         // it will be free when the
-                                                         // object dies
-         memcpy((void *)buffer, (void *)msgi.Buffer(), sizeof(Char_t) * msgi.BufferSize());
-         TMpiMessage msgo(buffer, msgi.BufferSize()); // using serialization
-                                                      // to copy memory
-                                                      // without copy
-                                                      // constructor
-         auto cl = gROOT->GetClass(typeid(Type));
-         auto obj_tmp = msgo.ReadObjectAny(cl);
-         memmove((void *)&out_var[i], obj_tmp, sizeof(Type));
-      }
-   }
+   MemMove<Type>(in_var, out_var, count);
 
    auto size = GetSize();
    auto lastpower = 1 << (Int_t)log2(size);
@@ -889,9 +873,16 @@ void TCommunicator::Reduce(const Type *in_var, Type *out_var, Int_t count, TOp<T
          Send(in_var, count, i - lastpower, GetInternalTag());
    for (Int_t i = 0; i < size - lastpower; i++)
       if (GetRank() == i) {
-         Type recvbuffer[count];
+         Type *recvbuffer = new Type[count];
          Recv(recvbuffer, count, i + lastpower, GetInternalTag());
-         for (Int_t j = 0; j < count; j++) out_var[j] = op(in_var[j], recvbuffer[j]);
+         if (op.IsPrtFunction()) {
+            auto tmp_out_var = op(in_var, recvbuffer, count);
+            MemMove<Type>(tmp_out_var, out_var, count);
+         } else {
+            for (Int_t j = 0; j < count; j++)
+               out_var[j] = op(in_var[j], recvbuffer[j]);
+         }
+         delete[] recvbuffer;
       }
 
    for (Int_t d = 0; d < (Int_t)log2(lastpower); d++)
@@ -899,9 +890,16 @@ void TCommunicator::Reduce(const Type *in_var, Type *out_var, Int_t count, TOp<T
          auto receiver = k;
          auto sender = k + (1 << d);
          if (GetRank() == receiver) {
-            Type recvbuffer[count];
+            Type *recvbuffer = new Type[count];
             Recv(recvbuffer, count, sender, GetInternalTag());
-            for (Int_t j = 0; j < count; j++) out_var[j] = op(out_var[j], recvbuffer[j]);
+            if (op.IsPrtFunction()) {
+               auto tmp_out_var = op(out_var, recvbuffer, count);
+               MemMove<Type>(tmp_out_var, out_var, count);
+            } else {
+               for (Int_t j = 0; j < count; j++)
+                  out_var[j] = op(out_var[j], recvbuffer[j]);
+            }
+            delete[] recvbuffer;
          } else if (GetRank() == sender)
             Send(out_var, count, receiver, GetInternalTag());
       }
@@ -955,6 +953,11 @@ template <>
 void TCommunicator::Unserialize<TMpiMessage>(Char_t *ibuffer, Int_t isize, TMpiMessage *vars, Int_t count,
                                              const TCommunicator *comm, Int_t dest, Int_t source, Int_t tag,
                                              Int_t root);
+
+//______________________________________________________________________________
+template <>
+void TCommunicator::Reduce<TTree>(const TTree *in_var, TTree *out_var, Int_t count, TOp<TTree> (*opf)(),
+                                  Int_t root) const;
 }
 }
 

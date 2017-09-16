@@ -2,6 +2,7 @@
 #include <Mpi/TIntraCommunicator.h>
 #include <Mpi/TErrorHandler.h>
 #include <iostream>
+#include <TApplication.h>
 using namespace ROOT::Mpi;
 
 TErrorHandler TEnvironment::fErrorHandler = TErrorHandler();
@@ -20,6 +21,8 @@ Int_t TEnvironment::fSavedStdOut = -1;
 Int_t TEnvironment::fProfiling = 0;
 
 FILE *TEnvironment::fOutput = NULL;
+
+static Bool_t fCkpInit = kFALSE;
 
 // TODO: enable thread level and thread-safe for ROOT
 
@@ -47,9 +50,18 @@ TEnvironment::TEnvironment(Int_t level)
 #if defined(R__MACOSX) && defined(OPEN_MPI)
    gSystem->Setenv("TMPDIR", "/tmp");
 #endif
+#if defined(ROOT_MPI_SCR)
+   auto argc = gApplication->Argc();
+   auto argv = gApplication->Argv();
+   for (auto i = 0; i < argc; i++) {
+      TString opt = argv[i];
+      if (opt == "-ckp-clean")
+         CkpCleanCache();
+   }
+#endif
+
    Int_t provided;
    MPI_Init_thread(NULL, NULL, level, &provided);
-
    if (IsInitialized()) {
       Int_t result;
       MPI_Comm_compare((MPI_Comm)COMM_WORLD, MPI_COMM_WORLD, &result);
@@ -57,6 +69,10 @@ TEnvironment::TEnvironment(Int_t level)
          COMM_WORLD.SetCommName("ROOT::Mpi::COMM_WORLD");
       ROOT_MPI_CHECK_CALL(MPI_Comm_set_errhandler, (MPI_COMM_WORLD, (MPI_Errhandler)fErrorHandler), &COMM_WORLD);
       InitSignalHandlers();
+#if defined(ROOT_MPI_SCR)
+      SetCkpJobId(0, kFALSE);
+      SetCkpFlush(0, kFALSE);
+#endif
    } else {
       // TODO: added error handling here
    }
@@ -88,6 +104,16 @@ TEnvironment::TEnvironment(Int_t argc, Char_t **argv, Int_t level)
 #if defined(R__MACOSX) && defined(OPEN_MPI)
    gSystem->Setenv("TMPDIR", "/tmp");
 #endif
+#if defined(ROOT_MPI_SCR)
+   auto argca = gApplication->Argc();
+   auto argva = gApplication->Argv();
+   for (auto i = 0; i < argca; i++) {
+      TString opt = argva[i];
+      if (opt == "-ckp-clean")
+         CkpCleanCache();
+   }
+#endif
+
    Int_t provided;
    MPI_Init_thread(&argc, &argv, level, &provided);
    if (IsInitialized()) {
@@ -95,6 +121,10 @@ TEnvironment::TEnvironment(Int_t argc, Char_t **argv, Int_t level)
       ROOT_MPI_CHECK_CALL(MPI_Comm_compare, ((MPI_Comm)COMM_WORLD, MPI_COMM_WORLD, &result), &COMM_WORLD);
       ROOT_MPI_CHECK_CALL(MPI_Comm_set_errhandler, (MPI_COMM_WORLD, (MPI_Errhandler)fErrorHandler), &COMM_WORLD);
       InitSignalHandlers();
+#if defined(ROOT_MPI_SCR)
+      SetCkpJobId(0, kFALSE);
+      SetCkpFlush(0, kFALSE);
+#endif
    } else {
       // TODO: added error handling here
    }
@@ -127,6 +157,12 @@ TEnvironment::~TEnvironment()
       delete fTerminationSignal;
    if (fSigSegmentationViolationSignal)
       delete fSigSegmentationViolationSignal;
+#if defined(ROOT_MPI_SCR)
+   if (fCkpInit)
+      if (SCR_Finalize() == SCR_SUCCESS)
+         fCkpInit = kFALSE;
+/*else error handling here shuptting down SCR*/
+#endif
 }
 
 //______________________________________________________________________________
@@ -455,3 +491,102 @@ void TEnvironment::SetVerbose(Bool_t status)
 {
    TErrorHandler::SetVerbose(status);
 }
+
+#if defined(ROOT_MPI_SCR)
+
+//______________________________________________________________________________
+void TEnvironment::CkpInit()
+{
+   if (IsInitialized()) {
+      if (!fCkpInit)
+         if (SCR_Init() == SCR_SUCCESS)
+            fCkpInit = kTRUE;
+   }
+   /*If mpi environment is not initialized, then error here*/
+}
+
+//______________________________________________________________________________
+void TEnvironment::CkpFinalize()
+{
+   if (!IsFinalized()) {
+      if (fCkpInit)
+         if (SCR_Finalize() == SCR_SUCCESS)
+            fCkpInit = kFALSE;
+   }
+   /*If mpi environment is was finalized, then error here*/
+}
+
+//______________________________________________________________________________
+Bool_t TEnvironment::IsCpkFinalized()
+{
+   return fCkpInit == kFALSE;
+}
+
+//______________________________________________________________________________
+Bool_t TEnvironment::IsCpkInitialized()
+{
+   return fCkpInit;
+}
+
+//______________________________________________________________________________
+void TEnvironment::CkpCleanCache()
+{
+   gSystem->Exec(Form("rm -rf /tmp/%s/scr.*/", gSystem->GetUserInfo(gSystem->GetUid())->fUser.Data()));
+   gSystem->Exec("rm -rf .scr/");
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpJobId(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_JOB_ID", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpJobName(const Char_t *value, Bool_t overwrite)
+{
+   SetEnv("SCR_JOB_NAME", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpPrefix(const Char_t *value, Bool_t overwrite)
+{
+   SetEnv("SCR_PREFIX", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpDebug(Bool_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_DEBUG", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpCacheBase(const Char_t *value, Bool_t overwrite)
+{
+   SetEnv("SCR_CACHE_BASE", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpInterval(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_CHECKPOINT_INTERVAL", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpSeconds(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_CHECKPOINT_SECONDS", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpConfigFile(const Char_t *value, Bool_t overwrite)
+{
+   SetEnv("SCR_CONF_FILE", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpFlush(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_FLUSH", value, overwrite);
+}
+
+#endif

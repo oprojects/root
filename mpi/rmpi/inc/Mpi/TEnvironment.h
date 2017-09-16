@@ -3,6 +3,7 @@
 #define ROOT_Mpi_TEnvironment
 
 #include <Mpi/Globals.h>
+
 namespace ROOT {
 
 namespace Mpi {
@@ -16,7 +17,13 @@ namespace Mpi {
 class TErrorHandler;
 class TMpiSignalHandler;
 class TCommunicator;
+#if defined(ROOT_MPI_SCR)
+class TCheckPoint;
+#endif
 class TEnvironment : public TObject {
+#if defined(ROOT_MPI_SCR)
+   friend class TCheckPoint;
+#endif
    friend class TCommunicator;
    friend class TMpiSignalHandler;
    friend class TErrorHandler;
@@ -43,6 +50,8 @@ private:
 
 protected:
    void InitSignalHandlers();
+   template <class T>
+   void SetEnv(const Char_t *var, T value, Bool_t overwrite);
 
 public:
    TEnvironment(Int_t level = ROOT::Mpi::THREAD_SINGLE);
@@ -92,8 +101,53 @@ public:
 
    static void SetVerbose(Bool_t status = kTRUE);
 
+#if defined(ROOT_MPI_SCR)
+   // CheckPoint related methods
+   static void CkpInit();
+
+   static void CkpFinalize();
+
+   static Bool_t IsCpkFinalized();
+
+   static Bool_t IsCpkInitialized();
+
+   void CkpCleanCache();
+
+   void SetCkpJobId(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpJobName(const Char_t *value, Bool_t overwrite = kTRUE);
+
+   void SetCkpPrefix(const Char_t *value, Bool_t overwrite = kTRUE);
+
+   void SetCkpDebug(Bool_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpCacheBase(const Char_t *value, Bool_t overwrite = kTRUE);
+
+   void SetCkpInterval(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpSeconds(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpConfigFile(const Char_t *value, Bool_t overwrite = kTRUE);
+
+   void SetCkpFlush(UInt_t value, Bool_t overwrite = kTRUE);
+
+#endif
+
    ClassDef(TEnvironment, 1)
 };
+
+template <class T>
+void TEnvironment::SetEnv(const Char_t *var, T value, Bool_t overwrite)
+{
+   std::stringstream ost;
+   ost << value;
+   if (overwrite) {
+      gSystem->Setenv(var, ost.str().c_str());
+   } else {
+      if (!gSystem->Getenv(var))
+         gSystem->Setenv(var, ost.str().c_str());
+   }
+}
 }
 }
 

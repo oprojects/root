@@ -5,6 +5,7 @@
 #include <iostream>
 #include <TSystem.h>
 #include <TROOT.h>
+#include <TTree.h>
 
 using namespace ROOT::Mpi;
 
@@ -412,4 +413,59 @@ TString TCommunicator::GetCommName() const
 void TCommunicator::SetCommName(const TString name)
 {
    ROOT_MPI_CHECK_CALL(MPI_Comm_set_name, (fComm, name.Data()), this);
+}
+
+//______________________________________________________________________________
+template <>
+void TCommunicator::Reduce<TTree>(const TTree *in_var, TTree *out_var, Int_t count, TOp<TTree> (*opf)(),
+                                  Int_t root) const
+{
+   auto op = opf();
+
+   MemMove<TTree>(in_var, out_var, count);
+
+   auto size = GetSize();
+   auto lastpower = 1 << (Int_t)log2(size);
+
+   for (Int_t i = lastpower; i < size; i++)
+      if (GetRank() == i)
+         Send(in_var, count, i - lastpower, GetInternalTag());
+   for (Int_t i = 0; i < size - lastpower; i++)
+      if (GetRank() == i) {
+         TTree *recvbuffer = new TTree[count];
+         Recv(recvbuffer, count, i + lastpower, GetInternalTag());
+         if (op.IsPrtFunction()) {
+            auto tmp_out_var = op(in_var, recvbuffer, count);
+            MemMove<TTree>(tmp_out_var, out_var, count);
+         } else {
+            Error(__FUNCTION__, "TTree dont have copy assignment operator, use TOp object using function with pointers "
+                                "in the arguments.");
+            Abort(ERR_OP);
+         }
+         delete[] recvbuffer;
+      }
+
+   for (Int_t d = 0; d < (Int_t)log2(lastpower); d++)
+      for (Int_t k = 0; k < lastpower; k += 1 << (d + 1)) {
+         auto receiver = k;
+         auto sender = k + (1 << d);
+         if (GetRank() == receiver) {
+            TTree *recvbuffer = new TTree[count];
+            Recv(recvbuffer, count, sender, GetInternalTag());
+            if (op.IsPrtFunction()) {
+               auto tmp_out_var = op(out_var, recvbuffer, count);
+               MemMove<TTree>(tmp_out_var, out_var, count);
+            } else {
+               Error(__FUNCTION__, "TTree dont have copy assignment operator, use TOp object using function with "
+                                   "pointers in the arguments.");
+               Abort(ERR_OP);
+            }
+            delete[] recvbuffer;
+         } else if (GetRank() == sender)
+            Send(out_var, count, receiver, GetInternalTag());
+      }
+   if (root != 0 && GetRank() == 0)
+      Send(out_var, count, root, GetInternalTag());
+   if (root == GetRank() && GetRank() != 0)
+      Recv(out_var, count, 0, GetInternalTag());
 }

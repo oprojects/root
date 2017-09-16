@@ -23,7 +23,7 @@ TRootMpi::TRootMpi(Int_t argc, Char_t **argv)
    fMpirunParams = " ";
 
    fCompiler = ROOT_MPI_CXX;
-#if ROOT_MPI_VALGRINDFOUND
+#if defined(ROOT_MPI_VALGRINDFOUND)
    fValgrind = ROOT_MPI_VALGRIND;
 #else
    fValgrind = "";
@@ -142,7 +142,7 @@ Int_t TRootMpi::ProcessArgs()
          TString arg = fArgv[i];
          arg.ReplaceAll(" ", "");
 
-#if ROOT_MPI_VALGRINDFOUND
+#if defined(ROOT_MPI_VALGRINDFOUND)
          if (arg == "-valgrind")
             fCallValgrind = kTRUE;
          else
@@ -165,17 +165,24 @@ Int_t TRootMpi::ProcessArgs()
       for (int i = 1; i < fArgc - 1; i++) {
          TString arg = fArgv[i];
          arg.ReplaceAll(" ", "");
-         if ((arg == "-b") || (arg == "-n") || (arg == "-l") || (arg == "-q") || (arg == "-x") || (arg == "-memstat")) {
+         if ((arg == "-b") || (arg == "-n") || (arg == "-l") || (arg == "-q") || (arg == "-x") || (arg == "-memstat") ||
+             (arg == "-ckp-clean")) {
             sRootParams += " " + arg;
          } else {
-#if ROOT_MPI_VALGRINDFOUND
-            if (arg == "-valgrind")
-               fCallValgrind = kTRUE;
-            else
-               fMpirunParams += " " + arg;
+            if (arg == "-ckp-jobid") {
+               // error control here
+               fCkpJobId = fArgv[i + 1];
+               i = i + 1;
+            } else {
+#if defined(ROOT_MPI_VALGRINDFOUND)
+               if (arg == "-valgrind")
+                  fCallValgrind = kTRUE;
+               else
+                  fMpirunParams += " " + arg;
 #else
             fMpirunParams += " " + arg;
 #endif
+            }
          }
       }
 
@@ -217,6 +224,7 @@ Int_t TRootMpi::Execute()
    auto cmd = fMpirun + " " + fMpirunParams;
    if (fVerbose)
       printf("\nEXECUTING %s\n", cmd.Data());
+   gSystem->Setenv("SCR_JOB_ID", fCkpJobId.Data());
    auto status = gSystem->Exec(cmd.Data());
 
    if (fCallValgrind)
