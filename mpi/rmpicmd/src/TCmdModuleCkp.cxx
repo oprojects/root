@@ -16,45 +16,56 @@ void TCmdModuleCkp::ParseOptions()
          fOptions[arg] = "";
          continue;
       }
-      if ((arg == "--ckp-jobid")) {
-         fOptions[arg] = fArgv[i + 1];
-         i++;
+      if (arg.Contains("=")) {
+         auto opt = ParseEqual(arg);
+         auto key = opt.first;
+         auto value = opt.second;
+
+      if ((key == "--ckp-jobid")) {
+         fOptions[key] = value;
          continue;
       }
-      if ((arg == "--ckp-jobname")) {
-         fOptions[arg] = fArgv[i + 1];
-         i++;
+      if ((key == "--ckp-jobname")) {
+         fOptions[key] = value;
          continue;
       }
-      if ((arg == "--ckp-prefix")) {
-         fOptions[arg] = fArgv[i + 1];
-         i++;
+      if ((key == "--ckp-prefix")) {
+         fOptions[key] = value;
          continue;
       }
-      if ((arg == "--ckp-debug")) {
-         fOptions[arg] = fArgv[i + 1];
-         i++;
+      if ((key == "--ckp-debug")) {
+         fOptions[key] = value;
          continue;
       }
-      if ((arg == "--ckp-cachebase")) {
-         fOptions[arg] = fArgv[i + 1];
-         i++;
+      if ((key == "--ckp-cachebase")) {
+         fOptions[key] = value;
          continue;
       }
-      if ((arg == "--ckp-interval")) {
-         fOptions[arg] = fArgv[i + 1];
-         i++;
+      if ((key == "--ckp-interval")) {
+         fOptions[key] = value;
          continue;
       }
-      if ((arg == "--ckp-seconds")) {
-         fOptions[arg] = fArgv[i + 1];
-         i++;
+      if ((key == "--ckp-seconds")) {
+         fOptions[key] = value;
          continue;
       }
-      if ((arg == "--ckp-configfile")) {
-         fOptions[arg] = fArgv[i + 1];
-         i++;
+      if ((key == "--ckp-configfile")) {
+         fOptions[key] = value;
          continue;
+      }
       }
    }
+}
+
+//______________________________________________________________________________
+TString TCmdModuleCkp::GetOptionsString()
+{
+   TString optstr;
+   for (auto &opt : fOptions) {
+      if (opt.first == "--ckp-clean")
+         optstr += Form(" %s ", opt.first.Data());
+      else
+         optstr += Form(" %s=%s ", opt.first.Data(), opt.second.Data());
+   }
+   return optstr;
 }

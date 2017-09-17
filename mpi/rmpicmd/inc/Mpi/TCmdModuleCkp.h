@@ -16,6 +16,7 @@ class TCmdModuleCkp : public TCmdModuleBase {
 public:
    TCmdModuleCkp(const Int_t argc, const Char_t **argv);
    virtual void ParseOptions();
+   virtual TString GetOptionsString();
    ClassDef(TCmdModuleCkp, 0)
 };
 }

@@ -1,6 +1,7 @@
 #include <Mpi/TEnvironment.h>
 #include <Mpi/TIntraCommunicator.h>
 #include <Mpi/TErrorHandler.h>
+#include <Mpi/TCmdModuleCkp.h>
 #include <iostream>
 #include <TApplication.h>
 using namespace ROOT::Mpi;

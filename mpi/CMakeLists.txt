@@ -116,8 +116,8 @@ endif()
 include_directories(${MPI_CXX_INCLUDE_PATH} ${MPI_C_INCLUDE_PATH} "${CMAKE_BINARY_DIR}/include")
 ROOT_ADD_CXX_FLAG(CMAKE_CXX_FLAGS  -Wno-overloaded-virtual  -Wno-literal-suffix)
 
-add_subdirectory(rmpi)
 add_subdirectory(rmpicmd)
+add_subdirectory(rmpi)
 
 GENERATE_EXPORT_HEADER(RMpi EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/include/Mpi/TMpiExport.h  CUSTOM_CONTENT_FROM_VARIABLE EXPORT_HEADER_OPT )
 install(FILES "${CMAKE_BINARY_DIR}/include/Mpi/TMpiExport.h" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/Mpi" COMPONENT headers)
