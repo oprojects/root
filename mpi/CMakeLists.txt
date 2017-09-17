@@ -17,7 +17,7 @@ endif()
 
 if(python OR python2 OR python3)
     if(PYTHONINTERP_FOUND)
-        set(EXPORT_HEADER_OPT "${EXPORT_HEADER_OPT}#define DPYTHONINTERP_FOUND\n")
+        set(EXPORT_HEADER_OPT "${EXPORT_HEADER_OPT}#define PYTHONINTERP_FOUND\n")
         set(EXPORT_HEADER_OPT "${EXPORT_HEADER_OPT}#define PYTHON_EXECUTABLE \"${PYTHON_EXECUTABLE}\"\n")
     endif(PYTHONINTERP_FOUND)
 endif()
@@ -117,7 +117,7 @@ include_directories(${MPI_CXX_INCLUDE_PATH} ${MPI_C_INCLUDE_PATH} "${CMAKE_BINAR
 ROOT_ADD_CXX_FLAG(CMAKE_CXX_FLAGS  -Wno-overloaded-virtual  -Wno-literal-suffix)
 
 add_subdirectory(rmpi)
-add_subdirectory(rootmpi)
+add_subdirectory(rmpicmd)
 
 GENERATE_EXPORT_HEADER(RMpi EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/include/Mpi/TMpiExport.h  CUSTOM_CONTENT_FROM_VARIABLE EXPORT_HEADER_OPT )
 install(FILES "${CMAKE_BINARY_DIR}/include/Mpi/TMpiExport.h" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/Mpi" COMPONENT headers)

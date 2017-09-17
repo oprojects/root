@@ -8,3 +8,12 @@ Ckp:
  * To create a system to clear cache dirs and files
  * To create a system to manage ckp cache files
  * Fix bug flushing datasets to disk
+ * add tests
+Cmd:
+ * To improve error system
+ * To implement Ckp options
+ * add documentation and users guide
+ * add support to compile 
+ * add support to executo binary code
+ * add tests
+ * add support to launch mpiexec from ROOT prompt
