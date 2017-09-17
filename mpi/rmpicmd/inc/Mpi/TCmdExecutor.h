@@ -6,6 +6,7 @@
 #include <Mpi/TCmdModulePython.h>
 #include <Mpi/TCmdModuleMpiExec.h>
 #include <Mpi/TCmdModuleValgrind.h>
+#include <Mpi/TCmdModuleCkp.h>
 
 namespace ROOT {
 namespace Mpi {
@@ -18,12 +19,11 @@ Class to execute ROOT Mpi code from command line, parsing options from a set of 
 class TCmdExecutor : TObject {
    const Int_t fArgc;
    const Char_t **fArgv;
-   TCmdModuleROOT fModuleROOT;
-   TCmdModulePython fModulePython;
-   TCmdModuleMpiExec fModuleMpiExec;
-   TCmdModuleValgrind fModuleValgrind;
-   TString fMpirun;
-
+   TCmdModuleROOT fModuleROOT;         // module to parse ROOT options
+   TCmdModulePython fModulePython;     // module to parse Python options
+   TCmdModuleMpiExec fModuleMpiExec;   // module to parse MpiExec options
+   TCmdModuleValgrind fModuleValgrind; // module to parse Valgrind options
+   TCmdModuleCkp fModuleCkp;           // module to parse CheckPoint options
 public:
    TCmdExecutor(const Int_t argc, const Char_t **argv);
    void SetMpiExecOption(const TString opt, const TString value);

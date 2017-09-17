@@ -25,5 +25,6 @@
 #pragma link C++ class ROOT::Mpi::TCmdModuleROOT;
 #pragma link C++ class ROOT::Mpi::TCmdModuleValgrind;
 #pragma link C++ class ROOT::Mpi::TCmdModulePython;
+#pragma link C++ class ROOT::Mpi::TCmdModuleCkp;
 
 #endif

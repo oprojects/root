@@ -10,6 +10,7 @@ set(RMPICMD_HEADERS Mpi/TCmdExecutor.h
 		 Mpi/TCmdModulePython.h
 		 Mpi/TCmdModuleMpiExec.h
 		 Mpi/TCmdModuleValgrind.h
+		 Mpi/TCmdModuleCkp.h
 		 )
 set(RMPICMD_SRCS src/TCmdExecutor.cxx
                  src/TCmdModuleBase.cxx
@@ -17,6 +18,7 @@ set(RMPICMD_SRCS src/TCmdExecutor.cxx
                  src/TCmdModulePython.cxx
                  src/TCmdModuleMpiExec.cxx
                  src/TCmdModuleValgrind.cxx
+                 src/TCmdModuleCkp.cxx
 		 )
 
 ROOT_GENERATE_DICTIONARY(G__RMpiCmd ${RMPICMD_HEADERS} MODULE ${libname} LINKDEF LinkDef.h)

@@ -28,146 +28,286 @@ void TCmdModuleValgrind::ParseOptions()
          auto opt = ParseEqual(arg);
          auto key = opt.first;
          auto value = opt.second;
-         if (key == "--tool")
+         if (key == "--tool") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--trace-children") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--trace-children-skip") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--trace-children-skip-by-arg") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--child-silent-after-fork") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--vgdb") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--vgdb-error") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--vgdb-stop-at") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--track-fds") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--time-stamp") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--log-fd") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--log-file") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--log-socket") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--xml") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--xml-fd") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--xml-file") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--xml-socket") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--xml-user-comment") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--demangle") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--num-callers") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--error-limit") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--error-exitcode") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--default-suppressions") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--suppressions") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--gen-suppressions") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--dsymutil") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--max-stackframe") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--alignment") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--redzone-size") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--xtree-memory") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--xtree-memory-file") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--fullpath-after") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--smc-check") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--vgdb-poll") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--vgdb-shadow-registers") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--vgdb-prefix") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--run-libc-freeres") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--run-cxx-freeres") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--fair-sched") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--kernel-variant") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--merge-recursive-frames") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--num-transtab-sectors") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--avg-transtab-entry-size") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--show-emwarns") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--require-text-symbol") {
+            fOptions[key] = value;
+            continue;
+         }
+         if (key == "--soname-synonyms") {
             fOptions[key] = value;
-         if (key == "--trace-children")
+            continue;
+         }
+         if (key == "--sigill-diagnostics") {
             fOptions[key] = value;
-         if (key == "--trace-children-skip")
+            continue;
+         }
+         if (key == "--unw-stack-scan-thresh") {
             fOptions[key] = value;
-         if (key == "--trace-children-skip-by-arg")
+            continue;
+         }
+         if (key == "--unw-stack-scan-frames") {
             fOptions[key] = value;
-         if (key == "--child-silent-after-fork")
+            continue;
+         }
+         if (key == "--resync-filter") {
             fOptions[key] = value;
-         if (key == "--vgdb")
+            continue;
+         }
+         if (key == "--max-threads") {
             fOptions[key] = value;
-         if (key == "--vgdb-error")
+            continue;
+         }
+         if (key == "--leak-check") {
             fOptions[key] = value;
-         if (key == "--vgdb-stop-at")
+            continue;
+         }
+         if (key == "--leak-resolution") {
             fOptions[key] = value;
-         if (key == "--track-fds")
+            continue;
+         }
+         if (key == "--leak-check-heuristics") {
             fOptions[key] = value;
-         if (key == "--time-stamp")
+            continue;
+         }
+         if (key == "--show-reachable") {
             fOptions[key] = value;
-         if (key == "--log-fd")
+            continue;
+         }
+         if (key == "--show-reachable") {
             fOptions[key] = value;
-         if (key == "--log-file")
+            continue;
+         }
+         if (key == "--show-reachable") {
             fOptions[key] = value;
-         if (key == "--log-socket")
+            continue;
+         }
+         if (key == "--xtree-leak") {
             fOptions[key] = value;
-         if (key == "--xml")
+            continue;
+         }
+         if (key == "--xtree-leak-file") {
             fOptions[key] = value;
-         if (key == "--xml-fd")
+            continue;
+         }
+         if (key == "--undef-value-errors") {
             fOptions[key] = value;
-         if (key == "--xml-file")
+            continue;
+         }
+         if (key == "--partial-loads-ok") {
             fOptions[key] = value;
-         if (key == "--xml-socket")
+            continue;
+         }
+         if (key == "--freelist-vol") {
             fOptions[key] = value;
-         if (key == "--xml-user-comment")
+            continue;
+         }
+         if (key == "--freelist-big-blocks") {
             fOptions[key] = value;
-         if (key == "--demangle")
+            continue;
+         }
+         if (key == "--workaround-gcc296-bugs") {
             fOptions[key] = value;
-         if (key == "--num-callers")
+            continue;
+         }
+         if (key == "--ignore-ranges") {
             fOptions[key] = value;
-         if (key == "--error-limit")
+            continue;
+         }
+         if (key == "--ignore-range-below-sp") {
             fOptions[key] = value;
-         if (key == "--error-exitcode")
+            continue;
+         }
+         if (key == "--malloc-fill") {
             fOptions[key] = value;
-         if (key == "--default-suppressions")
+            continue;
+         }
+         if (key == "--free-fill") {
             fOptions[key] = value;
-         if (key == "--suppressions")
+            continue;
+         }
+         if (key == "--keep-stacktraces") {
             fOptions[key] = value;
-         if (key == "--gen-suppressions")
+            continue;
+         }
+         if (key == "--show-mismatched-frees") {
             fOptions[key] = value;
-         if (key == "--dsymutil")
-            fOptions[key] = value;
-         if (key == "--max-stackframe")
-            fOptions[key] = value;
-         if (key == "--alignment")
-            fOptions[key] = value;
-         if (key == "--redzone-size")
-            fOptions[key] = value;
-         if (key == "--xtree-memory")
-            fOptions[key] = value;
-         if (key == "--xtree-memory-file")
-            fOptions[key] = value;
-         if (key == "--fullpath-after")
-            fOptions[key] = value;
-         if (key == "--smc-check")
-            fOptions[key] = value;
-         if (key == "--vgdb-poll")
-            fOptions[key] = value;
-         if (key == "--vgdb-shadow-registers")
-            fOptions[key] = value;
-         if (key == "--vgdb-prefix")
-            fOptions[key] = value;
-         if (key == "--run-libc-freeres")
-            fOptions[key] = value;
-         if (key == "--run-cxx-freeres")
-            fOptions[key] = value;
-         if (key == "--fair-sched")
-            fOptions[key] = value;
-         if (key == "--kernel-variant")
-            fOptions[key] = value;
-         if (key == "--merge-recursive-frames")
-            fOptions[key] = value;
-         if (key == "--num-transtab-sectors")
-            fOptions[key] = value;
-         if (key == "--avg-transtab-entry-size")
-            fOptions[key] = value;
-         if (key == "--show-emwarns")
-            fOptions[key] = value;
-         if (key == "--require-text-symbol")
-            fOptions[key] = value;
-         if (key == "--soname-synonyms")
-            fOptions[key] = value;
-         if (key == "--sigill-diagnostics")
-            fOptions[key] = value;
-         if (key == "--unw-stack-scan-thresh")
-            fOptions[key] = value;
-         if (key == "--unw-stack-scan-frames")
-            fOptions[key] = value;
-         if (key == "--resync-filter")
-            fOptions[key] = value;
-         if (key == "--max-threads")
-            fOptions[key] = value;
-         if (key == "--leak-check")
-            fOptions[key] = value;
-         if (key == "--leak-resolution")
-            fOptions[key] = value;
-         if (key == "--leak-check-heuristics")
-            fOptions[key] = value;
-         if (key == "--show-reachable")
-            fOptions[key] = value;
-         if (key == "--show-reachable")
-            fOptions[key] = value;
-         if (key == "--show-reachable")
-            fOptions[key] = value;
-         if (key == "--xtree-leak")
-            fOptions[key] = value;
-         if (key == "--xtree-leak-file")
-            fOptions[key] = value;
-         if (key == "--undef-value-errors")
-            fOptions[key] = value;
-         if (key == "--partial-loads-ok")
-            fOptions[key] = value;
-         if (key == "--freelist-vol")
-            fOptions[key] = value;
-         if (key == "--freelist-big-blocks")
-            fOptions[key] = value;
-         if (key == "--workaround-gcc296-bugs")
-            fOptions[key] = value;
-         if (key == "--ignore-ranges")
-            fOptions[key] = value;
-         if (key == "--ignore-range-below-sp")
-            fOptions[key] = value;
-         if (key == "--malloc-fill")
-            fOptions[key] = value;
-         if (key == "--free-fill")
-            fOptions[key] = value;
-         if (key == "--keep-stacktraces")
-            fOptions[key] = value;
-         if (key == "--show-mismatched-frees")
-            fOptions[key] = value;
+            continue;
+         }
       }
    }
 }

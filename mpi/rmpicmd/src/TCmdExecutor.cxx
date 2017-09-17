@@ -4,7 +4,7 @@ using namespace ROOT::Mpi;
 //______________________________________________________________________________
 TCmdExecutor::TCmdExecutor(const Int_t argc, const Char_t **argv)
    : fArgc(argc), fArgv(argv), fModuleROOT(argc, argv), fModulePython(argc, argv), fModuleMpiExec(argc, argv),
-     fModuleValgrind(argc, argv)
+     fModuleValgrind(argc, argv), fModuleCkp(argc, argv)
 {
 // export TMPDIR for OpenMPI at mac is required
 // https://www.open-mpi.org/faq/?category=osx#startup-errors-with-open-mpi-2.0.x
@@ -16,6 +16,7 @@ TCmdExecutor::TCmdExecutor(const Int_t argc, const Char_t **argv)
    fModulePython.ParseOptions();
    fModuleMpiExec.ParseOptions();
    fModuleValgrind.ParseOptions();
+   fModuleCkp.ParseOptions();
 }
 
 //______________________________________________________________________________
@@ -39,6 +40,9 @@ Int_t TCmdExecutor::Execute()
       cmd += Form("%s %s %s", fModulePython.GetExecPath().Data(), fModulePython.GetOptionsString().Data(),
                   fModulePython.GetFileName().Data());
    }
+
+   cmd += Form("%s ", fModuleCkp.GetOptionsString().Data());
+
    if (gSystem->Getenv("ROOT_MPI_VERBOSE") != NULL)
       printf("\nEXECUTING %s\n", cmd.Data());
    return gSystem->Exec(cmd.Data());

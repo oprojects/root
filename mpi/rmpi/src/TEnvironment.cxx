@@ -55,7 +55,7 @@ TEnvironment::TEnvironment(Int_t level)
    auto argv = gApplication->Argv();
    for (auto i = 0; i < argc; i++) {
       TString opt = argv[i];
-      if (opt == "-ckp-clean")
+      if (opt == "--ckp-clean")
          CkpCleanCache();
    }
 #endif
@@ -109,7 +109,7 @@ TEnvironment::TEnvironment(Int_t argc, Char_t **argv, Int_t level)
    auto argva = gApplication->Argv();
    for (auto i = 0; i < argca; i++) {
       TString opt = argva[i];
-      if (opt == "-ckp-clean")
+      if (opt == "--ckp-clean")
          CkpCleanCache();
    }
 #endif
