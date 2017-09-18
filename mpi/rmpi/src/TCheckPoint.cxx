@@ -51,7 +51,7 @@ using namespace ROOT::Mpi;
 // }
 
 //______________________________________________________________________________
-TCheckPoint::TCheckPoint(const TString name, const TString suffix) : fName(name), fSuffix(suffix), fCkpFile(nullptr)
+TCheckPoint::TCheckPoint(const TString name) : fName(name), fCkpFile(nullptr)
 {
 }
 
@@ -65,6 +65,12 @@ TCheckPoint::~TCheckPoint()
 }
 
 //______________________________________________________________________________
+/**
+ * Contructor for class to restart the checkpoint.
+ * \param haverestart have a restart file? was a checkpoint saved?
+ * \param dataset     name of temporal file with the data
+ * \param ckp         TCheckPoint object for current restart
+ */
 TCheckPoint::TRestarter::TRestarter(Bool_t haverestart, Char_t *dataset, TCheckPoint *ckp)
    : TObject(), fHaveRestart(haverestart), fDataSet(dataset), fCkp(ckp), fCkpFile(nullptr)
 {
@@ -79,6 +85,10 @@ TCheckPoint::TRestarter::TRestarter(const TRestarter &obj) : TObject(obj)
 }
 
 //______________________________________________________________________________
+/**
+ * Method to check is checkpoint needs restart
+ * \return true if have a restart checkpoint.
+ */
 Bool_t TCheckPoint::TRestarter::HaveRestart() const
 {
    return fHaveRestart;
@@ -92,6 +102,9 @@ TCheckPoint::TRestarter::~TRestarter()
 }
 
 //______________________________________________________________________________
+/**
+ * Inform library that restart is starting, get name of restart that is available.
+ */
 void TCheckPoint::TRestarter::Restart()
 {
    SCR_Start_restart(fDataSet);
@@ -100,6 +113,9 @@ void TCheckPoint::TRestarter::Restart()
 }
 
 //______________________________________________________________________________
+/**
+ *
+ */
 void TCheckPoint::TRestarter::Complete(Bool_t valid)
 {
    if (fCkpFile) {

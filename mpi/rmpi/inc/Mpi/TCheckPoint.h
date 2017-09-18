@@ -14,6 +14,80 @@ namespace Mpi {
 
 /**
 \class TCheckPoint
+Class to Write/Read state of the execution thrown checkpoint.
+This is a fault tolerance method based on the library SCR (Scalable Checkpoint/Restart for MPI)
+implemented by Lawrence Livermore National Laboratory
+https://computation.llnl.gov/projects/scalable-checkpoint-restart-for-mpi
+
+With this class you can to write the state of the execution peroidically when it is required and in a incremental way,
+according
+to the configuration provide througth the methods in the classes ROOT::Mpi::TEnvironment and ROOT::Mpi::TCheckPoint or
+using enviroment variables at the moment of the execution. In case of fail you can recover the saved information to
+recover the state of the execution.
+
+According to the design, to create a checkpoint you need to conifure first the environment using
+the class ROOT::Mpi::TEnvironment and after set the configuration you need to call the method
+ROOT::Mpi::Enviroment:CkpInit to load the configuration into
+the system.
+After that you need to create an instance of ROOT::Mpi:TCheckPoint that allows to Write/Read  your information into
+temporal
+files that are created by library to preserve the required information in case something is wrong.
+
+To know when the checkpoint neeeds to write the state you need to call the method ROOT::Mpi::TCheckPoint::IsRequired
+and if this is true you can to get the current temporal file assigned to save the information througth the method
+ROOT::Mpi::TCheckPoint::GetCkpFile() that return an object of ROOT::Mpi::TCheckPoint::TCkpFile that basically a class
+that
+encapsute a TFile objet with other information associated to the checkpoint.
+
+If you need to recover the state of the application you need to get a restarter,
+that basically is an object of the class ROOT::Mpi::TCheckPoint::TRestarter that allows to check with the method
+ROOT::Mpi::TCheckPoint::TRestarter::IsRequired
+if the application need to retrieve the information from last checkpoint saved.
+
+The most basic example, writing a checkpoint in a loop
+\code{.cxx}
+using namespace ROOT::Mpi;
+
+void ckploop()
+{
+   TEnvironment env; // environment to start communication system
+   env.CkpInit();
+   TCheckPoint ckp("loop");
+   auto rst = ckp.GetRestarter(); // restarter object to check if we need to read the last checkpoint
+
+   auto chunk = 10000 / COMM_WORLD.GetSize();
+   for (auto i = 0; i < chunk; i++) {
+      // we need to check is we are in recovery mode
+      if (rst.IsRequired()) {
+         rst.Restart();                   // require to load the last checkpoint
+         auto ckpfile = rst.GetCkpFile(); // file with the last checkpoint saved
+         ckpfile->ReadVar<Int_t>("i", i); // getting the last i saved
+         rst.Complete();                  // required to tell to the system that the checkpoint was successfully loaded.
+      }
+      // hard work here
+
+      // conditional to try to save the checkpoint every number of iterations
+      // and in the last iteratino
+      if (i % 100 == 0 || i == (chunk - 1)) {
+         cout << "Processing iteration " << i << "..."
+              << endl; // printing tghe interation where we are doing the checkpoint
+         // ask SCR whether we need to checkpoint
+         if (ckp.IsRequired()) {
+            ckp.Start(); // require to create a new temporal file where we will to save the checkpoint
+            auto ckpfile = ckp.GetCkpFile(); // file to save the data
+            ckpfile->WriteVar("i", i);       // saving the data
+            ckp.Complete();                  // require to tell to the system that the recovery was successfully saved.
+         }
+      }
+      gSystem->Sleep(10); // just to give some time kill the process and test the rcovery mode.
+   }
+     env.CkpFinalize();   // require to finalize the environment from SCR
+}
+\endcode
+
+For more information please read the ROOTMpi users guide.
+
+
  \ingroup Mpi
  */
 
@@ -86,7 +160,7 @@ protected:
    TCkpFile *fCkpFile;
 
 public:
-   TCheckPoint(const TString name, const TString suffix = "root");
+   TCheckPoint(const TString name);
    virtual ~TCheckPoint();
    TCheckPoint::TRestarter GetRestarter();
    TCheckPoint::TCkpFile *GetCkpFile();

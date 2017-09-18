@@ -21,38 +21,38 @@ void TCmdModuleCkp::ParseOptions()
          auto key = opt.first;
          auto value = opt.second;
 
-      if ((key == "--ckp-jobid")) {
-         fOptions[key] = value;
-         continue;
-      }
-      if ((key == "--ckp-jobname")) {
-         fOptions[key] = value;
-         continue;
-      }
-      if ((key == "--ckp-prefix")) {
-         fOptions[key] = value;
-         continue;
-      }
-      if ((key == "--ckp-debug")) {
-         fOptions[key] = value;
-         continue;
-      }
-      if ((key == "--ckp-cachebase")) {
-         fOptions[key] = value;
-         continue;
-      }
-      if ((key == "--ckp-interval")) {
-         fOptions[key] = value;
-         continue;
-      }
-      if ((key == "--ckp-seconds")) {
-         fOptions[key] = value;
-         continue;
-      }
-      if ((key == "--ckp-configfile")) {
-         fOptions[key] = value;
-         continue;
-      }
+         if ((key == "--ckp-jobid")) {
+            fOptions[key] = value;
+            continue;
+         }
+         if ((key == "--ckp-jobname")) {
+            fOptions[key] = value;
+            continue;
+         }
+         if ((key == "--ckp-prefix")) {
+            fOptions[key] = value;
+            continue;
+         }
+         if ((key == "--ckp-debug")) {
+            fOptions[key] = value;
+            continue;
+         }
+         if ((key == "--ckp-cachebase")) {
+            fOptions[key] = value;
+            continue;
+         }
+         if ((key == "--ckp-interval")) {
+            fOptions[key] = value;
+            continue;
+         }
+         if ((key == "--ckp-seconds")) {
+            fOptions[key] = value;
+            continue;
+         }
+         if ((key == "--ckp-configfile")) {
+            fOptions[key] = value;
+            continue;
+         }
       }
    }
 }
