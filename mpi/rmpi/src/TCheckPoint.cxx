@@ -114,7 +114,8 @@ void TCheckPoint::TRestarter::Restart()
 
 //______________________________________________________________________________
 /**
- *
+ *   Inform library that the current restart is complete and marks it as valid or not.
+ *   \param valid if valid then TCheckPoint::TRestarter::IsRequired is false, because checkpoint was correctly loaded.
  */
 void TCheckPoint::TRestarter::Complete(Bool_t valid)
 {
@@ -129,22 +130,35 @@ void TCheckPoint::TRestarter::Complete(Bool_t valid)
 }
 
 //______________________________________________________________________________
+/**
+ * Method to get the name of the file with the last checkpoint.
+ *
+ * \return file name to last checkpoint.
+ */
 const Char_t *TCheckPoint::TRestarter::GetRouteFile() const
 {
    return fCkp->GetRouteFile();
 }
 
 //______________________________________________________________________________
+/**
+ * Method to get a ROOT::Mpi::TCheckPoint::TCkpFile object to read data from
+ * last cehckpoint.
+ *
+ * \return ROOT::Mpi::TCheckPoint::TCkpFile object.
+ */
 TCheckPoint::TCkpFile *TCheckPoint::TRestarter::GetCkpFile()
 {
-   //     if(fCkpFile) return *fCkpFile;
-   //     else{
-   //         //error handling here
    return fCkpFile;
-   //     }
 }
 
 //______________________________________________________________________________
+/**
+ * Method to get a ROOT::Mpi::TCheckPoint::TCkpFile object to write data in the checkpoint
+ * file.
+ *
+ * \return ROOT::Mpi::TCheckPoint::TCkpFile object.
+ */
 TCheckPoint::TCkpFile *TCheckPoint::GetCkpFile()
 {
    // error handling here(check if Start was called)
@@ -152,6 +166,11 @@ TCheckPoint::TCkpFile *TCheckPoint::GetCkpFile()
 }
 
 //______________________________________________________________________________
+/**
+ * Method to get an ROOT::Mpi::TCheckPoint::TRestarter object
+ * to restore previos saved checkpoint.
+ * \return ROOT::Mpi::TCheckPoint::TRestarter object
+ */
 TCheckPoint::TRestarter TCheckPoint::GetRestarter()
 {
    Int_t have_restart;
@@ -164,6 +183,11 @@ TCheckPoint::TRestarter TCheckPoint::GetRestarter()
 }
 
 //______________________________________________________________________________
+/**
+ * Method to get the name of the file to write data to the checkpoint.
+ *
+ * \return file name to checkpoint.
+ */
 const Char_t *TCheckPoint::GetRouteFile() const
 {
    Char_t *file = new Char_t[SCR_MAX_FILENAME];
@@ -172,12 +196,20 @@ const Char_t *TCheckPoint::GetRouteFile() const
 }
 
 //______________________________________________________________________________
+/**
+ * File name with current rank and the checkpoint name.
+ *
+ * \return file name with the name of the checkpoint and rank.
+ */
 const Char_t *TCheckPoint::GetRankFile() const
 {
-   return Form("%s_%d.%s", fName.Data(), COMM_WORLD.GetRank(), fSuffix.Data());
+   return Form("%s_%d.root", fName.Data(), COMM_WORLD.GetRank());
 }
 
 //______________________________________________________________________________
+/**
+ * Informs SCR that a fresh checkpoint set is about to start.
+ */
 void TCheckPoint::Start()
 {
    SCR_Start_checkpoint();
@@ -186,6 +218,9 @@ void TCheckPoint::Start()
 }
 
 //______________________________________________________________________________
+/**
+ * completes the checkpoint set and marks it as valid or not.
+ */
 void TCheckPoint::Complete(Bool_t valid)
 {
    if (fCkpFile) {
@@ -197,6 +232,10 @@ void TCheckPoint::Complete(Bool_t valid)
 }
 
 //______________________________________________________________________________
+/**
+ * Returns kTRUE if a checkpoint should be taken.
+ * \return kTRUE if checkpoint is required
+ */
 Int_t TCheckPoint::NeedCheckPoint() const
 {
    Int_t flag = 0;

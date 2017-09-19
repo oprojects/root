@@ -91,6 +91,25 @@ For more information please read the ROOTMpi users guide.
  \ingroup Mpi
  */
 
+/**
+ * \class TCheckPoint::TCkpFile
+ * Class to Read/Write serialized information from checkpoint files.
+ * Internally it have a TFile object and when the object is obtained
+ * from TCheckPoint::TRestarter the internal TFile is open in READ mode to
+ * retrieve the variables and recover the state, and when the object is
+ * obtained from TCheckPoint::GetCkpFile the internal TFile is open in RECREATE
+ * mode to save the required variables to save the state.
+ *
+ * \ingroup Mpi
+*/
+
+/**
+ * \class TCheckPoint::TRestarter
+ *  Class to recover the state of the execution reading the variables from last checkpoint.
+ *
+ * \ingroup Mpi
+ */
+
 class TCheckPoint : public TObject {
 public:
    class TCkpFile : public TObject {
@@ -103,7 +122,6 @@ public:
    public:
       virtual ~TCkpFile();
       inline Bool_t cd(const char *path = 0) { return fFile->cd(path); }
-      inline void ReadAll(Option_t *option = "") { fFile->ReadAll(option); }
       template <class T>
       void WriteObject(const Char_t *name, const T *);
       template <class T>
@@ -155,7 +173,6 @@ public:
 
 protected:
    TString fName;   // checkpoint file name
-   TString fSuffix; // checkpoint file name suffix
    const Char_t *GetRankFile() const;
    TCkpFile *fCkpFile;
 
@@ -173,13 +190,25 @@ public:
    ClassDef(TCheckPoint, 0)
 };
 
+//______________________________________________________________________________
+/**
+ * Method to write data to checkpoint file.
+ * \param name name of the variable.
+ * \param obj  any serializable object.
+ */
 template <class T>
-void TCheckPoint::TCkpFile::WriteObject(const Char_t *name, const T *var)
+void TCheckPoint::TCkpFile::WriteObject(const Char_t *name, const T *obj)
 {
-   fFile->WriteObjectAny(var, gROOT->GetClass(typeid(T)), name);
+   fFile->WriteObjectAny(obj, gROOT->GetClass(typeid(T)), name);
    fFile->Flush();
 }
 
+//______________________________________________________________________________
+/**
+ * Method to read data from checkpoint file.
+ * \param name name of the variable.
+ * \param obj  unserialized obj assigned (output).
+ */
 template <class T>
 void TCheckPoint::TCkpFile::ReadObject(const Char_t *name, T *obj)
 {
@@ -190,6 +219,12 @@ void TCheckPoint::TCkpFile::ReadObject(const Char_t *name, T *obj)
    MemMove<T>(fobj, obj, 1);
 }
 
+//______________________________________________________________________________
+/**
+ * Method to write data to checkpoint file.
+ * \param name name of the variable.
+ * \param var any variable (Double_t, Int_t, Char_t..).
+ */
 template <class T>
 void TCheckPoint::TCkpFile::WriteVar(const Char_t *name, const T &var)
 {
@@ -198,6 +233,12 @@ void TCheckPoint::TCkpFile::WriteVar(const Char_t *name, const T &var)
    delete ckpvar;
 }
 
+//______________________________________________________________________________
+/**
+ * Method to read data to checkpoint file.
+ * \param name name of the variable.
+ * \param var any variable (Double_t, Int_t, Char_t..) (output).
+ */
 template <class T>
 void TCheckPoint::TCkpFile::ReadVar(const Char_t *name, T &var)
 {
@@ -205,6 +246,14 @@ void TCheckPoint::TCkpFile::ReadVar(const Char_t *name, T &var)
    ReadObject<TCkpVar<T>>(name, &ckpvar);
    var = *ckpvar.GetVar();
 }
+
+//______________________________________________________________________________
+/**
+ * Method to write data to checkpoint file.
+ * \param name name of the variable.
+ * \param array any variable array (Double_t*, Int_t*, Char_t*..).
+ * \param size size of the array
+ */
 template <class T>
 void TCheckPoint::TCkpFile::WriteArray(const Char_t *name, const T *array, const Int_t size)
 {
@@ -213,6 +262,13 @@ void TCheckPoint::TCkpFile::WriteArray(const Char_t *name, const T *array, const
    delete ckpvar;
 }
 
+//______________________________________________________________________________
+/**
+ * Method to Read data to checkpoint file.
+ * \param name name of the variable.
+ * \param array any variable array (Double_t*, Int_t*, Char_t*..) (output).
+ * \param size size of the array
+ */
 template <class T>
 void TCheckPoint::TCkpFile::ReadArray(const Char_t *name, T *array, const Int_t size)
 {
