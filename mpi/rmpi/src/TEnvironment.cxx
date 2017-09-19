@@ -496,6 +496,9 @@ void TEnvironment::SetVerbose(Bool_t status)
 #if defined(ROOT_MPI_SCR)
 
 //______________________________________________________________________________
+/**
+ * Method to load environment for he checkpoint system
+ */
 void TEnvironment::CkpInit()
 {
    if (IsInitialized()) {
@@ -507,6 +510,9 @@ void TEnvironment::CkpInit()
 }
 
 //______________________________________________________________________________
+/**
+ * Method to finalize environment for he checkpoint system
+ */
 void TEnvironment::CkpFinalize()
 {
    if (!IsFinalized()) {
@@ -518,18 +524,29 @@ void TEnvironment::CkpFinalize()
 }
 
 //______________________________________________________________________________
+/**
+ * Method to check is the checkpoint environment was finalized.
+ * \return status of the environment;
+ */
 Bool_t TEnvironment::IsCpkFinalized()
 {
    return fCkpInit == kFALSE;
 }
 
 //______________________________________________________________________________
+/**
+ * Method to check is the checkpoint environment was initialized.
+ * \return status of the environment;
+ */
 Bool_t TEnvironment::IsCpkInitialized()
 {
    return fCkpInit;
 }
 
 //______________________________________________________________________________
+/**
+ * Helps to clean temporal files for checkpoints
+ */
 void TEnvironment::CkpCleanCache()
 {
    gSystem->Exec(Form("rm -rf /tmp/%s/scr.*/", gSystem->GetUserInfo(gSystem->GetUid())->fUser.Data()));
@@ -537,12 +554,22 @@ void TEnvironment::CkpCleanCache()
 }
 
 //______________________________________________________________________________
+/**
+ * Set job id for checkpoint
+ * \param value jobid
+ * \param overwrite to overwrite variable if was defined in the shell environment
+ */
 void TEnvironment::SetCkpJobId(UInt_t value, Bool_t overwrite)
 {
    SetEnv("SCR_JOB_ID", value, overwrite);
 }
 
 //______________________________________________________________________________
+/**
+ * Set job name for checkpoint
+ * \param value job name
+ * \param overwrite to overwrite variable if was defined in the shell environment
+ */
 void TEnvironment::SetCkpJobName(const Char_t *value, Bool_t overwrite)
 {
    SetEnv("SCR_JOB_NAME", value, overwrite);
@@ -588,6 +615,144 @@ void TEnvironment::SetCkpConfigFile(const Char_t *value, Bool_t overwrite)
 void TEnvironment::SetCkpFlush(UInt_t value, Bool_t overwrite)
 {
    SetEnv("SCR_FLUSH", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpFlushOnRestart(Bool_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_FLUSH_ON_RESTART", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpFlushWidth(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_FLUSH_WIDTH", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpCacheSize(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_CACHE_SIZE", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpOverhead(Double_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_CHECKPOINT_OVERHEAD", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpClusterName(const char *value, Bool_t overwrite)
+{
+   SetEnv("SCR_CLUSTER_NAME", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpCntlBase(const char *value, Bool_t overwrite)
+{
+   SetEnv("SCR_CNTL_BASE", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpCopyType(const char *value, Bool_t overwrite)
+{
+   SetEnv("SCR_COPY_TYPE", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpCrcOnCopy(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_CRC_ON_COPY", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpCrcOnDelete(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_CRC_ON_DELETE", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpCrcOnFlush(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_CRC_ON_FLUSH", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpDistribute(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_DISTRIBUTE", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpFetch(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_FETCH", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpFetchWidth(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_FETCH_WIDTH", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpGlobalRestart(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_GLOBAL_RESTART", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpGroup(const char *value, Bool_t overwrite)
+{
+   SetEnv("SCR_GROUP", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpHaltEnabled(Bool_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_HALT_ENABLED", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpHaltSeconds(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_HALT SECONDS", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpLogEnable(Bool_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_LOG_ENABLE", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpRuns(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_RUNS", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpSize(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_SET_SIZE", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpUserName(const char *value, Bool_t overwrite)
+{
+   SetEnv("SCR_USER_NAME", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpUseContainers(Bool_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_USE_CONTAINERS", value, overwrite);
+}
+
+//______________________________________________________________________________
+void TEnvironment::SetCkpContainerSize(UInt_t value, Bool_t overwrite)
+{
+   SetEnv("SCR_CONTAINER_SIZE", value, overwrite);
 }
 
 #endif

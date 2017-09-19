@@ -5,50 +5,6 @@
 #include <iostream>
 using namespace ROOT::Mpi;
 
-// Bool_t TCkpEnvironment::fStatus=kFALSE;
-//
-// //______________________________________________________________________________
-// TCkpEnvironment::TCkpEnvironment() : TObject()
-// {
-//     if(TEnvironment::IsInitialized())
-//     {
-//     }else{
-//         #warning Error handling here
-//     }
-// //    // setting up default options
-// //    fOptions["SCR_CACHE_SIZE"] = "1";
-// //    fOptions["SCR_CHECKPOINT_OVERHEAD"] = "";
-// //    fOptions["SCR_CLUSTER_NAME"] = "";
-// //    fOptions["SCR_CNTL_BASE"] = "";
-// //    fOptions["SCR_COPY_TYPE"] = "SINGLE"; // Set to one of: SINGLE, PARTNER, XOR, or FILE.
-// //    fOptions["SCR_CRC_ON_COPY"] = "0";
-// //    fOptions["SCR_CRC_ON_DELETE"] = "0";
-// //    fOptions["SCR_CRC_ON_FLUSH"] = "1";
-// //    fOptions["SCR_DISTRIBUTE"] = "1";
-// //    fOptions["SCR_FETCH "] = "1";
-// //    fOptions["SCR_FETCH_WIDTH"] = "256";
-// //    fOptions["SCR_FILE_BUF_SIZE"] = "1048576";
-// //    fOptions["SCR_FLUSH"] = "10";
-// //    fOptions["SCR_FLUSH_WIDTH"] = "256";
-// //    fOptions["SCR_FLUSH_ON_RESTART"] = "0";
-// //    fOptions["SCR_GLOBAL_RESTART"] = "";
-// //    fOptions["SCR_GROUP"] = "NODE"; //
-// //    fOptions["SCR_HALT SECONDS"] = "0";
-// //    fOptions["SCR_HALT_ENABLED"] = "";
-// //    fOptions["SCR_LOG_ENABLE"] = "0";
-// //    fOptions["SCR_MPI_BUF_SIZE"] = "131072";
-// //    fOptions["SCR_RUNS"] = "0";
-// //    fOptions["SCR_SET_SIZE"] = "8";
-// //    fOptions["SCR_USER_NAME"] = gSystem->GetUserInfo(gSystem->GetUid())->fUser;
-// //    fOptions["SCR_USE_CONTAINERS"] = "";
-// //    fOptions["SCR_CONTAINER_SIZE"] = "";
-// }
-
-// //______________________________________________________________________________
-// void TCkpEnvironment::Finalize()
-// {
-//    SCR_Finalize();
-// }
 
 //______________________________________________________________________________
 TCheckPoint::TCheckPoint(const TString name) : fName(name), fCkpFile(nullptr)

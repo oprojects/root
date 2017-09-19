@@ -10,7 +10,27 @@ namespace Mpi {
 /**
 \class TEnvironment
    Class manipulate mpi environment, with this class you can to start/stop the communication system and
-   to hanlde some information about the communication environment.
+   hanlde some information about the communication environment.
+
+   For checkpoints you need to call the method TEnvironment::CkpInit to load the SCR environment
+   but you need to call the setters first like in the next example.
+   \code{.cxx}
+   {
+    ROOT::Mpi::TEnvironment env;
+    env.SetCkpJobId(123);
+    env.SetCkpClusterName("my cluster");
+    env.SetCkpDebug(kTRUE,kFALSE);
+    ...//your ckp options
+    env.CkpInit(); //load previous ckp values and start ckp environment
+    ...//your code
+    env.CkpFinalize();//close ckp environment
+   }
+   \endcode
+
+   The methods to set checkpoint optons has an extra option "overwrite"
+   that allows to overwrite environment variables or in case it is false
+   load then and it can to forget the setter.
+
    \ingroup Mpi
  */
 
@@ -130,6 +150,52 @@ public:
    void SetCkpConfigFile(const Char_t *value, Bool_t overwrite = kTRUE);
 
    void SetCkpFlush(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpFlushOnRestart(Bool_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpFlushWidth(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpCacheSize(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpOverhead(Double_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpClusterName(const char *value, Bool_t overwrite = kTRUE);
+
+   void SetCkpCntlBase(const char *value, Bool_t overwrite = kTRUE);
+
+   void SetCkpCopyType(const char *value, Bool_t overwrite = kTRUE);
+
+   void SetCkpCrcOnCopy(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpCrcOnDelete(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpCrcOnFlush(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpDistribute(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpFetch(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpFetchWidth(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpGlobalRestart(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpGroup(const char *value, Bool_t overwrite = kTRUE);
+
+   void SetCkpHaltEnabled(Bool_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpHaltSeconds(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpLogEnable(Bool_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpRuns(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpSize(UInt_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpUserName(const char *value, Bool_t overwrite = kTRUE);
+
+   void SetCkpUseContainers(Bool_t value, Bool_t overwrite = kTRUE);
+
+   void SetCkpContainerSize(UInt_t value, Bool_t overwrite = kTRUE);
 
 #endif
 
