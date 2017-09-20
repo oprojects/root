@@ -52,6 +52,9 @@ TEnvironment::TEnvironment(Int_t level)
    gSystem->Setenv("TMPDIR", "/tmp");
 #endif
 #if defined(ROOT_MPI_SCR)
+   if (!TROOT::Initialized()) {
+      TApplication::CreateApplication();
+   }
    auto argc = gApplication->Argc();
    auto argv = gApplication->Argv();
    for (auto i = 0; i < argc; i++) {

@@ -393,7 +393,7 @@ void TCommunicator::Send(const Type *vars, Int_t count, Int_t dest, Int_t tag) c
       Int_t size;
       Serialize(&buffer, size, vars, count, this, dest, GetRank(), tag);
       ROOT_MPI_CHECK_CALL(MPI_Send, (buffer, size, MPI_CHAR, dest, tag, fComm), this);
-      delete buffer;
+      delete[] buffer;
    } else {
       ROOT_MPI_CHECK_DATATYPE(Type, this);
       ROOT_MPI_CHECK_CALL(MPI_Send, ((void *)vars, count, GetDataType<Type>(), dest, tag, fComm), this);

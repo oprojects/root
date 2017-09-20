@@ -10,6 +10,8 @@
 #include <Mpi/TMpiTimer.h>
 #include <Mpi/TIntraCommunicator.h>
 #include <Mpi/TInterCommunicator.h>
+#include <Mpi/TCartCommunicator.h>
+#include <Mpi/TGraphCommunicator.h>
 
 #if defined(ROOT_MPI_SCR)
 #include <Mpi/TCheckPoint.h>
