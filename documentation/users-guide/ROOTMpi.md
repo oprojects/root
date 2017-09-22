@@ -59,7 +59,7 @@ TCartCommunicator|Cartesian Communicator (map processes in a mesh)              
 TGraphComminicator|Graph communicator (map processes in a general graph topology)|<span style="color:green">**DONE**</span>
 Profiling Functions|Support to call MPI profiling functions just enabling a flag. It is a better design because you dont need to rewrite code to call PMPI_* functions or call a different namespace. http://mpi-forum.org/docs/mpi-2.1/mpi21-report-bw/node334.htm|<span style="color:green">**DONE**</span>
 Python support|Support for python2 and python3 using PyROOT and allow PyObjects serialization|<span style="color:green">**DONE**</span>
-Checkpointing| Feature to save the state of the execution and restore it.                                                                          |<span style="color:red">**TODO**</span>
+Checkpointing| Feature to save the state of the execution and restore it.                                                                          |<span style="color:orange">**UNDER DEVELOPMENT**</span>
 Fault Tolerance | Feature to continue execution in case of fault.                                                                                  |<span style="color:red">**TODO**</span>
 Memory Window|Class to shared regions of memory with Remote Access Memory using one-sided communication|<span style="color:red">**NOT SUPPORTED**</span>
 
@@ -69,7 +69,8 @@ Memory Window|Class to shared regions of memory with Remote Access Memory using 
 
   * The message in the communication can be any serializable object supported by ROOT or raw datatypes.
   * Persistent communication is not supported because is not possible to know previously the size of the object in the serialization. (It will be implemented in the future for raw datatypes)
-  * Fault tolerance and checkpoint needs the new standart that is not implemented yet in the mpi backends.
+  * Fault tolerance needs the new standart that is not implemented yet in the mpi backends.
+  * Checkpoint is implemented with SCR https://computation.llnl.gov/projects/scalable-checkpoint-restart-for-mpi that can be compiled with any mpi implementation, but is not supported on Microsoft Windows.
   * The class TMpiFile is not using the raw MPI C functions, instead a new design was created that is using TMemFile and TFile from ROOT.
   * Memory window is not supported becuase is not possible to know the size of the serialized object in both processes to get access to a memory region.
 
@@ -1019,6 +1020,96 @@ Info in <TCanvas::Print>: file hist.png has been created
 ![Histogram reduce](pictures/rmpihistreduce.png)
 </center>
 
+## CheckPoint and Disaster Recovery
+This is a fault tolerance method based on the library SCR (Scalable Checkpoint/Restart for MPI)
+implemented by Lawrence Livermore National Laboratory
+https://computation.llnl.gov/projects/scalable-checkpoint-restart-for-mpi
+
+Para usar el sistema de checkpoint se deben tener varias cosas
+
+* Se deben configurar las variables de ambiente del sistema SCR, exportandolas en la shell del sistema o usando los metodos setter para checkpoint en la clase TEnvironment
+``` {.sh}
+export SCR_DEBUG=1
+``` 
+or
+``` {.cpp}
+TEnvironment env;
+env.SetCkpDebug(1);
+``` 
+Los metodos setters para ckeckpoint tienen un segundo argumento overwrite como
+SetCkpDebug(Bool_t value, Bool_t overwrite) que permite en caso de requerirlo 
+no sobre escribir la variable de ambiente que fue exportada en la shell del sistema operativo.
+
+* Se debe iniciar el ambiente llamando el metodo ROOT::TEnviroment::CkpInit, 
+esto permite cargar en el sistema todas las variables exportadas o assignas.
+``` {.cpp}
+TEnvironment env;
+env.SetCkpDebug(1);
+env.SetCkpJobId(123);
+env.SetCkpClusterName("mycluster");
+env.CkpInit();
+``` 
+
+* Se deben crear un objecto de la clase ROOT::Mpi::TCheckPoint que es el que permite acceder a los sistemas de almacenamiento para guardar o cargar las variables.
+Para poder reiniciar el estado de la aplicacion tambien se debe crear una instanacia
+de  TCheckPoint::TRestarter llamando el metodo TCheckPoint::TRestarter::GetRestarter(); 
+``` {.cpp}
+TEnvironment env;
+env.SetCkpDebug(1);
+env.SetCkpJobId(123);
+env.SetCkpClusterName("mycluster");
+env.CkpInit();
+TCheckPoint ckp("myckp");
+auto rst = ckp.GetRestarter(); 
+```
+
+* Luego necesitamos mirar cuando la aplication necesita reiniciar o hacer un checkpoint con los metodos IsRequire, para ello veamos un ejemplo completo de como funciona el sistema en un loop.
+
+``` {.cpp}
+{
+   TEnvironment env; // environment to start communication system
+   env.CkpInit();
+   TCheckPoint ckp("loop");
+   auto rst = ckp.GetRestarter(); // restarter object to check if we need to read the last checkpoint
+
+   auto chunk = 10000 / COMM_WORLD.GetSize();
+   for (auto i = 0; i < chunk; i++) {
+      // we need to check is we are in recovery mode
+      if (rst.IsRequired()) {
+         rst.Restart();                   // require to load the last checkpoint
+         auto ckpfile = rst.GetCkpFile(); // file with the last checkpoint saved
+         ckpfile->ReadVar<Int_t>("i", i); // getting the last i saved
+         rst.Complete();                  // required to tell to the system that the checkpoint was successfully loaded.
+      }
+      // hard work here
+
+      // conditional to try to save the checkpoint every number of iterations
+      // and in the last iteratino
+      if (i % 100 == 0 || i == (chunk - 1)) {
+         cout << "Processing iteration " << i << "..."
+              << endl; // printing tghe interation where we are doing the checkpoint
+         // ask SCR whether we need to checkpoint
+         if (ckp.IsRequired()) {
+            ckp.Start(); // require to create a new temporal file where we will to save the checkpoint
+            auto ckpfile = ckp.GetCkpFile(); // file to save the data
+            ckpfile->WriteVar("i", i);       // saving the data
+            ckp.Complete();                  // require to tell to the system that the recovery was successfully saved.
+         }
+      }
+      gSystem->Sleep(10); // just to give some time kill the process and test the rcovery mode.
+   }
+   env.CkpFinalize(); // require to finalize the environment from SCR
+}
+```
+
+* Los metodos Start and Complete en los objetos de TCheckPoint y TCheckPoint::TRestarter garantizan dos cosas
+1. Si se esta haciendo el checkpoint finalize con exito y guarde los nuevos datos si corrupcion.
+2. Si se estan leyendo los datos se lea el ultimo checkpoint guardado con exito y se deshabilite el modo de restart.
+
+* Al final se debe llamar el metodo TEnvironment::CkpFinalize() para finalizer todo lo relacionado con el ambiente asociado al checkpoint.
+
+
+
 
 ## Debugging and Profiling ROOT Mpi applications
 
@@ -1038,7 +1129,7 @@ In ROOT Mpi, when you run an application every rank of process has a process id 
 In this example we will run the initial hello world code.
 
 ``` {.sh}
-rootmpi  -np 2 -valgrind hello.C
+rootmpi  -np 2 --tool=memcheck hello.C
 ```
 the output mus be something like 
 ``` {.sh}

@@ -14,35 +14,33 @@ namespace Mpi {
 
 /**
 \class TCheckPoint
-Class to Write/Read state of the execution thrown checkpoint.
+Class to Write/Read state of the execution through a checkpoint.
 This is a fault tolerance method based on the library SCR (Scalable Checkpoint/Restart for MPI)
 implemented by Lawrence Livermore National Laboratory
 https://computation.llnl.gov/projects/scalable-checkpoint-restart-for-mpi
 
-With this class you can to write the state of the execution peroidically when it is required and in a incremental way,
+With this class you can write the state of the execution periodically when it is required and in a incremental way,
 according
-to the configuration provide througth the methods in the classes ROOT::Mpi::TEnvironment and ROOT::Mpi::TCheckPoint or
-using enviroment variables at the moment of the execution. In case of fail you can recover the saved information to
-recover the state of the execution.
+to the configuration provided througth the methods in the classes ROOT::Mpi::TEnvironment and ROOT::Mpi::TCheckPoint or
+using enviroment variables at the moment of the execution. In case of failure you can recover the state of the execution.
 
-According to the design, to create a checkpoint you need to conifure first the environment using
-the class ROOT::Mpi::TEnvironment and after set the configuration you need to call the method
+According to the design, to create a checkpoint you need to set the environment using
+the class ROOT::Mpi::TEnvironment and then, call the setter methods, such as, SetCkpJobId, SetCkpClusterName, etc, and then
 ROOT::Mpi::Enviroment:CkpInit to load the configuration into
 the system.
-After that you need to create an instance of ROOT::Mpi:TCheckPoint that allows to Write/Read  your information into
+After that, you need to create an instance of ROOT::Mpi:TCheckPoint that allows you to Write/Read your information into
 temporal
-files that are created by library to preserve the required information in case something is wrong.
+files that are created by the library to preserve the required information in case something goes wrong.
 
-To know when the checkpoint neeeds to write the state you need to call the method ROOT::Mpi::TCheckPoint::IsRequired
-and if this is true you can to get the current temporal file assigned to save the information througth the method
-ROOT::Mpi::TCheckPoint::GetCkpFile() that return an object of ROOT::Mpi::TCheckPoint::TCkpFile that basically a class
+To know when the checkpoint neeeds to write the state, you need to call the method ROOT::Mpi::TCheckPoint::IsRequired
+and if this is true, you can get the current temporal file by calling the method
+ROOT::Mpi::TCheckPoint::GetCkpFile() that returns an object of ROOT::Mpi::TCheckPoint::TCkpFile that basically is a class
 that
-encapsute a TFile objet with other information associated to the checkpoint.
+encapsulates a TFile objet with other information associated to the checkpoint.
 
-If you need to recover the state of the application you need to get a restarter,
-that basically is an object of the class ROOT::Mpi::TCheckPoint::TRestarter that allows to check with the method
-ROOT::Mpi::TCheckPoint::TRestarter::IsRequired
-if the application need to retrieve the information from last checkpoint saved.
+If the application needs to retrieve the information from last checkpoint saved you can check this with the method ROOT::Mpi::TCheckPoint::TRestarter::IsRequired.
+In the case of you need to retrieve the variables to recover the state of the execution, you can
+get a  ROOT::Mpi::TCheckPoint::TRestart::TCkpFile object to read it.
 
 The most basic example, writing a checkpoint in a loop
 \code{.cxx}

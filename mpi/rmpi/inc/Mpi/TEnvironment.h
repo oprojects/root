@@ -21,7 +21,7 @@ namespace Mpi {
     env.SetCkpClusterName("my cluster");
     env.SetCkpDebug(kTRUE,kFALSE);
     ...//your ckp options
-    env.CkpInit(); //load previous ckp values and start ckp environment
+    env.CkpInit(); //load previous defined ckp values and start ckp environment
     ...//your code
     env.CkpFinalize();//close ckp environment
    }
