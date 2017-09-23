@@ -20,12 +20,12 @@ void ckploop()
    TEnvironment env; // environment to start communication system
    env.SetCkpCopyType("SINGLE");
    env.CkpInit();
-   
+
    TCheckPoint ckp("loop");
    auto rst = ckp.GetRestarter(); // restarter object to check if we need to read the last checkpoint
 
    auto chunk = 4000 / COMM_WORLD.GetSize();
-   
+
    for (auto i = 0; i < chunk; i++) {
       // we need to check is we are in recovery mode
       if (rst.IsRequired()) {

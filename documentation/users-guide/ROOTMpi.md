@@ -1025,34 +1025,33 @@ This is a fault tolerance method based on the library SCR (Scalable Checkpoint/R
 implemented by Lawrence Livermore National Laboratory
 https://computation.llnl.gov/projects/scalable-checkpoint-restart-for-mpi
 
-Para usar el sistema de checkpoint se deben tener varias cosas
+To use the checkpoint system you must have several things
 
-* Se deben configurar las variables de ambiente del sistema SCR, exportandolas en la shell del sistema o usando los metodos setter para checkpoint en la clase TEnvironment
+* You must configure the SCR system environment variables by exporting them to the system shell or using the setter methods for checkpoint in the TEnvironment class.
 ``` {.sh}
 export SCR_DEBUG=1
-``` 
+```
 or
 ``` {.cpp}
 TEnvironment env;
 env.SetCkpDebug(1);
-``` 
-Los metodos setters para ckeckpoint tienen un segundo argumento overwrite como
-SetCkpDebug(Bool_t value, Bool_t overwrite) que permite en caso de requerirlo 
-no sobre escribir la variable de ambiente que fue exportada en la shell del sistema operativo.
+```
+The setters methods for ckeckpoint have a second overwrite argument as
+SetCkpDebug (Bool_t value, Bool_t overwrite) that allows, if required
+not overwriting the environment variable that was exported in the operating system shell.
 
-* Se debe iniciar el ambiente llamando el metodo ROOT::TEnviroment::CkpInit, 
-esto permite cargar en el sistema todas las variables exportadas o assignas.
+* You must start the environment by calling the ROOT::TEnviroment::CkpInit method,this allows to load all the exported or assigned variables into the system.
 ``` {.cpp}
 TEnvironment env;
 env.SetCkpDebug(1);
 env.SetCkpJobId(123);
 env.SetCkpClusterName("mycluster");
 env.CkpInit();
-``` 
+```
 
-* Se deben crear un objecto de la clase ROOT::Mpi::TCheckPoint que es el que permite acceder a los sistemas de almacenamiento para guardar o cargar las variables.
-Para poder reiniciar el estado de la aplicacion tambien se debe crear una instanacia
-de  TCheckPoint::TRestarter llamando el metodo TCheckPoint::TRestarter::GetRestarter(); 
+* You must create an object of class ROOT::Mpi::TCheckPoint that is the one that allows access to the storage systems to save or load the variables.
+In order to restart the application state, you must also create an instance
+of TCheckPoint::TRestarter by calling the method TCheckPoint::TRestarter::GetRestarter ();
 ``` {.cpp}
 TEnvironment env;
 env.SetCkpDebug(1);
@@ -1063,7 +1062,7 @@ TCheckPoint ckp("myckp");
 auto rst = ckp.GetRestarter(); 
 ```
 
-* Luego necesitamos mirar cuando la aplication necesita reiniciar o hacer un checkpoint con los metodos IsRequire, para ello veamos un ejemplo completo de como funciona el sistema en un loop.
+* Then we need to look when the application needs to restart or checkpoint with the IsRequire methods, for this we see a complete example of how the system works in a loop.
 
 ``` {.cpp}
 {
@@ -1074,7 +1073,7 @@ auto rst = ckp.GetRestarter();
 
    auto chunk = 10000 / COMM_WORLD.GetSize();
    for (auto i = 0; i < chunk; i++) {
-      // we need to check is we are in recovery mode
+      // we need to check if we are in recovery mode
       if (rst.IsRequired()) {
          rst.Restart();                   // require to load the last checkpoint
          auto ckpfile = rst.GetCkpFile(); // file with the last checkpoint saved
@@ -1102,11 +1101,11 @@ auto rst = ckp.GetRestarter();
 }
 ```
 
-* Los metodos Start and Complete en los objetos de TCheckPoint y TCheckPoint::TRestarter garantizan dos cosas
-1. Si se esta haciendo el checkpoint finalize con exito y guarde los nuevos datos si corrupcion.
-2. Si se estan leyendo los datos se lea el ultimo checkpoint guardado con exito y se deshabilite el modo de restart.
+* The Start and Complete methods in the TCheckPoint and TCheckPoint :: TRestarter objects guarantee two things.
+1. If you are doing the checkpoint, you should successfully finish and save the new data without corruption.
+2. If you are reading the data, you have read the last saved checkpoint successfully and the restart mode  is disabled to continue with the loop.
 
-* Al final se debe llamar el metodo TEnvironment::CkpFinalize() para finalizer todo lo relacionado con el ambiente asociado al checkpoint.
+* At the end you should call the Environment::CkpFinalizer () method to finalize everything related to the environment associated with the checkpoint.
 
 
 

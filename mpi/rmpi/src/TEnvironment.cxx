@@ -23,7 +23,9 @@ Int_t TEnvironment::fProfiling = 0;
 
 FILE *TEnvironment::fOutput = NULL;
 
+#if defined(ROOT_MPI_SCR)
 static Bool_t fCkpInit = kFALSE;
+#endif
 
 // TODO: enable thread level and thread-safe for ROOT
 

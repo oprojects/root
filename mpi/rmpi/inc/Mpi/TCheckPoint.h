@@ -22,10 +22,12 @@ https://computation.llnl.gov/projects/scalable-checkpoint-restart-for-mpi
 With this class you can write the state of the execution periodically when it is required and in a incremental way,
 according
 to the configuration provided througth the methods in the classes ROOT::Mpi::TEnvironment and ROOT::Mpi::TCheckPoint or
-using enviroment variables at the moment of the execution. In case of failure you can recover the state of the execution.
+using enviroment variables at the moment of the execution. In case of failure you can recover the state of the
+execution.
 
 According to the design, to create a checkpoint you need to set the environment using
-the class ROOT::Mpi::TEnvironment and then, call the setter methods, such as, SetCkpJobId, SetCkpClusterName, etc, and then
+the class ROOT::Mpi::TEnvironment and then, call the setter methods, such as, SetCkpJobId, SetCkpClusterName, etc, and
+then
 ROOT::Mpi::Enviroment:CkpInit to load the configuration into
 the system.
 After that, you need to create an instance of ROOT::Mpi:TCheckPoint that allows you to Write/Read your information into
@@ -34,11 +36,13 @@ files that are created by the library to preserve the required information in ca
 
 To know when the checkpoint neeeds to write the state, you need to call the method ROOT::Mpi::TCheckPoint::IsRequired
 and if this is true, you can get the current temporal file by calling the method
-ROOT::Mpi::TCheckPoint::GetCkpFile() that returns an object of ROOT::Mpi::TCheckPoint::TCkpFile that basically is a class
+ROOT::Mpi::TCheckPoint::GetCkpFile() that returns an object of ROOT::Mpi::TCheckPoint::TCkpFile that basically is a
+class
 that
 encapsulates a TFile objet with other information associated to the checkpoint.
 
-If the application needs to retrieve the information from last checkpoint saved you can check this with the method ROOT::Mpi::TCheckPoint::TRestarter::IsRequired.
+If the application needs to retrieve the information from last checkpoint saved you can check this with the method
+ROOT::Mpi::TCheckPoint::TRestarter::IsRequired.
 In the case of you need to retrieve the variables to recover the state of the execution, you can
 get a  ROOT::Mpi::TCheckPoint::TRestart::TCkpFile object to read it.
 

@@ -33,7 +33,7 @@ Int_t TCmdExecutor::Execute()
    }
 
    if (!fModuleROOT.GetFileName().IsNull()) {
-      cmd += Form("%s -l -q -b %s %s", fModuleROOT.GetExecPath().Data(), fModuleROOT.GetOptionsString().Data(),
+      cmd += Form("%s  -q %s %s", fModuleROOT.GetExecPath().Data(), fModuleROOT.GetOptionsString().Data(),
                   fModuleROOT.GetFileName().Data());
    }
    if (!fModulePython.GetFileName().IsNull()) {
