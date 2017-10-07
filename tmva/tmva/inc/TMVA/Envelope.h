@@ -66,6 +66,7 @@ namespace TMVA {
           Bool_t  IsSilentFile();
           TFile* GetFile();
           void   SetFile(TFile *file);
+          Bool_t HasMethod(TString methodname, TString methodtitle);
 
           DataLoader *GetDataLoader();
           void SetDataLoader(DataLoader *dalaloader);

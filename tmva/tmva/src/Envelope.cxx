@@ -35,7 +35,40 @@ this is a generic one protected.
 Envelope::Envelope(const TString &name,DataLoader *dalaloader,TFile *file,const TString options):Configurable(options),fDataLoader(dalaloader),fFile(file),fVerbose(kFALSE)
 {
     SetName(name.Data());
+    // render silent
+    if (gTools().CheckForSilentOption(GetOptions()))
+       Log().InhibitOutput(); // make sure is silent if wanted to
+
+    Bool_t silent = kFALSE;
+#ifdef WIN32
+    // under Windows, switch progress bar and color off by default, as the typical windows shell doesn't handle these
+    // (would need different sequences..)
+    Bool_t color = kFALSE;
+    Bool_t drawProgressBar = kFALSE;
+#else
+    Bool_t color = !gROOT->IsBatch();
+    Bool_t drawProgressBar = kTRUE;
+#endif
     fModelPersistence = kTRUE;
+
+    DeclareOptionRef(fVerbose, "V", "Verbose flag");
+    DeclareOptionRef(color, "Color", "Flag for coloured screen output (default: True, if in batch mode: False)");
+    DeclareOptionRef(drawProgressBar, "DrawProgressBar",
+                     "Draw progress bar to display training, testing and evaluation schedule (default: True)");
+    DeclareOptionRef(fModelPersistence, "ModelPersistence",
+                     "Option to save the trained model in xml file or using serialization");
+    DeclareOptionRef(silent, "Silent", "Batch mode: boolean silent flag inhibiting any output from TMVA after the "
+                                       "creation of the factory class object (default: False)");
+    ParseOptions();
+    CheckForUnusedOptions();
+
+    if (IsVerbose())
+       Log().SetMinType(kVERBOSE);
+
+    // global settings
+    gConfig().SetUseColor(color);
+    gConfig().SetSilent(silent);
+    gConfig().SetDrawProgressBar(drawProgressBar);
 }
 
 //_______________________________________________________________________
@@ -150,4 +183,20 @@ void TMVA::Envelope::BookMethod(TString methodName, TString methodTitle, TString
    fMethod["MethodOptions"] = options;
 
    fMethods.push_back(fMethod);
+}
+
+//_______________________________________________________________________
+/**
+ * function to check methods booked
+ * \param methodname  Method's name.
+ * \param methodtitle title associated to the method.
+ * \return true if the method was booked.
+ */
+Bool_t TMVA::Envelope::HasMethod(TString methodname, TString methodtitle)
+{
+   for (auto &meth : fMethods) {
+      if (meth.GetValue<TString>("MethodName") == methodname && meth.GetValue<TString>("MethodTitle") == methodtitle)
+         return kTRUE;
+   }
+   return kFALSE;
 }
