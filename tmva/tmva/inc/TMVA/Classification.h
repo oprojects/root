@@ -62,6 +62,7 @@ class Classification : public Envelope {
    std::vector<IMethod *> fIMethods;             //! vector of objects with booked methods
    Types::EAnalysisType fAnalysisType;           //!
    Bool_t fCorrelations;                         //!
+   Bool_t fROC;                                  //!
 public:
    explicit Classification(DataLoader *loader, TFile *file, TString options);
    explicit Classification(DataLoader *loader, TString options);
@@ -73,6 +74,7 @@ public:
 
    virtual void Test();
    virtual void TestMethod(TString methodname, TString methodtitle);
+   virtual void TestMethod(Types::EMVA method, TString methodtitle);
 
    virtual void Evaluate();
 
@@ -80,12 +82,18 @@ public:
 
    MethodBase *GetMethod(TString methodname, TString methodtitle);
 
-private:
+protected:
    void CreateEnvironment();
    TString GetMethodOptions(TString methodname, TString methodtitle);
    Bool_t HasMethodObject(TString methodname, TString methodtitle, Int_t &index);
    Bool_t IsCutsMethod(TMVA::MethodBase *method);
-   TMVA::ROCCurve *GetROC(TMVA::MethodBase *method, UInt_t iClass = 0, Types::ETreeType type = Types::kTesting);
+   TMVA::ROCCurve *
+   GetROC(TMVA::MethodBase *method, UInt_t iClass = 0, TMVA::Types::ETreeType type = TMVA::Types::kTesting);
+   TMVA::ROCCurve *GetROC(TString methodname, TString methodtitle, UInt_t iClass = 0,
+                          TMVA::Types::ETreeType type = TMVA::Types::kTesting);
+
+   Double_t GetROCIntegral(TString methodname, TString methodtitle, UInt_t iClass = 0);
+
    ClassificationResult *GetResults(TString methodname, TString methodtitle);
    ClassDef(Classification, 0);
 };

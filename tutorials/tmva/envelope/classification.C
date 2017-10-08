@@ -1,0 +1,84 @@
+#include "TMVA/Factory.h"
+#include "TMVA/DataLoader.h"
+#include "TMVA/Tools.h"
+#include "TMVA/Classification.h"
+
+void classification()
+{
+   TMVA::Tools::Instance();
+
+   TFile *input(0);
+   TString fname = "./tmva_class_example.root";
+   if (!gSystem->AccessPathName(fname)) {
+      input = TFile::Open(fname); // check if file in local directory exists
+   } else {
+      TFile::SetCacheFileDir(".");
+      input = TFile::Open("http://root.cern.ch/files/tmva_class_example.root", "CACHEREAD");
+   }
+   if (!input) {
+      std::cout << "ERROR: could not open data file" << std::endl;
+      exit(1);
+   }
+
+   // Register the training and test trees
+
+   TTree *signalTree = (TTree *)input->Get("TreeS");
+   TTree *background = (TTree *)input->Get("TreeB");
+
+   TMVA::DataLoader *dataloader = new TMVA::DataLoader("dataset");
+   // If you wish to modify default settings
+   // (please check "src/Config.h" to see all available global options)
+   //
+   //    (TMVA::gConfig().GetVariablePlotting()).fTimesRMS = 8.0;
+   //    (TMVA::gConfig().GetIONames()).fWeightFileDir = "myWeightDirectory";
+
+   // Define the input variables that shall be used for the MVA training
+   // note that you may also use variable expressions, such as: "3*var1/var2*abs(var3)"
+   // [all types of expressions that can also be parsed by TTree::Draw( "expression" )]
+   dataloader->AddVariable("myvar1 := var1+var2", 'F');
+   dataloader->AddVariable("myvar2 := var1-var2", "Expression 2", "", 'F');
+   dataloader->AddVariable("var3", "Variable 3", "units", 'F');
+   dataloader->AddVariable("var4", "Variable 4", "units", 'F');
+
+   // You can add so-called "Spectator variables", which are not used in the MVA training,
+   // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
+   // input variables, the response values of all trained MVAs, and the spectator variables
+
+   dataloader->AddSpectator("spec1 := var1*2", "Spectator 1", "units", 'F');
+   dataloader->AddSpectator("spec2 := var1*3", "Spectator 2", "units", 'F');
+
+   // global event weights per tree (see below for setting event-wise weights)
+   Double_t signalWeight = 1.0;
+   Double_t backgroundWeight = 1.0;
+
+   // You can add an arbitrary number of signal or background trees
+   dataloader->AddSignalTree(signalTree, signalWeight);
+   dataloader->AddBackgroundTree(background, backgroundWeight);
+
+   // Set individual event weights (the variables must exist in the original TTree)
+   // -  for signal    : `dataloader->SetSignalWeightExpression    ("weight1*weight2");`
+   // -  for background: `dataloader->SetBackgroundWeightExpression("weight1*weight2");`
+   dataloader->SetBackgroundWeightExpression("weight");
+
+   TMVA::Experimental::Classification *cl = new TMVA::Experimental::Classification(dataloader, ""); //,&outputFile);
+
+   cl->BookMethod(TMVA::Types::kBDT, "BDT", "!H:!V:NTrees=850:MinNodeSize=2.5%:MaxDepth=3:BoostType=AdaBoost:"
+                                            "AdaBoostBeta=0.5:UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType="
+                                            "GiniIndex:nCuts=20");
+   cl->BookMethod(TMVA::Types::kBDT, "BDTG", "!H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:"
+                                             "UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2");
+
+   //     cl->Train();
+   //     cl->Test();
+   //     cl->TrainMethod(TMVA::Types::kBDT,"BDT");
+   //     cl->TrainMethod(TMVA::Types::kBDT,"BDTG");
+   //     cl->TestMethod(TMVA::Types::kBDT,"BDT");
+   //     cl->TestMethod(TMVA::Types::kBDT,"BDTG");
+
+   cl->Evaluate();
+   //    auto &r=cl->GetResults();
+   //    r.Print();
+   //    r.Draw();
+   //    outputFile.Close();
+   delete cl;
+}
