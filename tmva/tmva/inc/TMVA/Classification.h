@@ -61,6 +61,7 @@ class Classification : public Envelope {
    TString fTransformations;                     //! List of transformations to test
    std::vector<IMethod *> fIMethods;             //! vector of objects with booked methods
    Types::EAnalysisType fAnalysisType;           //!
+   Bool_t fCorrelations;                         //!
 public:
    explicit Classification(DataLoader *loader, TFile *file, TString options);
    explicit Classification(DataLoader *loader, TString options);
