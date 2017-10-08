@@ -47,7 +47,8 @@ void multiclassification()
 
    dataloader->PrepareTrainingAndTestTree("", "SplitMode=Random:NormMode=NumEvents:!V");
 
-   TMVA::Experimental::Classification *cl = new TMVA::Experimental::Classification(dataloader, ""); //,&outputFile);
+   TMVA::Experimental::Classification *cl =
+      new TMVA::Experimental::Classification(dataloader, "Multiclass=True"); //,&outputFile);
 
    // gradient boosted decision trees
    cl->BookMethod(
@@ -57,9 +58,10 @@ void multiclassification()
    cl->BookMethod(TMVA::Types::kMLP, "MLP",
                   "!H:!V:NeuronType=tanh:NCycles=1000:HiddenLayers=N+5,5:TestRate=5:EstimatorType=MSE");
    // functional discriminant with GA minimizer
-   cl->BookMethod(TMVA::Types::kFDA, "FDA_GA", "H:!V:Formula=(0)+(1)*x0+(2)*x1+(3)*x2+(4)*x3:ParRanges=(-1,1);(-10,10);"
-                                               "(-10,10);(-10,10);(-10,10):FitMethod=GA:PopSize=300:Cycles=3:Steps=20:"
-                                               "Trim=True:SaveBestGen=1");
+   cl->BookMethod(TMVA::Types::kFDA, "FDA_GA",
+                  "!H:!V:Formula=(0)+(1)*x0+(2)*x1+(3)*x2+(4)*x3:ParRanges=(-1,1);(-10,10);"
+                  "(-10,10);(-10,10);(-10,10):FitMethod=GA:PopSize=300:Cycles=3:Steps=20:"
+                  "Trim=True:SaveBestGen=1");
    // PDE-Foam approach
    cl->BookMethod(
       TMVA::Types::kPDEFoam, "PDEFoam",

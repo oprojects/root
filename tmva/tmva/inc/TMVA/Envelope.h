@@ -63,6 +63,9 @@ namespace TMVA {
           virtual void BookMethod( TString methodname, TString methodtitle, TString options = "");
           virtual void BookMethod( Types::EMVA method,  TString methodtitle, TString options = "");
 
+          // parse the internal option string
+          virtual void ParseOptions();
+
           Bool_t  IsSilentFile();
           TFile* GetFile();
           void   SetFile(TFile *file);

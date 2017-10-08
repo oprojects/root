@@ -39,41 +39,17 @@ Envelope::Envelope(const TString &name,DataLoader *dalaloader,TFile *file,const 
     if (gTools().CheckForSilentOption(GetOptions()))
        Log().InhibitOutput(); // make sure is silent if wanted to
 
-    Bool_t silent = kFALSE;
-#ifdef WIN32
-    // under Windows, switch progress bar and color off by default, as the typical windows shell doesn't handle these
-    // (would need different sequences..)
-    Bool_t color = kFALSE;
-    Bool_t drawProgressBar = kFALSE;
-#else
-    Bool_t color = !gROOT->IsBatch();
-    Bool_t drawProgressBar = kTRUE;
-#endif
     fModelPersistence = kTRUE;
-
     DeclareOptionRef(fVerbose, "V", "Verbose flag");
-    DeclareOptionRef(color, "Color", "Flag for coloured screen output (default: True, if in batch mode: False)");
-    DeclareOptionRef(drawProgressBar, "DrawProgressBar",
-                     "Draw progress bar to display training, testing and evaluation schedule (default: True)");
+
     DeclareOptionRef(fModelPersistence, "ModelPersistence",
                      "Option to save the trained model in xml file or using serialization");
-    DeclareOptionRef(silent, "Silent", "Batch mode: boolean silent flag inhibiting any output from TMVA after the "
-                                       "creation of the factory class object (default: False)");
-    ParseOptions();
-    CheckForUnusedOptions();
-
-    if (IsVerbose())
-       Log().SetMinType(kVERBOSE);
-
-    // global settings
-    gConfig().SetUseColor(color);
-    gConfig().SetSilent(silent);
-    gConfig().SetDrawProgressBar(drawProgressBar);
 }
 
 //_______________________________________________________________________
 Envelope::~Envelope()
-{}
+{
+}
 
 //_______________________________________________________________________
 /**
@@ -183,6 +159,41 @@ void TMVA::Envelope::BookMethod(TString methodName, TString methodTitle, TString
    fMethod["MethodOptions"] = options;
 
    fMethods.push_back(fMethod);
+}
+
+//_______________________________________________________________________
+/**
+Method to parse the internal option string.
+*/
+void TMVA::Envelope::ParseOptions()
+{
+
+   Bool_t silent = kFALSE;
+#ifdef WIN32
+   // under Windows, switch progress bar and color off by default, as the typical windows shell doesn't handle these
+   // (would need different sequences..)
+   Bool_t color = kFALSE;
+   Bool_t drawProgressBar = kFALSE;
+#else
+   Bool_t color = !gROOT->IsBatch();
+   Bool_t drawProgressBar = kTRUE;
+#endif
+   DeclareOptionRef(color, "Color", "Flag for coloured screen output (default: True, if in batch mode: False)");
+   DeclareOptionRef(drawProgressBar, "DrawProgressBar",
+                    "Draw progress bar to display training, testing and evaluation schedule (default: True)");
+   DeclareOptionRef(silent, "Silent", "Batch mode: boolean silent flag inhibiting any output from TMVA after the "
+                                      "creation of the factory class object (default: False)");
+
+   Configurable::ParseOptions();
+   CheckForUnusedOptions();
+
+   if (IsVerbose())
+      Log().SetMinType(kVERBOSE);
+
+   // global settings
+   gConfig().SetUseColor(color);
+   gConfig().SetSilent(silent);
+   gConfig().SetDrawProgressBar(drawProgressBar);
 }
 
 //_______________________________________________________________________
