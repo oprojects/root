@@ -45,11 +45,13 @@ namespace TMVA {
       class Envelope:public Configurable
       {
       protected:
-         std::vector<OptionMap> fMethods;         // Booked method information
-         std::shared_ptr<DataLoader> fDataLoader; // data
+         std::vector<OptionMap> fMethods;         //! Booked method information
+         std::shared_ptr<DataLoader> fDataLoader; //! data
          std::shared_ptr<TFile> fFile;            //! file to save the results
-         Bool_t fModelPersistence;                // flag to save the trained model
-         Bool_t fVerbose;                         // flag for extra information
+         Bool_t fModelPersistence;                //! flag to save the trained model
+         Bool_t fVerbose;                         //! flag for extra information
+         TString fTransformations;                //! List of transformations to test
+         Bool_t fSilentFile;                      //! if true dont produce file output
 
          Envelope(const TString &name, DataLoader *dataloader = nullptr, TFile *file = nullptr,
                   const TString options = "");
@@ -103,6 +105,15 @@ namespace TMVA {
            \return TMVA::DataSetManager pointer.
          */
          DataSetManager *GetDataLoaderDataSetManager() { return fDataLoader->fDataSetManager; }
+
+         /**
+           Utility method to get base dir directory from current file.
+           \return TDirectory* pointer.
+         */
+         TDirectory *RootBaseDir() { return (TDirectory *)fFile.get(); }
+
+         void WriteDataInformation(TMVA::DataSetInfo &fDataSetInfo, TMVA::Types::EAnalysisType fAnalysisType);
+
          ClassDef(Envelope, 0);
       };
 }

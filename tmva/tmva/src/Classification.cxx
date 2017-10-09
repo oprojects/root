@@ -109,7 +109,8 @@ Bool_t TMVA::Experimental::ClassificationResult::IsMethod(TString methodname, TS
 
 //_______________________________________________________________________
 TMVA::Experimental::Classification::Classification(DataLoader *dataloader, TFile *file, TString options)
-   : TMVA::Envelope("Classification", dataloader, file, options)
+   : TMVA::Envelope("Classification", dataloader, file, options), fMulticlass(kFALSE),
+     fAnalysisType(Types::kClassification), fCorrelations(kFALSE), fROC(kTRUE)
 {
    DeclareOptionRef(fMulticlass, "Multiclass", "Set Multiclass=True to perform multi-class classification");
    ParseOptions();
@@ -121,17 +122,14 @@ TMVA::Experimental::Classification::Classification(DataLoader *dataloader, TFile
 
 //_______________________________________________________________________
 TMVA::Experimental::Classification::Classification(DataLoader *dataloader, TString options)
-   : TMVA::Envelope("Classification", dataloader, nullptr, options), fMulticlass(kFALSE)
+   : TMVA::Envelope("Classification", dataloader, NULL, options), fMulticlass(kFALSE),
+     fAnalysisType(Types::kClassification), fCorrelations(kFALSE), fROC(kTRUE)
 {
 
    // init configurable
    SetConfigDescription("Configuration options for Classification running");
    SetConfigName(GetName());
 
-   DeclareOptionRef(fTransformations, "Transformations", "List of transformations to test; formatting example: "
-                                                         "\"Transformations=I;D;P;U;G,D\", for identity, "
-                                                         "decorrelation, PCA, Uniform and Gaussianisation followed by "
-                                                         "decorrelation transformations");
    DeclareOptionRef(fMulticlass, "Multiclass", "Set Multiclass=True to perform multi-class classification");
    ParseOptions();
    CheckForUnusedOptions();
@@ -519,7 +517,6 @@ void TMVA::Experimental::Classification::TestMethod(TString methodname, TString 
             TPrincipal *tpBkg = new TPrincipal(nmeth + nvar, "");
 
             //              set required tree branch references
-            Int_t ivar = 0;
             std::vector<TString> *theVars = new std::vector<TString>;
             std::vector<ResultsClassification *> mvaRes;
             theVars->push_back(methodNoCuts->GetTestvarName());
@@ -800,11 +797,7 @@ void TMVA::Experimental::Classification::TestMethod(TString methodname, TString 
       Log() << kINFO << "given by the row is considered signal while the class given " << Endl;
       Log() << kINFO << "by the column index is considered background." << Endl;
       Log() << kINFO << Endl;
-      //       for (UInt_t iMethod = 0; iMethod < methods->size(); ++iMethod) {
-      //          MethodBase *method = dynamic_cast<MethodBase *>(methods->at(iMethod));
-      //          if (method == nullptr) {
-      //             continue;
-      //          }
+
       UInt_t numClasses = method->fDataSetInfo.GetNClasses();
 
       std::vector<TString> classnames;
@@ -909,16 +902,12 @@ void TMVA::Experimental::Classification::TestMethod(TString methodname, TString 
             Log().InhibitOutput();
       } // end fROC
    }
-   //       if (!IsSilentFile()) {
-   //          for (Int_t k = 0; k < 2; k++) {
-   //             for (Int_t i = 0; i < nmeth_used[k]; i++) {
-   //                // write test/training trees
-   //                RootBaseDir()->cd(method->fDataSetInfo.GetName());
-   //                method->fDataSetInfo.GetDataSet()->GetTree(Types::kTesting)->Write("", TObject::kOverwrite);
-   //                method->fDataSetInfo.GetDataSet()->GetTree(Types::kTraining)->Write("", TObject::kOverwrite);
-   //             }
-   //          }
-   //     }
+   if (!IsSilentFile()) {
+      // write test/training trees
+      RootBaseDir()->cd(method->fDataSetInfo.GetName());
+      method->fDataSetInfo.GetDataSet()->GetTree(Types::kTesting)->Write("", TObject::kOverwrite);
+      method->fDataSetInfo.GetDataSet()->GetTree(Types::kTraining)->Write("", TObject::kOverwrite);
+   }
 }
 
 //_______________________________________________________________________

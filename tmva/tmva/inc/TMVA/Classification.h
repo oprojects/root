@@ -58,7 +58,6 @@ public:
 class Classification : public Envelope {
    std::vector<ClassificationResult *> fResults; //!
    Bool_t fMulticlass;                           //!
-   TString fTransformations;                     //! List of transformations to test
    std::vector<IMethod *> fIMethods;             //! vector of objects with booked methods
    Types::EAnalysisType fAnalysisType;           //!
    Bool_t fCorrelations;                         //!

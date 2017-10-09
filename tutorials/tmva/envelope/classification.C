@@ -60,7 +60,9 @@ void classification()
    // -  for background: `dataloader->SetBackgroundWeightExpression("weight1*weight2");`
    dataloader->SetBackgroundWeightExpression("weight");
 
-   TMVA::Experimental::Classification *cl = new TMVA::Experimental::Classification(dataloader, ""); //,&outputFile);
+   TFile *outputFile = TFile::Open("TMVAClass.root", "RECREATE");
+
+   TMVA::Experimental::Classification *cl = new TMVA::Experimental::Classification(dataloader, outputFile, "");
 
    cl->BookMethod(TMVA::Types::kBDT, "BDT", "!H:!V:NTrees=850:MinNodeSize=2.5%:MaxDepth=3:BoostType=AdaBoost:"
                                             "AdaBoostBeta=0.5:UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType="
@@ -79,6 +81,6 @@ void classification()
    //    auto &r=cl->GetResults();
    //    r.Print();
    //    r.Draw();
-   //    outputFile.Close();
+   outputFile->Close();
    delete cl;
 }
