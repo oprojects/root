@@ -36,7 +36,7 @@ this is a generic one protected.
 */
 Envelope::Envelope(const TString &name, DataLoader *dalaloader, TFile *file, const TString options)
    : Configurable(options), fDataLoader(dalaloader), fFile(file), fModelPersistence(kTRUE), fVerbose(kFALSE),
-     fTransformations("I"), fSilentFile(kFALSE)
+     fTransformations("I"), fSilentFile(kFALSE), fJobs(1)
 {
     SetName(name.Data());
     // render silent
@@ -52,6 +52,7 @@ Envelope::Envelope(const TString &name, DataLoader *dalaloader, TFile *file, con
                                                           "\"Transformations=I;D;P;U;G,D\", for identity, "
                                                           "decorrelation, PCA, Uniform and Gaussianisation followed by "
                                                           "decorrelation transformations");
+    DeclareOptionRef(fJobs, "Jobs", "Option to run hign level algorithms in parallel with multi-thread");
 }
 
 //_______________________________________________________________________

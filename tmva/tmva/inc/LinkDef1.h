@@ -20,6 +20,7 @@
 #pragma link C++ class TMVA::HyperParameterOptimisation+;
 
 #pragma link C++ class TMVA::Experimental::Classification + ;
+#pragma link C++ class TMVA::Experimental::ClassificationResult + ;
 
 //required to enable serialization on DataLoader for paralellism.
 #pragma link C++ class TMVA::OptionBase+;

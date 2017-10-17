@@ -66,7 +66,7 @@ public:
 
 private:
    mutable MsgLogger *fLogger; //! message logger
-   MsgLogger &Log() const { return *fLogger; }
+   MsgLogger &Log() const;
 
    TGraph *fGraph;
 

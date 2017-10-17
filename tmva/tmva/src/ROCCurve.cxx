@@ -122,6 +122,13 @@ TMVA::ROCCurve::~ROCCurve() {
    if(fGraph) delete fGraph;
 }
 
+TMVA::MsgLogger &TMVA::ROCCurve::Log() const
+{
+   if (!fLogger)
+      fLogger = new TMVA::MsgLogger("ROCCurve");
+   return *fLogger;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 

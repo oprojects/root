@@ -3,7 +3,7 @@
 #include "TMVA/Tools.h"
 #include "TMVA/Classification.h"
 
-void classification()
+void classification(UInt_t jobs = 2)
 {
    TMVA::Tools::Instance();
 
@@ -62,25 +62,27 @@ void classification()
 
    TFile *outputFile = TFile::Open("TMVAClass.root", "RECREATE");
 
-   TMVA::Experimental::Classification *cl = new TMVA::Experimental::Classification(dataloader, outputFile, "");
+   TMVA::Experimental::Classification *cl = new TMVA::Experimental::Classification(dataloader, Form("Jobs=%d", jobs));
 
-   cl->BookMethod(TMVA::Types::kBDT, "BDT", "!H:!V:NTrees=850:MinNodeSize=2.5%:MaxDepth=3:BoostType=AdaBoost:"
+   cl->BookMethod(TMVA::Types::kBDT, "BDT", "!H:!V:NTrees=2000:MinNodeSize=2.5%:MaxDepth=3:BoostType=AdaBoost:"
                                             "AdaBoostBeta=0.5:UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType="
                                             "GiniIndex:nCuts=20");
-   cl->BookMethod(TMVA::Types::kBDT, "BDTG", "!H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:"
+   cl->BookMethod(TMVA::Types::kBDT, "BDTG", "!H:!V:NTrees=2000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:"
                                              "UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2");
+   //    cl->BookMethod(TMVA::Types::kSVM, "SVM", "Gamma=0.25:Tol=0.001:VarTransform=Norm" );
+   //
+   //    cl->BookMethod(TMVA::Types::kBDT,
+   //    "BDTB","!H:!V:NTrees=2000:BoostType=Bagging:SeparationType=GiniIndex:nCuts=20" );
 
-   //     cl->Train();
-   //     cl->Test();
-   //     cl->TrainMethod(TMVA::Types::kBDT,"BDT");
-   //     cl->TrainMethod(TMVA::Types::kBDT,"BDTG");
-   //     cl->TestMethod(TMVA::Types::kBDT,"BDT");
-   //     cl->TestMethod(TMVA::Types::kBDT,"BDTG");
+   //    cl->BookMethod(TMVA::Types::kCuts, "Cuts",
+   //                            "!H:!V:FitMethod=MC:EffSel:SampleSize=200000:VarProp=FSmart" );
 
-   cl->Evaluate();
-   //    auto &r=cl->GetResults();
-   //    r.Print();
-   //    r.Draw();
-   outputFile->Close();
+
+   cl->Evaluate(); // Train and Test all methods
+   //    auto &results = cl->GetResults();
+   //    for (auto &r : results) {
+   // do your work here, check the stuff for every method results.
+   //    }
+   //    outputFile->Close();
    delete cl;
 }

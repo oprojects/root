@@ -15,6 +15,8 @@
 #include <TMVA/DataSet.h>
 #include <TMVA/Event.h>
 #include <TMVA/Results.h>
+#include <TMVA/ResultsClassification.h>
+#include <TMVA/ResultsMulticlass.h>
 #include <TMVA/Factory.h>
 #include <TMVA/DataLoader.h>
 #include <TMVA/OptionMap.h>
@@ -33,30 +35,47 @@
 namespace TMVA {
 class ResultsClassification;
 namespace Experimental {
-class ClassificationResult {
+class ClassificationResult : public TObject {
    friend class Classification;
 
 private:
-   std::shared_ptr<ResultsClassification> fClassifierResults;
-   std::shared_ptr<ROCCurve> fROCCurve;
-   Float_t fROCIntegral;
-   OptionMap fMethod;
-   TString fDataLoaderName;
+   //    TMVA::ResultsClassification *fClassifierResults; //!
+   //    TMVA::ResultsMulticlass *fMulticlassResults;     //!
+   std::shared_ptr<ROCCurve> fROCCurve; //!
+   Float_t fROCIntegral;                //
+   OptionMap fMethod;                   //
+   TString fDataLoaderName;             //
+   Bool_t fMulticlass;                  //
+   std::vector<Float_t> fMvaRes;        //
+   std::vector<Bool_t> fMvaResTypes;    //
+   std::vector<Float_t> fMvaResWeights; //
 
    Bool_t IsMethod(TString methodname, TString methodtitle);
 
 public:
    ClassificationResult();
+   ClassificationResult(const ClassificationResult &cr);
    ~ClassificationResult() {}
-   ClassificationResult(const ClassificationResult &) = default;
 
-   void Print() const;
+   //    const TMVA::ResultsClassification *GetResultsClassification() const { return fClassifierResults; }
+   //    const TMVA::ResultsMulticlass *GetResultsMulticlass() const { return fMulticlassResults; }
+   const TString GetMethodName() const { return fMethod.GetValue<TString>("MethodName"); }
+   const TString GetMethodTitle() const { return fMethod.GetValue<TString>("MethodTitle"); }
+   //    const ROCCurve *GetROCCurve() const { return fROCCurve; }
+   Float_t GetROCIntegral() { return fROCIntegral; }
+   TString GetDataLoaderName() { return fDataLoaderName; }
 
-   TCanvas *Draw(const TString name = "Classifier") const;
+   void Print(Option_t *option = "") const;
+
+   void Draw(Option_t *option = "Classifier");
+   TCanvas *GetCanvas(Option_t *option = "Classifier");
+   ClassificationResult &operator=(const ClassificationResult &r);
+
+   ClassDef(ClassificationResult, 3);
 };
 
 class Classification : public Envelope {
-   std::vector<ClassificationResult *> fResults; //!
+   std::vector<ClassificationResult> fResults;   //!
    Bool_t fMulticlass;                           //!
    std::vector<IMethod *> fIMethods;             //! vector of objects with booked methods
    Types::EAnalysisType fAnalysisType;           //!
@@ -77,7 +96,7 @@ public:
 
    virtual void Evaluate();
 
-   const std::vector<ClassificationResult *> &GetResults() const;
+   const std::vector<ClassificationResult> &GetResults() const;
 
    MethodBase *GetMethod(TString methodname, TString methodtitle);
 
@@ -93,7 +112,7 @@ protected:
 
    Double_t GetROCIntegral(TString methodname, TString methodtitle, UInt_t iClass = 0);
 
-   ClassificationResult *GetResults(TString methodname, TString methodtitle);
+   ClassificationResult &GetResults(TString methodname, TString methodtitle);
    ClassDef(Classification, 0);
 };
 } // namespace Experimental

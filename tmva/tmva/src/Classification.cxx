@@ -25,10 +25,6 @@
 #include <TMVA/VariableInfo.h>
 #include <TMVA/VariableTransform.h>
 
-#include <TMVA/Results.h>
-#include <TMVA/ResultsClassification.h>
-#include <TMVA/ResultsRegression.h>
-#include <TMVA/ResultsMulticlass.h>
 
 #include <TMVA/Types.h>
 
@@ -58,12 +54,38 @@
 #define MinNoTrainingEvents 10
 
 //_______________________________________________________________________
-TMVA::Experimental::ClassificationResult::ClassificationResult()
+TMVA::Experimental::ClassificationResult::ClassificationResult() : fROCCurve(nullptr)
 {
 }
 
 //_______________________________________________________________________
-void TMVA::Experimental::ClassificationResult::Print() const
+TMVA::Experimental::ClassificationResult::ClassificationResult(const ClassificationResult &cr) : TObject(cr)
+{
+   fROCIntegral = cr.fROCIntegral;
+   fMethod = cr.fMethod;
+   fDataLoaderName = cr.fDataLoaderName;
+   fMvaRes = cr.fMvaRes;
+   fMvaResTypes = cr.fMvaResTypes;
+   fMvaResWeights = cr.fMvaResWeights;
+   fMulticlass = cr.fMulticlass;
+}
+
+//_______________________________________________________________________
+TMVA::Experimental::ClassificationResult &TMVA::Experimental::ClassificationResult::
+operator=(const TMVA::Experimental::ClassificationResult &cr)
+{
+   fROCIntegral = cr.fROCIntegral;
+   fMethod = cr.fMethod;
+   fDataLoaderName = cr.fDataLoaderName;
+   fMvaRes = cr.fMvaRes;
+   fMvaResTypes = cr.fMvaResTypes;
+   fMvaResWeights = cr.fMvaResWeights;
+   fMulticlass = cr.fMulticlass;
+   return *this;
+}
+
+//_______________________________________________________________________
+void TMVA::Experimental::ClassificationResult::Print(Option_t * /*option*/) const
 {
    TMVA::MsgLogger::EnableOutput();
    TMVA::gConfig().SetSilent(kFALSE);
@@ -73,10 +95,12 @@ void TMVA::Experimental::ClassificationResult::Print() const
 
    fLogger << kINFO << hLine << Endl;
    fLogger << kINFO << "DataSet              MVA                            :" << Endl;
-   fLogger << kINFO << "Name:                Method:          ROC-integ     :" << Endl;
+   fLogger << kINFO << "Name:                Method/Title:    ROC-integ     :" << Endl;
    fLogger << kINFO << hLine << Endl;
    fLogger << kINFO << Form("%-20s %-15s  %#1.3f         :", fDataLoaderName.Data(),
-                            fMethod.GetValue<TString>("MethodName").Data(), fROCIntegral)
+                            Form("%s/%s", fMethod.GetValue<TString>("MethodName").Data(),
+                                 fMethod.GetValue<TString>("MethodTitle").Data()),
+                            fROCIntegral)
            << Endl;
    fLogger << kINFO << hLine << Endl;
 
@@ -84,17 +108,24 @@ void TMVA::Experimental::ClassificationResult::Print() const
 }
 
 //_______________________________________________________________________
-TCanvas *TMVA::Experimental::ClassificationResult::Draw(const TString name) const
+void TMVA::Experimental::ClassificationResult::Draw(Option_t *name)
 {
-   //     TMVA::TMVAGlob::Initialize();
-   TCanvas *c = new TCanvas(name.Data());
+   auto c = GetCanvas(name);
+   c->Draw();
+}
+
+//_______________________________________________________________________
+TCanvas *TMVA::Experimental::ClassificationResult::GetCanvas(Option_t *name)
+{
+   //    TMVA::TMVAGlob::Initialize();
+   TCanvas *c = new TCanvas(name);
    TGraph *roc = fROCCurve->GetROCCurve();
    roc->Draw("AL");
    roc->GetXaxis()->SetTitle(" Signal Efficiency ");
    roc->GetYaxis()->SetTitle(" Background Rejection ");
    c->BuildLegend(0.15, 0.15, 0.3, 0.3);
    c->SetTitle("ROC-Integral Curve");
-   //     TMVA::TMVAGlob::plot_logo();
+   //    TMVA::TMVAGlob::plot_logo();
    c->Draw();
    return c;
 }
@@ -113,6 +144,8 @@ TMVA::Experimental::Classification::Classification(DataLoader *dataloader, TFile
      fAnalysisType(Types::kClassification), fCorrelations(kFALSE), fROC(kTRUE)
 {
    DeclareOptionRef(fMulticlass, "Multiclass", "Set Multiclass=True to perform multi-class classification");
+   DeclareOptionRef(fCorrelations, "Correlations", "boolean to show correlation in output");
+   DeclareOptionRef(fROC, "ROC", "boolean to show ROC in output");
    ParseOptions();
    CheckForUnusedOptions();
 
@@ -131,6 +164,8 @@ TMVA::Experimental::Classification::Classification(DataLoader *dataloader, TStri
    SetConfigName(GetName());
 
    DeclareOptionRef(fMulticlass, "Multiclass", "Set Multiclass=True to perform multi-class classification");
+   DeclareOptionRef(fCorrelations, "Correlations", "boolean to show correlation in output");
+   DeclareOptionRef(fROC, "ROC", "boolean to show ROC in output");
    ParseOptions();
    CheckForUnusedOptions();
    if (fModelPersistence)
@@ -159,10 +194,56 @@ TString TMVA::Experimental::Classification::GetMethodOptions(TString methodname,
 //_______________________________________________________________________
 void TMVA::Experimental::Classification::Evaluate()
 {
+   fTimer.Reset();
+   fTimer.Start();
 
-   Train();
-   Test();
-   TMVA::gConfig().SetSilent(kFALSE);
+   Bool_t roc = fROC;
+   if (!fMulticlass)
+      fROC = kFALSE;
+   if (fJobs <= 1) {
+      Train();
+      Test();
+   } else {
+      for (auto &meth : fMethods) {
+         GetMethod(meth.GetValue<TString>("MethodName"), meth.GetValue<TString>("MethodTitle"));
+      }
+      fWorkers.SetNWorkers(fJobs);
+      auto executor = [=](UInt_t workerID) -> ClassificationResult {
+         TMVA::MsgLogger::InhibitOutput();
+         TMVA::gConfig().SetSilent(kTRUE);
+         TMVA::gConfig().SetUseColor(kFALSE);
+         TMVA::gConfig().SetDrawProgressBar(kFALSE);
+         auto methodname = fMethods[workerID].GetValue<TString>("MethodName");
+         auto methodtitle = fMethods[workerID].GetValue<TString>("MethodTitle");
+         TrainMethod(methodname, methodtitle);
+         TestMethod(methodname, methodtitle);
+         auto result = GetResults(methodname, methodtitle);
+         return result;
+      };
+
+      fResults = fWorkers.Map(executor, ROOT::TSeqI(fMethods.size()));
+   }
+   if (!fMulticlass) {
+      fROC = roc;
+      TMVA::gConfig().SetSilent(kFALSE);
+
+      TString hLine = "--------------------------------------------------- :";
+      Log() << kINFO << hLine << Endl;
+      Log() << kINFO << "DataSet              MVA                            :" << Endl;
+      Log() << kINFO << "Name:                Method/Title:    ROC-integ     :" << Endl;
+      Log() << kINFO << hLine << Endl;
+      for (auto &r : fResults) {
+
+         Log() << kINFO << Form("%-20s %-15s  %#1.3f         :", r.GetDataLoaderName().Data(),
+                                Form("%s/%s", r.GetMethodName().Data(), r.GetMethodTitle().Data()), r.GetROCIntegral())
+               << Endl;
+      }
+      Log() << kINFO << hLine << Endl;
+   }
+   Log() << kINFO << "-----------------------------------------------------" << Endl;
+   Log() << kHEADER << "Evaluation done." << Endl << Endl;
+   Log() << kINFO << Form("Jobs = %d Real Time = %lf ", fJobs, fTimer.RealTime()) << Endl;
+   Log() << kINFO << "-----------------------------------------------------" << Endl;
    Log() << kINFO << "Evaluation done." << Endl;
    TMVA::gConfig().SetSilent(kTRUE);
 }
@@ -346,7 +427,6 @@ void TMVA::Experimental::Classification::Test()
 //_______________________________________________________________________
 void TMVA::Experimental::Classification::TestMethod(TString methodname, TString methodtitle)
 {
-   auto resutls = GetResults(methodname, methodtitle);
    auto method = GetMethod(methodname, methodtitle);
    if (!method) {
       Log() << kFATAL
@@ -902,6 +982,26 @@ void TMVA::Experimental::Classification::TestMethod(TString methodname, TString 
             Log().InhibitOutput();
       } // end fROC
    }
+   auto &results = GetResults(methodname, methodtitle);
+   TMVA::DataSet *dataset = method->Data();
+   dataset->SetCurrentType(Types::kTesting);
+   TMVA::Results *result = dataset->GetResults(method->GetName(), Types::kTesting, this->fAnalysisType);
+
+   if (this->fAnalysisType == Types::kClassification) {
+      results.fMvaRes = *dynamic_cast<ResultsClassification *>(result)->GetValueVector();
+      results.fMvaResTypes = *dynamic_cast<ResultsClassification *>(result)->GetValueVectorTypes();
+
+      auto eventCollection = dataset->GetEventCollection(Types::kTesting);
+      results.fMvaResWeights.reserve(eventCollection.size());
+      for (auto ev : eventCollection) {
+         results.fMvaResWeights.push_back(ev->GetWeight());
+      }
+   }
+
+   results.fROCIntegral = GetROCIntegral(methodname, methodtitle);
+   results.fROCCurve = std::shared_ptr<ROCCurve>(GetROC(methodname, methodtitle));
+   results.fROCCurve->GetROCCurve()->SetTitle(Form("%s : ROC-Int %.3f", methodtitle.Data(), results.fROCIntegral));
+   results.fROCCurve->GetROCCurve()->SetName(methodname);
    if (!IsSilentFile()) {
       // write test/training trees
       RootBaseDir()->cd(method->fDataSetInfo.GetName());
@@ -917,7 +1017,7 @@ void TMVA::Experimental::Classification::TestMethod(Types::EMVA method, TString 
 }
 
 //_______________________________________________________________________
-const std::vector<TMVA::Experimental::ClassificationResult *> &TMVA::Experimental::Classification::GetResults() const
+const std::vector<TMVA::Experimental::ClassificationResult> &TMVA::Experimental::Classification::GetResults() const
 {
    if (fResults.size() == 0)
       Log() << kFATAL << "No Classification results available" << Endl;
@@ -931,19 +1031,19 @@ Bool_t TMVA::Experimental::Classification::IsCutsMethod(TMVA::MethodBase *method
 }
 
 //_______________________________________________________________________
-TMVA::Experimental::ClassificationResult *
+TMVA::Experimental::ClassificationResult &
 TMVA::Experimental::Classification::GetResults(TString methodname, TString methodtitle)
 {
    for (auto &result : fResults) {
-      if (result->IsMethod(methodname, methodtitle))
+      if (result.IsMethod(methodname, methodtitle))
          return result;
    }
-   auto result = new ClassificationResult();
-   result->fMethod["MethodName"] = methodname;
-   result->fMethod["MethodTitle"] = methodtitle;
-   result->fDataLoaderName = fDataLoader->GetName();
+   ClassificationResult result;
+   result.fMethod["MethodName"] = methodname;
+   result.fMethod["MethodTitle"] = methodtitle;
+   result.fDataLoaderName = fDataLoader->GetName();
    fResults.push_back(result);
-   return result;
+   return fResults.back();
 }
 
 //_______________________________________________________________________

@@ -16,18 +16,16 @@
 #include <memory>
 
 #include <TROOT.h>
+#include <TStopwatch.h>
 
+#include <TProcPool.h>
 #include <TStopwatch.h>
 
 #include <TMVA/OptionMap.h>
-
-#include "TMVA/Config.h"
-
-#include "TMVA/Tools.h"
-
-#include "TMVA/DataLoader.h"
-
-#include "TMVA/DataLoader.h"
+#include <TMVA/Config.h>
+#include <TMVA/Tools.h>
+#include <TMVA/DataLoader.h>
+#include <TMVA/DataLoader.h>
 
 /*! \class TMVA::Envelope
  * Abstract base class for all high level ml algorithms,
@@ -52,6 +50,9 @@ namespace TMVA {
          Bool_t fVerbose;                         //! flag for extra information
          TString fTransformations;                //! List of transformations to test
          Bool_t fSilentFile;                      //! if true dont produce file output
+         TProcPool fWorkers;                      //! procpool object
+         UInt_t fJobs;                            //! number of jobs to run some high level algorithm in parallel
+         TStopwatch fTimer;                       //! timer to measute the time.
 
          Envelope(const TString &name, DataLoader *dataloader = nullptr, TFile *file = nullptr,
                   const TString options = "");
