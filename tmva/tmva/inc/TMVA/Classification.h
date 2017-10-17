@@ -39,16 +39,14 @@ class ClassificationResult : public TObject {
    friend class Classification;
 
 private:
-   //    TMVA::ResultsClassification *fClassifierResults; //!
-   //    TMVA::ResultsMulticlass *fMulticlassResults;     //!
-   std::shared_ptr<ROCCurve> fROCCurve; //!
-   Float_t fROCIntegral;                //
-   OptionMap fMethod;                   //
-   TString fDataLoaderName;             //
-   Bool_t fMulticlass;                  //
-   std::vector<Float_t> fMvaRes;        //
-   std::vector<Bool_t> fMvaResTypes;    //
-   std::vector<Float_t> fMvaResWeights; //
+   OptionMap fMethod;       //
+   TString fDataLoaderName; //
+   Bool_t fMulticlass;      //
+   std::map<UInt_t, std::vector<std::tuple<Float_t, Float_t, Bool_t>>>
+      fMvaTrain; // Mvas for two-class and multiclass classification
+   std::map<UInt_t, std::vector<std::tuple<Float_t, Float_t, Bool_t>>>
+      fMvaTest;                      // Mvas for two-class and multiclass classification
+   std::vector<TString> fClassNames; //
 
    Bool_t IsMethod(TString methodname, TString methodtitle);
 
@@ -57,18 +55,15 @@ public:
    ClassificationResult(const ClassificationResult &cr);
    ~ClassificationResult() {}
 
-   //    const TMVA::ResultsClassification *GetResultsClassification() const { return fClassifierResults; }
-   //    const TMVA::ResultsMulticlass *GetResultsMulticlass() const { return fMulticlassResults; }
    const TString GetMethodName() const { return fMethod.GetValue<TString>("MethodName"); }
    const TString GetMethodTitle() const { return fMethod.GetValue<TString>("MethodTitle"); }
-   //    const ROCCurve *GetROCCurve() const { return fROCCurve; }
-   Float_t GetROCIntegral() { return fROCIntegral; }
+   ROCCurve *GetROC(UInt_t iClass = 0, TMVA::Types::ETreeType type = TMVA::Types::kTesting);
+   Double_t GetROCIntegral(UInt_t iClass = 0, TMVA::Types::ETreeType type = TMVA::Types::kTesting);
    TString GetDataLoaderName() { return fDataLoaderName; }
 
-   void Print(Option_t *option = "") const;
+   void Show(Option_t *option = "");
 
-   void Draw(Option_t *option = "Classifier");
-   TCanvas *GetCanvas(Option_t *option = "Classifier");
+   TGraph *GetROCGraph(UInt_t iClass = 0, TMVA::Types::ETreeType type = TMVA::Types::kTesting);
    ClassificationResult &operator=(const ClassificationResult &r);
 
    ClassDef(ClassificationResult, 3);
@@ -96,7 +91,7 @@ public:
 
    virtual void Evaluate();
 
-   const std::vector<ClassificationResult> &GetResults() const;
+   std::vector<ClassificationResult> &GetResults();
 
    MethodBase *GetMethod(TString methodname, TString methodtitle);
 

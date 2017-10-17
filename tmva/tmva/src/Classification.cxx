@@ -54,82 +54,91 @@
 #define MinNoTrainingEvents 10
 
 //_______________________________________________________________________
-TMVA::Experimental::ClassificationResult::ClassificationResult() : fROCCurve(nullptr)
+TMVA::Experimental::ClassificationResult::ClassificationResult()
 {
 }
 
 //_______________________________________________________________________
 TMVA::Experimental::ClassificationResult::ClassificationResult(const ClassificationResult &cr) : TObject(cr)
 {
-   fROCIntegral = cr.fROCIntegral;
    fMethod = cr.fMethod;
    fDataLoaderName = cr.fDataLoaderName;
-   fMvaRes = cr.fMvaRes;
-   fMvaResTypes = cr.fMvaResTypes;
-   fMvaResWeights = cr.fMvaResWeights;
    fMulticlass = cr.fMulticlass;
+   fMvaTrain = cr.fMvaTrain;
+   fMvaTest = cr.fMvaTest;
+}
+
+//_______________________________________________________________________
+Double_t TMVA::Experimental::ClassificationResult::GetROCIntegral(UInt_t iClass, TMVA::Types::ETreeType type)
+{
+   auto roc = GetROC(iClass, type);
+   auto inte = roc->GetROCIntegral();
+   delete roc;
+   return inte;
+}
+
+//_______________________________________________________________________
+TMVA::ROCCurve *TMVA::Experimental::ClassificationResult::GetROC(UInt_t iClass, TMVA::Types::ETreeType type)
+{
+   ROCCurve *fROCCurve = nullptr;
+   if (type == TMVA::Types::kTesting)
+      fROCCurve = new ROCCurve(fMvaTest[iClass]);
+   else
+      fROCCurve = new ROCCurve(fMvaTrain[iClass]);
+   return fROCCurve;
 }
 
 //_______________________________________________________________________
 TMVA::Experimental::ClassificationResult &TMVA::Experimental::ClassificationResult::
 operator=(const TMVA::Experimental::ClassificationResult &cr)
 {
-   fROCIntegral = cr.fROCIntegral;
    fMethod = cr.fMethod;
    fDataLoaderName = cr.fDataLoaderName;
-   fMvaRes = cr.fMvaRes;
-   fMvaResTypes = cr.fMvaResTypes;
-   fMvaResWeights = cr.fMvaResWeights;
    fMulticlass = cr.fMulticlass;
+   fMvaTrain = cr.fMvaTrain;
+   fMvaTest = cr.fMvaTest;
    return *this;
 }
 
 //_______________________________________________________________________
-void TMVA::Experimental::ClassificationResult::Print(Option_t * /*option*/) const
+void TMVA::Experimental::ClassificationResult::Show(Option_t * /*option*/)
 {
-   TMVA::MsgLogger::EnableOutput();
-   TMVA::gConfig().SetSilent(kFALSE);
-   TString hLine = "--------------------------------------------------- :";
-
    MsgLogger fLogger("Classification");
+   if (fMulticlass) {
+      // TODO multiclass
+      fLogger << kWARNING << "Multiclass output not implemented yet." << std::endl;
+   } else {
+      TMVA::MsgLogger::EnableOutput();
+      TMVA::gConfig().SetSilent(kFALSE);
+      TString hLine = "--------------------------------------------------- :";
 
-   fLogger << kINFO << hLine << Endl;
-   fLogger << kINFO << "DataSet              MVA                            :" << Endl;
-   fLogger << kINFO << "Name:                Method/Title:    ROC-integ     :" << Endl;
-   fLogger << kINFO << hLine << Endl;
-   fLogger << kINFO << Form("%-20s %-15s  %#1.3f         :", fDataLoaderName.Data(),
-                            Form("%s/%s", fMethod.GetValue<TString>("MethodName").Data(),
-                                 fMethod.GetValue<TString>("MethodTitle").Data()),
-                            fROCIntegral)
-           << Endl;
-   fLogger << kINFO << hLine << Endl;
+      fLogger << kINFO << hLine << Endl;
+      fLogger << kINFO << "DataSet              MVA                            :" << Endl;
+      fLogger << kINFO << "Name:                Method/Title:    ROC-integ     :" << Endl;
+      fLogger << kINFO << hLine << Endl;
+      fLogger << kINFO << Form("%-20s %-15s  %#1.3f         :", fDataLoaderName.Data(),
+                               Form("%s/%s", fMethod.GetValue<TString>("MethodName").Data(),
+                                    fMethod.GetValue<TString>("MethodTitle").Data()),
+                               GetROCIntegral())
+              << Endl;
+      fLogger << kINFO << hLine << Endl;
 
-   TMVA::gConfig().SetSilent(kTRUE);
+      TMVA::gConfig().SetSilent(kTRUE);
+   }
 }
 
 //_______________________________________________________________________
-void TMVA::Experimental::ClassificationResult::Draw(Option_t *name)
+TGraph *TMVA::Experimental::ClassificationResult::GetROCGraph(UInt_t iClass, TMVA::Types::ETreeType type)
 {
-   auto c = GetCanvas(name);
-   c->Draw();
-}
-
-//_______________________________________________________________________
-TCanvas *TMVA::Experimental::ClassificationResult::GetCanvas(Option_t *name)
-{
-   //    TMVA::TMVAGlob::Initialize();
-   TCanvas *c = new TCanvas(name);
-   TGraph *roc = fROCCurve->GetROCCurve();
-   roc->Draw("AL");
+   TGraph *roc = GetROC(iClass, type)->GetROCCurve();
+   roc->SetName(Form("%s/%s", GetMethodName().Data(), GetMethodTitle().Data()));
+   roc->SetTitle(Form("%s/%s", GetMethodName().Data(), GetMethodTitle().Data()));
    roc->GetXaxis()->SetTitle(" Signal Efficiency ");
    roc->GetYaxis()->SetTitle(" Background Rejection ");
-   c->BuildLegend(0.15, 0.15, 0.3, 0.3);
-   c->SetTitle("ROC-Integral Curve");
-   //    TMVA::TMVAGlob::plot_logo();
-   c->Draw();
-   return c;
+   return roc;
 }
 
+//_______________________________________________________________________
 Bool_t TMVA::Experimental::ClassificationResult::IsMethod(TString methodname, TString methodtitle)
 {
    return fMethod.GetValue<TString>("MethodName") == methodname &&
@@ -217,13 +226,14 @@ void TMVA::Experimental::Classification::Evaluate()
          auto methodtitle = fMethods[workerID].GetValue<TString>("MethodTitle");
          TrainMethod(methodname, methodtitle);
          TestMethod(methodname, methodtitle);
-         auto result = GetResults(methodname, methodtitle);
-         return result;
+         return GetResults(methodname, methodtitle);
       };
 
       fResults = fWorkers.Map(executor, ROOT::TSeqI(fMethods.size()));
    }
-   if (!fMulticlass) {
+   if (fMulticlass) {
+
+   } else {
       fROC = roc;
       TMVA::gConfig().SetSilent(kFALSE);
 
@@ -275,7 +285,7 @@ void TMVA::Experimental::Classification::TrainMethod(TString methodname, TString
       Log() << kFATAL << "You want to do classification training, but specified less than two classes." << Endl;
 
    // first print some information about the default dataset
-   //      if(!IsSilentFile()) WriteDataInformation(method->fDataSetInfo);
+   //    if(!IsSilentFile()) WriteDataInformation(method->fDataSetInfo);
 
    if (method->Data()->GetNTrainingEvents() < MinNoTrainingEvents) {
       Log() << kWARNING << "Method " << method->GetMethodName() << " not trained (training tree has less entries ["
@@ -805,7 +815,6 @@ void TMVA::Experimental::Classification::TestMethod(TString methodname, TString 
 
                ROCCurve *rocCurveTrain = GetROC(methodname, methodtitle, iClass, Types::kTraining);
                ROCCurve *rocCurveTest = GetROC(methodname, methodtitle, iClass, Types::kTesting);
-
                const TString className = method->DataInfo().GetClassInfo(iClass)->GetName();
                const Double_t rocaucTrain = rocCurveTrain->GetROCIntegral();
                const Double_t effB01Train = rocCurveTrain->GetEffSForEffB(0.01);
@@ -869,7 +878,7 @@ void TMVA::Experimental::Classification::TestMethod(TString methodname, TString 
       };
 
       Log() << kINFO << Endl;
-      Log() << kINFO << "Confusion matrices for all methods" << Endl;
+      Log() << kINFO << Form("Confusion matrices for method %s/%s", methodname.Data(), methodtitle.Data()) << Endl;
       Log() << kINFO << hLine << Endl;
       Log() << kINFO << Endl;
       Log() << kINFO << "Does a binary comparison between the two classes given by a " << Endl;
@@ -982,26 +991,35 @@ void TMVA::Experimental::Classification::TestMethod(TString methodname, TString 
             Log().InhibitOutput();
       } // end fROC
    }
-   auto &results = GetResults(methodname, methodtitle);
+
+   // putting results in the classification result object
+   auto &fResult = GetResults(methodname, methodtitle);
+
    TMVA::DataSet *dataset = method->Data();
    dataset->SetCurrentType(Types::kTesting);
-   TMVA::Results *result = dataset->GetResults(method->GetName(), Types::kTesting, this->fAnalysisType);
 
    if (this->fAnalysisType == Types::kClassification) {
-      results.fMvaRes = *dynamic_cast<ResultsClassification *>(result)->GetValueVector();
-      results.fMvaResTypes = *dynamic_cast<ResultsClassification *>(result)->GetValueVectorTypes();
+      //       auto rocCurveTrain = GetROC(methodname, methodtitle, 0, Types::kTraining);
+      auto rocCurveTest = GetROC(methodname, methodtitle, 0, Types::kTesting);
+      //       fResult.fMvaTrain[0] = rocCurveTrain->GetMvas();
+      fResult.fMvaTest[0] = rocCurveTest->GetMvas();
+      TString className = method->DataInfo().GetClassInfo(0)->GetName();
+      fResult.fClassNames.push_back(className);
+      //       className = method->DataInfo().GetClassInfo(1)->GetName();
+      //       fResult.fClassNames.push_back(className);
+   } else {
+      UInt_t numClasses = method->fDataSetInfo.GetNClasses();
+      for (UInt_t iClass = 0; iClass < numClasses; ++iClass) {
 
-      auto eventCollection = dataset->GetEventCollection(Types::kTesting);
-      results.fMvaResWeights.reserve(eventCollection.size());
-      for (auto ev : eventCollection) {
-         results.fMvaResWeights.push_back(ev->GetWeight());
+         auto rocCurveTrain = GetROC(methodname, methodtitle, iClass, Types::kTraining);
+         auto rocCurveTest = GetROC(methodname, methodtitle, iClass, Types::kTesting);
+         fResult.fMvaTrain[iClass] = rocCurveTrain->GetMvas();
+         fResult.fMvaTest[iClass] = rocCurveTest->GetMvas();
+         const TString className = method->DataInfo().GetClassInfo(iClass)->GetName();
+         fResult.fClassNames.push_back(className);
       }
    }
 
-   results.fROCIntegral = GetROCIntegral(methodname, methodtitle);
-   results.fROCCurve = std::shared_ptr<ROCCurve>(GetROC(methodname, methodtitle));
-   results.fROCCurve->GetROCCurve()->SetTitle(Form("%s : ROC-Int %.3f", methodtitle.Data(), results.fROCIntegral));
-   results.fROCCurve->GetROCCurve()->SetName(methodname);
    if (!IsSilentFile()) {
       // write test/training trees
       RootBaseDir()->cd(method->fDataSetInfo.GetName());
@@ -1017,7 +1035,7 @@ void TMVA::Experimental::Classification::TestMethod(Types::EMVA method, TString 
 }
 
 //_______________________________________________________________________
-const std::vector<TMVA::Experimental::ClassificationResult> &TMVA::Experimental::Classification::GetResults() const
+std::vector<TMVA::Experimental::ClassificationResult> &TMVA::Experimental::Classification::GetResults()
 {
    if (fResults.size() == 0)
       Log() << kFATAL << "No Classification results available" << Endl;

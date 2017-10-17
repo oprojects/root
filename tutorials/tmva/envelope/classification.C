@@ -3,7 +3,7 @@
 #include "TMVA/Tools.h"
 #include "TMVA/Classification.h"
 
-void classification(UInt_t jobs = 2)
+void classification(UInt_t jobs = 4)
 {
    TMVA::Tools::Instance();
 
@@ -69,20 +69,29 @@ void classification(UInt_t jobs = 2)
                                             "GiniIndex:nCuts=20");
    cl->BookMethod(TMVA::Types::kBDT, "BDTG", "!H:!V:NTrees=2000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:"
                                              "UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2");
-   //    cl->BookMethod(TMVA::Types::kSVM, "SVM", "Gamma=0.25:Tol=0.001:VarTransform=Norm" );
-   //
-   //    cl->BookMethod(TMVA::Types::kBDT,
-   //    "BDTB","!H:!V:NTrees=2000:BoostType=Bagging:SeparationType=GiniIndex:nCuts=20" );
+   cl->BookMethod(TMVA::Types::kSVM, "SVM", "Gamma=0.25:Tol=0.001:VarTransform=Norm");
 
-   //    cl->BookMethod(TMVA::Types::kCuts, "Cuts",
-   //                            "!H:!V:FitMethod=MC:EffSel:SampleSize=200000:VarProp=FSmart" );
-
+   cl->BookMethod(TMVA::Types::kBDT, "BDTB", "!H:!V:NTrees=2000:BoostType=Bagging:SeparationType=GiniIndex:nCuts=20");
 
    cl->Evaluate(); // Train and Test all methods
-   //    auto &results = cl->GetResults();
-   //    for (auto &r : results) {
-   // do your work here, check the stuff for every method results.
-   //    }
-   //    outputFile->Close();
+
+   auto &results = cl->GetResults();
+
+   TCanvas *c = new TCanvas(Form("ROC"));
+   c->SetTitle("ROC-Integral Curve");
+
+   auto mg = new TMultiGraph();
+   for (UInt_t i = 0; i < results.size(); i++) {
+      auto roc = results[i].GetROCGraph();
+      roc->SetLineColorAlpha(i + 1, 0.1);
+      mg->Add(roc);
+   }
+   mg->Draw("AL");
+   mg->GetXaxis()->SetTitle(" Signal Efficiency ");
+   mg->GetYaxis()->SetTitle(" Background Rejection ");
+   c->BuildLegend(0.15, 0.15, 0.3, 0.3);
+   c->Draw();
+
+   outputFile->Close();
    delete cl;
 }
