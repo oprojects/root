@@ -29,3 +29,7 @@ endif()
 if(r)
   add_subdirectory(rtools)
 endif()
+
+if(ipopt)
+  add_subdirectory(ipopt)
+endif()
