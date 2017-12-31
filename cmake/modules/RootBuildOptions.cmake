@@ -140,6 +140,7 @@ ROOT_BUILD_OPTION(gviz OFF "Enable support for Graphviz (graph visualization sof
 ROOT_BUILD_OPTION(http ON "Enable support for HTTP server")
 ROOT_BUILD_OPTION(fcgi OFF "Enable FastCGI support in HTTP server")
 ROOT_BUILD_OPTION(imt ON "Enable support for implicit multi-threading via Intel® Thread Building Blocks (TBB)")
+ROOT_BUILD_OPTION(ipopt ON "Interior Point OPTimizer (https://projects.coin-or.org/Ipopt)")
 ROOT_BUILD_OPTION(jemalloc OFF "Use jemalloc memory allocator")
 ROOT_BUILD_OPTION(libcxx OFF "Build using libc++")
 ROOT_BUILD_OPTION(macos_native OFF "Disable looking for libraries, includes and binaries in locations other than a native installation (MacOS only)")

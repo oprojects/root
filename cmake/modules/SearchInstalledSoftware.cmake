@@ -1855,6 +1855,21 @@ if(pyroot)
   endif()
 endif()
 
+#---Check for Ipopt library---------------------------------------------------------------
+if(ipopt )
+  message(STATUS "Looking for Ipopt")
+    find_package(IPOPT)
+    if(NOT IPOPT_FOUND)
+      if(fail-on-missing)
+        message(FATAL_ERROR "Ipopt package not found and 'ipopt' component if required ('fail-on-missing' enabled). ")
+      else()
+        message(STATUS "Ipopt not found. Set variable IPOPT_DIR to point to your Ipopt installation")
+        message(STATUS "               For the time being switching OFF 'ipopt' option")
+        set(mathmore OFF CACHE BOOL "" FORCE)
+      endif()
+    endif()
+endif()
+
 #---Check for PyROOT legacy---------------------------------------------------------------
 if(pyroot_legacy)
   if(NOT pyroot)
