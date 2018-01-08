@@ -13,12 +13,9 @@
 #define ROOT_Math_IpoptMinimizer
 
 #include "Math/Minimizer.h"
-
 #include "Math/IFunctionfwd.h"
-
-#include "Math/IParamFunctionfwd.h"
-
 #include "Math/BasicMinimizer.h"
+#include "Math/IpoptFunctions.h"
 
 #include <vector>
 #include <map>
@@ -35,6 +32,7 @@
 namespace ROOT {
 
 namespace Math {
+
 /**
    enumeration specifying the types of Ipopt solvers
    @ingroup MultiMin
@@ -401,9 +399,11 @@ public:
    /// set the function to minimize
    virtual void SetFunction(const ROOT::Math::IMultiGenFunction &func);
 
-   /// set the function to minimize
+   /// set the gradient of function to minimize
    virtual void SetFunction(const ROOT::Math::IMultiGradFunction &func) { BasicMinimizer::SetFunction(func); }
 
+   /// set the constraint of function
+   virtual void SetFunction(const ROOT::Math::IMultiConstraintFunction &func);
    /// method to perform the minimization
    virtual bool Minimize();
 
@@ -412,6 +412,8 @@ public:
    virtual void SetNNZerosHessian(UInt_t nzeros);
 
    virtual void SetOptionStringValue(const char *var, const char *value);
+
+   ROOT::Math::IMultiConstraintFunction *ConstraintObjFunction() { return fConstraintFunc; }
 
    /// return expected distance reached from the minimum
    virtual double Edm() const { return 0; } // not impl. }
@@ -435,6 +437,8 @@ public:
    virtual double CovMatrix(unsigned int, unsigned int) const { return 0; }
 protected:
    Ipopt::SmartPtr<InternalTNLP> fInternalTNLP;
+   ROOT::Math::IMultiConstraintFunction *fConstraintFunc;
+   unsigned int fConstraintFuncDim;
    ClassDef(IpoptMinimizer, 0) //
 };
 

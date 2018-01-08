@@ -15,13 +15,18 @@ IpoptMinimizer::IpoptMinimizer() : BasicMinimizer()
    fIpotApp = IpoptApplicationFactory();
    fInternalTNLP = new InternalTNLP(this);
    fIpotApp->Options()->SetStringValue("hessian_approximation", "limited-memory");
+   fConstraintFunc = nullptr;
+   fIpotApp->Options()->SetStringValue("linear_solver", "mumps"); // mumps by default
 }
 
 //_______________________________________________________________________
 IpoptMinimizer::IpoptMinimizer(const char *type)
 {
-   fIpotApp->Options()->SetStringValue("hessian_approximation", "limited-memory");
+   fIpotApp = IpoptApplicationFactory();
+   fInternalTNLP = new InternalTNLP(this);
    fIpotApp->Options()->SetStringValue("linear_solver", type);
+   fIpotApp->Options()->SetStringValue("hessian_approximation", "limited-memory");
+   fConstraintFunc = nullptr;
 }
 
 //_______________________________________________________________________
@@ -130,10 +135,18 @@ bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::eval_grad_f(Index n, const Nu
 }
 
 //_______________________________________________________________________
-bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::eval_g(Index /*n*/, const Number * /*x*/, bool /*new_x*/,
-                                                          Index /*m*/, Number * /*g*/)
+bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::eval_g(Index n, const Number *x, bool /*new_x*/, Index m, Number *g)
 {
-   return false;
+   auto gfun = fMinimizer->ConstraintObjFunction();
+   if (!gfun)
+      return false;
+   else {
+      R__ASSERT(n == (Index)gfun->NDim());
+      auto gr = (*gfun)(x);
+      for (auto i = 0; i < m; i++)
+         g[i] = gr[i];
+   }
+   return true;
 }
 
 //_______________________________________________________________________
@@ -246,4 +259,11 @@ bool IpoptMinimizer::Minimize()
    } else {
       return false;
    }
+}
+
+//_______________________________________________________________________
+void IpoptMinimizer::SetFunction(const ROOT::Math::IMultiConstraintFunction &func)
+{
+   fConstraintFunc = func.Clone();
+   fConstraintFuncDim = func.NDim();
 }

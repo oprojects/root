@@ -6,7 +6,9 @@ include_directories(${IPOPT_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR})
 add_definitions(-DUSE_ROOT_ERROR ${IPOPT_DEFINITIONS} )
 
 
-set(headers Math/IpoptMinimizer.h )
+set(headers Math/IpoptMinimizer.h
+            Math/IpoptFunctions.h)
+            
 set(linkdefs Math/LinkDef.h )
 
 ROOT_STANDARD_LIBRARY_PACKAGE(Ipopt
