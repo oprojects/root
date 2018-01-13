@@ -439,6 +439,7 @@ protected:
    Ipopt::SmartPtr<InternalTNLP> fInternalTNLP;
    ROOT::Math::IMultiConstraintFunction *fConstraintFunc;
    unsigned int fConstraintFuncDim;
+   //    unsigned int fConstraintFunReturncDim;
    ClassDef(IpoptMinimizer, 0) //
 };
 

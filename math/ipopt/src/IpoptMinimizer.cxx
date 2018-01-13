@@ -1,8 +1,6 @@
 #include <Math/IpoptMinimizer.h>
 #include <Fit/ParameterSettings.h>
 #include <Math/IFunction.h>
-#include "Math/MultiNumGradFunction.h"
-#include "Math/FitMethodFunction.h"
 #include <TString.h>
 
 using namespace ROOT;
@@ -135,26 +133,53 @@ bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::eval_grad_f(Index n, const Nu
 }
 
 //_______________________________________________________________________
-bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::eval_g(Index n, const Number *x, bool /*new_x*/, Index m, Number *g)
+bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::eval_g(Index n, const Number *x, bool new_x, Index m, Number *g)
 {
    auto gfun = fMinimizer->ConstraintObjFunction();
-   if (!gfun)
+   if (!gfun) {
+      std::cout << "not const func\n";
+      exit(1);
       return false;
-   else {
+   } else {
       R__ASSERT(n == (Index)gfun->NDim());
-      auto gr = (*gfun)(x);
-      for (auto i = 0; i < m; i++)
-         g[i] = gr[i];
+      R__ASSERT(m == (Index)gfun->NDimConstraint());
+      if (new_x)
+         (*gfun)(x, g); // eval only if it is a new point
    }
    return true;
 }
 
 //_______________________________________________________________________
-bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::eval_jac_g(Index /*n*/, const Number * /*x*/, bool /*new_x*/,
-                                                              Index /*m*/, Index /*nele_jac*/, Index * /*iRow*/,
-                                                              Index * /*jCol*/, Number * /*values*/)
+bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::eval_jac_g(Index n, const Number *x, bool new_x, Index m,
+                                                              Index nele_jac, Index *iRow, Index *jCol, Number *values)
 {
-   return false;
+   auto gfun = fMinimizer->ConstraintObjFunction();
+   if (!gfun)
+      return false;
+
+   if (values == NULL) {
+      // creatring the structure of the jacobian matrix for ipopt, at the moment only dense matrix
+      Index idx = 0;
+      for (Index row = 0; row < n; row++) {
+         for (Index col = 0; col <= row; col++) {
+            iRow[idx] = row;
+            jCol[idx] = col;
+            idx++;
+         }
+      }
+
+      R__ASSERT(idx == nele_jac);
+   } else {
+      R__ASSERT(n == (Index)gfun->NDim());
+      R__ASSERT(m == (Index)gfun->NDimConstraint());
+      if (new_x) { // eval only if it is a new point
+         for (auto i = 0; i < n; i++) {
+            for (auto j = 0; j < m; j++)
+               gfun->DoJacobian(x, values[i * n + j], i, j);
+         }
+      }
+   }
+   return true;
 }
 
 //_______________________________________________________________________
@@ -202,18 +227,10 @@ void IpoptMinimizer::IpoptMinimizer::InternalTNLP::finalize_solution(SolverRetur
    fMinimizer->SetMinValue(obj_value);
 }
 
+//_______________________________________________________________________
 void IpoptMinimizer::SetFunction(const ROOT::Math::IMultiGenFunction &func)
 {
-   // set the function to minimizer
-   // need to calculate numerically the derivatives: do via class MultiNumGradFunction
-   // no need to clone the passed function
-   ROOT::Math::MultiNumGradFunction gradFunc(func);
-   //     IGradientFunctionMultiDim gradFunc(func);
-   // function is cloned inside so can be delete afterwards
-   // called base class method setfunction
-   // (note: write explicitly otherwise it will call back itself)
-   BasicMinimizer::SetFunction(gradFunc);
-   //    BasicMinimizer::SetFunction(func);
+   BasicMinimizer::SetFunction(func);
 }
 
 //_______________________________________________________________________

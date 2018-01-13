@@ -57,33 +57,35 @@ public:
    virtual IBaseConstraintFunctionMultiDimTempl<T> *Clone() const = 0;
 
    /**
-      Retrieve the dimension of the function
+      Retrieve the dimension of the constraint function
     */
    virtual unsigned int NDim() const = 0;
+
+   /**
+      Retrieve the dimension of the return of constraint function
+    */
+   virtual unsigned int NDimConstraint() const = 0;
 
    /**
        Evaluate the function at a point x[].
        Use the pure virtual private method DoEval which must be implemented by the sub-classes
    */
-   T *operator()(const T *x) const { return DoEval(x); }
+   void operator()(const T *x, T *g) const { DoEval(x, g); }
 
-#ifdef LATER
    /**
-      Template method to eveluate the function using the begin of an iterator
-      User is responsible to provide correct size for the iterator
+      Implementation of the evaluation pf jacobian function. Must be implemented by derived classes
+      \param x point to eval
+      \param value of the jacobian in the coordinates i,j
+      \param icoord coordinate i of the jacobian matrix
+      \param jcoord coordinate j of the jacobian matrix
    */
-   template <class Iterator>
-   T operator()(const Iterator it) const
-   {
-      return DoEval(&(*it));
-   }
-#endif
+   virtual bool DoJacobian(const double *x, double &value, unsigned int icoord, unsigned int jcoord) const = 0;
 
 private:
    /**
       Implementation of the evaluation function. Must be implemented by derived classes
    */
-   virtual T *DoEval(const T *x) const = 0;
+   virtual void DoEval(const T *x, T *g) const = 0;
 };
 using IBaseConstraintFunctionMultiDim = IBaseConstraintFunctionMultiDimTempl<double>;
 typedef IBaseConstraintFunctionMultiDim IMultiConstraintFunction;
@@ -114,10 +116,13 @@ class ConstraintFunctorHandler : public ParentFunctor::Impl {
 
 public:
    // constructor for 1d functions
-   ConstraintFunctorHandler(const Func &fun) : fDim(1), fFunc(fun) {}
+   ConstraintFunctorHandler(const Func &fun) : fDim(1), fDimConstraint(1), fFunc(fun) {}
 
    // constructor for multi-dimensional functions w/0 NDim()
-   ConstraintFunctorHandler(unsigned int dim, const Func &fun) : fDim(dim), fFunc(fun) {}
+   ConstraintFunctorHandler(unsigned int dim, unsigned int dimconstraint, const Func &fun)
+      : fDim(dim), fDimConstraint(dimconstraint), fFunc(fun)
+   {
+   }
 
    virtual ~ConstraintFunctorHandler() {}
 
@@ -130,18 +135,20 @@ public:
    // constructor for multi-dimensional functions
    unsigned int NDim() const { return fDim; }
 
+   unsigned int NDimConstraint() const { return fDimConstraint; }
+
 private:
-   //    inline double DoEval (double x) const {
-   //       return fFunc(x);
-   //    }
+   inline void DoEval(const double *x, double *g) const { fFunc(x, g); }
 
-   inline double *DoEval(const double *x) const { return fFunc(x); }
-
-   inline double DoDerivative(double x) const { return fFunc.Derivative(x); }
-
-   inline double DoDerivative(const double *x, unsigned int icoord) const { return fFunc.Derivative(x, icoord); }
+   inline bool DoJacobian(const double *x, double &value, unsigned int icoord, unsigned int jcoord) const
+   {
+      return fFunc.DoJacobian(x, value, icoord, jcoord);
+   }
+   //    inline double DoJacobian(const double *x, unsigned int icoord,unsigned int jcoord) const { return
+   //    fFunc.Derivative(x, icoord); }
 
    unsigned int fDim;
+   unsigned int fDimConstraint;
    mutable Func fFunc; // should here be a reference and pass a non-const ref in ctor
 };
 
@@ -175,8 +182,8 @@ public:
        construct from a pointer to member function (multi-dim type)
     */
    template <class PtrObj, typename MemFn>
-   ConstraintFunctor(const PtrObj &p, MemFn memFn, unsigned int dim)
-      : fImpl(new MemFunHandler<Functor, PtrObj, MemFn>(dim, p, memFn))
+   ConstraintFunctor(const PtrObj &p, MemFn memFn, unsigned int dim, unsigned int dimconstraint)
+      : fImpl(new MemFunHandler<Functor, PtrObj, MemFn>(dim, dimconstraint, p, memFn))
    {
    }
 
@@ -185,8 +192,8 @@ public:
       with the right signature (implementing operator()(double *x)
     */
    template <typename Func>
-   ConstraintFunctor(const Func &f, unsigned int dim)
-      : fImpl(new ConstraintFunctorHandler<ConstraintFunctor, Func>(dim, f))
+   ConstraintFunctor(const Func &f, unsigned int dim, unsigned int dimconstraint)
+      : fImpl(new ConstraintFunctorHandler<ConstraintFunctor, Func>(dim, dimconstraint, f))
    {
    }
 
@@ -221,12 +228,17 @@ public:
    // for multi-dimensional functions
    unsigned int NDim() const { return fImpl->NDim(); }
 
+   unsigned int NDimConstraint() const { return fImpl->NDimConstraint(); }
+
 private:
-   inline double *DoEval(const double *x) const { return (*fImpl)(x); }
+   inline void DoEval(const double *x, double *g) const { (*fImpl)(x, g); }
+   inline bool DoJacobian(const double *x, double &value, unsigned int icoord, unsigned int jcoord) const
+   {
+      return fImpl->DoJacobian(x, value, icoord, jcoord);
+   }
+
    std::unique_ptr<Impl> fImpl; // pointer to base functor handler
 };
-
-//     class IMultiConstraintFunction:public IBaseFunctionMultiDimTempl<double>{};
 }
 }
 
