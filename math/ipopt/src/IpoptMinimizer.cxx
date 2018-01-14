@@ -175,7 +175,8 @@ bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::eval_jac_g(Index n, const Num
       if (new_x) { // eval only if it is a new point
          for (auto i = 0; i < n; i++) {
             for (auto j = 0; j < m; j++)
-               gfun->DoJacobian(x, values[i * n + j], i, j);
+               if (!gfun->DoJacobian(x, values[i * n + j], i, j))
+                  return false; // if not implemented
          }
       }
    }
@@ -252,6 +253,18 @@ void IpoptMinimizer::SetOptionStringValue(const char *var, const char *value)
 }
 
 //_______________________________________________________________________
+void IpoptMinimizer::SetOptionNumericValue(const char *var, const Ipopt::Number value)
+{
+   fIpotApp->Options()->SetNumericValue(var, value);
+}
+
+//_______________________________________________________________________
+void IpoptMinimizer::SetOptionIntegerValue(const char *var, const Ipopt::Index value)
+{
+   fIpotApp->Options()->SetIntegerValue(var, value);
+}
+
+//_______________________________________________________________________
 bool IpoptMinimizer::Minimize()
 {
    ApplicationReturnStatus status;
@@ -261,6 +274,8 @@ bool IpoptMinimizer::Minimize()
       return (int)status;
    }
 
+   fIpotApp->Options()->SetNumericValue("tol", Tolerance());
+   fIpotApp->Options()->SetIntegerValue("max_iter", MaxIterations());
    status = fIpotApp->OptimizeTNLP(fInternalTNLP);
 
    if (status == Solve_Succeeded) {
@@ -283,4 +298,117 @@ void IpoptMinimizer::SetFunction(const ROOT::Math::IMultiConstraintFunction &fun
 {
    fConstraintFunc = func.Clone();
    fConstraintFuncDim = func.NDim();
+}
+
+//_______________________________________________________________________
+bool IpoptMinimizer::SetConstraintLowerLimit(unsigned int ivar, double lower)
+{
+   // set variable lower limit
+   double upper =
+      (fConstraintBounds.count(ivar)) ? fConstraintBounds[ivar].second : std::numeric_limits<double>::infinity();
+   return SetConstraintLimits(ivar, lower, upper);
+}
+
+//_______________________________________________________________________
+bool IpoptMinimizer::SetConstraintUpperLimit(unsigned int ivar, double upper)
+{
+   // set variable upper limit
+   double lower =
+      (fConstraintBounds.count(ivar)) ? fConstraintBounds[ivar].first : -std::numeric_limits<double>::infinity();
+   return SetConstraintLimits(ivar, lower, upper);
+}
+
+//_______________________________________________________________________
+bool IpoptMinimizer::SetConstraintLimits(unsigned int ivar, double lower, double upper)
+{
+   // set variable limits (remove limits if lower >= upper)
+   if (ivar > fConstraintTypes.size())
+      return false;
+   // if limits do not exists add them or update
+   fConstraintBounds[ivar] = std::make_pair(lower, upper);
+   if (lower > upper ||
+       (lower == -std::numeric_limits<double>::infinity() && upper == std::numeric_limits<double>::infinity())) {
+      fConstraintBounds.erase(ivar);
+      fConstraintTypes[ivar] = kDefault;
+   } else if (lower == upper)
+      FixConstraint(ivar); //
+   else {
+      if (lower == -std::numeric_limits<double>::infinity())
+         fConstraintTypes[ivar] = kLowBound;
+      else if (upper == std::numeric_limits<double>::infinity())
+         fConstraintTypes[ivar] = kUpBound;
+      else
+         fConstraintTypes[ivar] = kBounds;
+   }
+   return true;
+}
+
+//_______________________________________________________________________
+bool IpoptMinimizer::FixConstraint(unsigned int ivar)
+{
+   // fix variable
+   if (ivar > fConstraintTypes.size())
+      return false;
+   fConstraintTypes[ivar] = kFix;
+   return true;
+}
+
+//_______________________________________________________________________
+bool IpoptMinimizer::ReleaseConstraint(unsigned int ivar)
+{
+   // fix variable
+   if (ivar > fConstraintTypes.size())
+      return false;
+   if (fConstraintBounds.count(ivar) == 0) {
+      fConstraintTypes[ivar] = kDefault;
+      return true;
+   }
+   if (fConstraintBounds[ivar].first == -std::numeric_limits<double>::infinity())
+      fConstraintTypes[ivar] = kLowBound;
+   else if (fConstraintBounds[ivar].second == std::numeric_limits<double>::infinity())
+      fConstraintTypes[ivar] = kUpBound;
+   else
+      fConstraintTypes[ivar] = kBounds;
+
+   return true;
+}
+
+//_______________________________________________________________________
+bool IpoptMinimizer::IsFixedConstraint(unsigned int ivar) const
+{
+   if (ivar > fConstraintTypes.size())
+      return false;
+   return (fConstraintTypes[ivar] == kFix);
+}
+
+//_______________________________________________________________________
+bool IpoptMinimizer::GetConstraintSettings(unsigned int ivar, ROOT::Fit::ParameterSettings &varObj) const
+{
+   if (ivar > fConstraintValues.size())
+      return false;
+   R__ASSERT(fConstraintValues.size() == fConstraintNames.size() &&
+             fConstraintValues.size() == fConstraintTypes.size());
+   varObj.Set(fConstraintNames[ivar], fConstraintValues[ivar], fConstraintSteps[ivar]);
+   std::map<unsigned int, std::pair<double, double>>::const_iterator itr = fConstraintBounds.find(ivar);
+   if (itr != fConstraintBounds.end()) {
+      double lower = (itr->second).first;
+      double upper = (itr->second).second;
+      if (fConstraintTypes[ivar] == kLowBound)
+         varObj.SetLowerLimit(lower);
+      if (fConstraintTypes[ivar] == kUpBound)
+         varObj.SetUpperLimit(upper);
+      else
+         varObj.SetLimits(lower, upper);
+   }
+   if (fConstraintTypes[ivar] == kFix)
+      varObj.Fix();
+   return true;
+}
+
+//_______________________________________________________________________
+std::string IpoptMinimizer::ConstraintName(unsigned int ivar) const
+{
+   if (ivar > fConstraintNames.size())
+      return "";
+   return fConstraintNames[ivar];
 }

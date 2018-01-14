@@ -413,6 +413,26 @@ public:
 
    virtual void SetOptionStringValue(const char *var, const char *value);
 
+   virtual void SetOptionNumericValue(const char *var, const Ipopt::Number value);
+
+   virtual void SetOptionIntegerValue(const char *var, const Ipopt::Index value);
+
+   bool SetConstraintLowerLimit(unsigned int ivar, double lower);
+
+   bool SetConstraintUpperLimit(unsigned int ivar, double upper);
+
+   bool SetConstraintLimits(unsigned int ivar, double lower, double upper);
+
+   bool FixConstraint(unsigned int ivar);
+
+   bool ReleaseConstraint(unsigned int ivar);
+
+   bool IsFixedConstraint(unsigned int ivar) const;
+
+   bool GetConstraintSettings(unsigned int ivar, ROOT::Fit::ParameterSettings &varObj) const;
+
+   std::string ConstraintName(unsigned int ivar) const;
+
    ROOT::Math::IMultiConstraintFunction *ConstraintObjFunction() { return fConstraintFunc; }
 
    /// return expected distance reached from the minimum
@@ -440,6 +460,12 @@ protected:
    ROOT::Math::IMultiConstraintFunction *fConstraintFunc;
    unsigned int fConstraintFuncDim;
    //    unsigned int fConstraintFunReturncDim;
+   std::vector<double> fConstraintValues;
+   std::vector<double> fConstraintSteps;
+   std::vector<std::string> fConstraintNames;
+   std::map<unsigned int, std::pair<double, double>>
+      fConstraintBounds; // map specifying the bound for contraint function using as key the parameter index
+   std::vector<ROOT::Math::EMinimVariableType> fConstraintTypes; // vector specifyng the type of variables
    ClassDef(IpoptMinimizer, 0) //
 };
 
