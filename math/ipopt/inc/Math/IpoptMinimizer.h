@@ -417,6 +417,8 @@ public:
 
    virtual void SetOptionIntegerValue(const char *var, const Ipopt::Index value);
 
+   bool SetConstraint(unsigned int ivar, const std::string &name, double val, double step);
+
    bool SetConstraintLowerLimit(unsigned int ivar, double lower);
 
    bool SetConstraintUpperLimit(unsigned int ivar, double upper);
