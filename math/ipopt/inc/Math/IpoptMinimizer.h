@@ -432,7 +432,7 @@ public:
    virtual double CovMatrix(unsigned int, unsigned int) const { return 0; }
 protected:
    Ipopt::SmartPtr<InternalTNLP> fInternalTNLP;
-   ClassDef(IpoptMinimizer, 0) //
+   //ClassDef(IpoptMinimizer, 0); //
 };
 
 } // end namespace Experimental
