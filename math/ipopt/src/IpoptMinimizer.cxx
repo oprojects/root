@@ -17,9 +17,10 @@ IpoptMinimizer::IpoptMinimizer() : BasicMinimizer()
    fInternalTNLP = new InternalTNLP(this);
    fIpotApp->Options()->SetStringValue("hessian_approximation", "limited-memory");
    fIpotApp->Options()->SetStringValue("linear_solver", "mumps");
-   fIpotApp->Options()->SetIntegerValue("print_level", 0);
+   fIpotApp->Options()->SetIntegerValue("print_level", 5);
    fOptions.SetMinimizerType("Ipopt");
    fOptions.SetMinimizerAlgorithm("mumps");
+   fFuncCalls=0;
 }
 
 //_______________________________________________________________________
@@ -29,9 +30,10 @@ IpoptMinimizer::IpoptMinimizer(const char *type)
    fInternalTNLP = new InternalTNLP(this);
    fIpotApp->Options()->SetStringValue("hessian_approximation", "limited-memory");
    fIpotApp->Options()->SetStringValue("linear_solver", type);
-   fIpotApp->Options()->SetIntegerValue("print_level", 0);
+   fIpotApp->Options()->SetIntegerValue("print_level", 5);
    fOptions.SetMinimizerType("Ipopt");
    fOptions.SetMinimizerAlgorithm(type);
+   fFuncCalls=0;
 }
 
 //_______________________________________________________________________
@@ -118,10 +120,10 @@ bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::get_starting_point(Index n, b
 //_______________________________________________________________________
 bool IpoptMinimizer::IpoptMinimizer::InternalTNLP::eval_f(Index n, const Number *x, bool /*new_x*/, Number &obj_value)
 {
-
    auto fun = fMinimizer->ObjFunction();
    R__ASSERT(n == (Index)fun->NDim());
    obj_value = (*fun)(x);
+   fMinimizer->fFuncCalls++;
    return true;
 }
 
@@ -196,6 +198,7 @@ void IpoptMinimizer::IpoptMinimizer::InternalTNLP::finalize_solution(SolverRetur
    fMinimizer->SetFinalValues(x);
 
    fMinimizer->SetMinValue(obj_value);
+
 }
 
 void IpoptMinimizer::SetFunction(const ROOT::Math::IMultiGenFunction &func)

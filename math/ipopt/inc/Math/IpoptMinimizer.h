@@ -94,6 +94,7 @@ using Ipopt::IpoptCalculatedQuantities;
 class IpoptMinimizer : public BasicMinimizer {
 private:
    Ipopt::SmartPtr<Ipopt::IpoptApplication> fIpotApp;
+   UInt_t fFuncCalls;
 
 protected:
    /**
@@ -380,7 +381,11 @@ public:
       Destructor
    */
    virtual ~IpoptMinimizer();
-
+   
+   /**
+      number of function calls
+   */
+   virtual unsigned int 	NCalls () const {return fFuncCalls;};
 private:
    // usually copying is non trivial, so we make this unaccessible
 

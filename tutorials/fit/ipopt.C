@@ -62,6 +62,7 @@ int ipopt()
 
    const double *xs = minimizer.X();
    std::cout << "Minimum: f(" << xs[0] << "," << xs[1] << "): " << rgf(xs) << std::endl;
+   std::cout << "NCalls: " <<minimizer.NCalls() << std::endl;
 
    return 0;
 }
