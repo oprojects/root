@@ -382,10 +382,6 @@ public:
    */
    virtual ~IpoptMinimizer();
    
-   /**
-      number of function calls
-   */
-   virtual unsigned int 	NCalls () const {return fFuncCalls;};
 private:
    // usually copying is non trivial, so we make this unaccessible
 
@@ -407,13 +403,13 @@ private:
 
 public:
    /// set the function to minimize
-   virtual void SetFunction(const ROOT::Math::IMultiGenFunction &func);
+   virtual void SetFunction(const ROOT::Math::IMultiGenFunction &func) override;
 
    /// set the function to minimize
-   virtual void SetFunction(const ROOT::Math::IMultiGradFunction &func) { BasicMinimizer::SetFunction(func); }
+   virtual void SetFunction(const ROOT::Math::IMultiGradFunction &func) override { BasicMinimizer::SetFunction(func); }
 
    /// method to perform the minimization
-   virtual bool Minimize();
+   virtual bool Minimize() override;
 
    virtual void SetNNZerosJacobian(UInt_t nzeros);
 
@@ -422,19 +418,25 @@ public:
    virtual void SetOptionStringValue(const char *var, const char *value);
 
    /// return expected distance reached from the minimum
-   virtual double Edm() const { return 0; } // not impl. }
+   virtual double Edm() const override{ return 0; } // not impl. }
 
    /// minimizer provides error and error matrix
-   virtual bool ProvidesError() const { return false; }
+   virtual bool ProvidesError() const override{ return false; }
 
    /// return errors at the minimum
-   virtual const double *Errors() const { return 0; }
+   virtual const double *Errors() const override{ return 0; }
+
+   /*
+      Number of function calls
+    */
+   virtual unsigned int NCalls() const override;
+
 
    /** return covariance matrices elements
        if the variable is fixed the matrix is zero
        The ordering of the variables is the same as in errors
    */
-   virtual double CovMatrix(unsigned int, unsigned int) const { return 0; }
+   virtual double CovMatrix(unsigned int, unsigned int) const override{ return 0; }
 protected:
    Ipopt::SmartPtr<InternalTNLP> fInternalTNLP;
    //ClassDef(IpoptMinimizer, 0); //
