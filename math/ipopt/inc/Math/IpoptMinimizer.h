@@ -25,12 +25,12 @@
 #include <string>
 
 #define HAVE_CSTDDEF
-#include <coin/IpTNLP.hpp>
-#include <coin/IpSmartPtr.hpp>
+#include <coin-or/IpTNLP.hpp>
+#include <coin-or/IpSmartPtr.hpp>
 #undef HAVE_CSTDDEF
 
-#include <coin/IpIpoptApplication.hpp>
-#include <coin/IpSolveStatistics.hpp>
+#include <coin-or/IpIpoptApplication.hpp>
+#include <coin-or/IpSolveStatistics.hpp>
 
 namespace ROOT {
 

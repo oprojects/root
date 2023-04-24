@@ -15,9 +15,17 @@ IpoptMinimizer::IpoptMinimizer() : BasicMinimizer()
 {
    fIpotApp = IpoptApplicationFactory();
    fInternalTNLP = new InternalTNLP(this);
-   fIpotApp->Options()->SetStringValue("hessian_approximation", "limited-memory");
+   //fIpotApp->Options()->SetStringValue("hessian_approximation", "limited-memory");
+   fIpotApp->Options()->SetStringValue("hessian_approximation", "exact");
    fIpotApp->Options()->SetStringValue("linear_solver", "mumps");
-   fIpotApp->Options()->SetIntegerValue("print_level", 5);
+   fIpotApp->Options()->SetIntegerValue("print_level", 3);
+   // fIpotApp->Options()->SetStringValue("nlp_scaling_method","none");
+   // fIpotApp->Options()->SetStringValue("fast_step_computation","yes");
+   // fIpotApp->Options()->SetStringValue("expect_infeasible_problem","yes");
+   // fIpotApp->Options()->SetStringValue("gradient_approximation","finite-difference-values");
+   // fIpotApp->Options()->SetStringValue("warm_start_init_point","yes");
+    
+   
    fOptions.SetMinimizerType("Ipopt");
    fOptions.SetMinimizerAlgorithm("mumps");
    fFuncCalls=0;
@@ -30,7 +38,14 @@ IpoptMinimizer::IpoptMinimizer(const char *type)
    fInternalTNLP = new InternalTNLP(this);
    fIpotApp->Options()->SetStringValue("hessian_approximation", "limited-memory");
    fIpotApp->Options()->SetStringValue("linear_solver", type);
-   fIpotApp->Options()->SetIntegerValue("print_level", 1);
+   fIpotApp->Options()->SetIntegerValue("print_level", 3);
+   
+   // fIpotApp->Options()->SetStringValue("nlp_scaling_method","none");
+   // fIpotApp->Options()->SetStringValue("fast_step_computation","yes");
+   // fIpotApp->Options()->SetStringValue("expect_infeasible_problem","yes");
+   // fIpotApp->Options()->SetStringValue("gradient_approximation","finite-difference-values");
+   // fIpotApp->Options()->SetStringValue("warm_start_init_point","yes");
+
    fOptions.SetMinimizerType("Ipopt");
    fOptions.SetMinimizerAlgorithm(type);
    fFuncCalls=0;
@@ -228,6 +243,9 @@ void IpoptMinimizer::SetOptionStringValue(const char *var, const char *value)
 //_______________________________________________________________________
 bool IpoptMinimizer::Minimize()
 {
+   fIpotApp->Options()->SetIntegerValue("max_iter",MaxIterations());
+   fIpotApp->Options()->SetNumericValue("tol", Tolerance());
+
    ApplicationReturnStatus status;
    status = fIpotApp->Initialize();
    if (status != Solve_Succeeded) {
